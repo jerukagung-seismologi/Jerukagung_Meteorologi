@@ -26,12 +26,21 @@ interface SeasonalLeafletCanvasProps {
 
 const BASEMAP_CONFIGS: Record<
   BasemapId,
-  { url: string; darkUrl?: string; attribution: string; maxZoom: number }
+  {
+    url: string;
+    darkUrl?: string;
+    darkLabelUrl?: string;
+    attribution: string;
+    maxZoom: number;
+  }
 > = {
   jalan: {
-    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
-    darkUrl: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-    attribution: "&copy; OpenStreetMap contributors",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
+    darkUrl:
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    darkLabelUrl:
+      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+    attribution: "&copy; Esri, HERE, Garmin, OpenStreetMap contributors",
     maxZoom: 18,
   },
   satelit: {
@@ -60,6 +69,7 @@ export default function SeasonalLeafletCanvas({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const labelTileLayerRef = useRef<L.TileLayer | null>(null);
   const rasterLayerRef = useRef<L.ImageOverlay | null>(null);
   const geoLayerRef = useRef<L.GeoJSON | null>(null);
   const boundsRef = useRef<L.LatLngBounds | null>(null);
@@ -129,6 +139,7 @@ export default function SeasonalLeafletCanvas({
       map.remove();
       mapRef.current = null;
       tileLayerRef.current = null;
+      labelTileLayerRef.current = null;
       rasterLayerRef.current = null;
       geoLayerRef.current = null;
     };
@@ -141,16 +152,29 @@ export default function SeasonalLeafletCanvas({
 
     if (tileLayerRef.current) {
       map.removeLayer(tileLayerRef.current);
+      tileLayerRef.current = null;
+    }
+    if (labelTileLayerRef.current) {
+      map.removeLayer(labelTileLayerRef.current);
+      labelTileLayerRef.current = null;
     }
 
     const cfg = BASEMAP_CONFIGS[basemap];
-    const url = basemap === "jalan" && isDarkMode && cfg.darkUrl ? cfg.darkUrl : cfg.url;
+    const useDarkRoad = basemap === "jalan" && isDarkMode && Boolean(cfg.darkUrl);
+    const url = useDarkRoad && cfg.darkUrl ? cfg.darkUrl : cfg.url;
     const tile = L.tileLayer(url, {
       attribution: cfg.attribution,
       maxZoom: cfg.maxZoom,
     }).addTo(map);
-
     tileLayerRef.current = tile;
+
+    if (useDarkRoad && cfg.darkLabelUrl) {
+      const labelTile = L.tileLayer(cfg.darkLabelUrl, {
+        maxZoom: cfg.maxZoom,
+        opacity: 0.9,
+      }).addTo(map);
+      labelTileLayerRef.current = labelTile;
+    }
   }, [basemap, isDarkMode]);
 
   // Perbarui Overlay Raster 250m
