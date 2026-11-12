@@ -1,8 +1,9 @@
 {
   "metadata": {
-    "generated_at": "2026-11-12T23:20:14.954245+07:00",
+    "generated_at": "2026-11-13T00:03:07.006290+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
+    "total_desa": 460,
     "model": "LSTM Multi-Head & Downscaling 250m",
     "standard": "BMKG / WMO",
     "seasons": {
@@ -180,7 +181,10 @@
       "prakiraan_puncak_dasarian": 33.5,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Ayah",
+      "total_hujan_mh_mm": 1558.5,
+      "kelas_hujan_mh": "1.500–1.600 mm"
     },
     {
       "kecamatan": "Buayan",
@@ -199,7 +203,10 @@
       "prakiraan_puncak_dasarian": 33.5,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Buayan",
+      "total_hujan_mh_mm": 1593.4,
+      "kelas_hujan_mh": "1.500–1.600 mm"
     },
     {
       "kecamatan": "Puring",
@@ -218,7 +225,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Puring",
+      "total_hujan_mh_mm": 1534.0,
+      "kelas_hujan_mh": "1.500–1.600 mm"
     },
     {
       "kecamatan": "Petanahan",
@@ -237,7 +247,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Petanahan",
+      "total_hujan_mh_mm": 1564.5,
+      "kelas_hujan_mh": "1.500–1.600 mm"
     },
     {
       "kecamatan": "Klirong",
@@ -256,7 +269,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Klirong",
+      "total_hujan_mh_mm": 1550.8,
+      "kelas_hujan_mh": "1.500–1.600 mm"
     },
     {
       "kecamatan": "Buluspesantren",
@@ -275,7 +291,10 @@
       "prakiraan_puncak_dasarian": 33.5,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Buluspesantren",
+      "total_hujan_mh_mm": 1482.6,
+      "kelas_hujan_mh": "< 1.500 mm"
     },
     {
       "kecamatan": "Ambal",
@@ -294,7 +313,10 @@
       "prakiraan_puncak_dasarian": 33.4,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Ambal",
+      "total_hujan_mh_mm": 1394.7,
+      "kelas_hujan_mh": "< 1.500 mm"
     },
     {
       "kecamatan": "Mirit",
@@ -313,7 +335,10 @@
       "prakiraan_puncak_dasarian": 33.1,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Mirit",
+      "total_hujan_mh_mm": 1317.1,
+      "kelas_hujan_mh": "< 1.500 mm"
     },
     {
       "kecamatan": "Prembun",
@@ -332,7 +357,10 @@
       "prakiraan_puncak_dasarian": 33.4,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Prembun",
+      "total_hujan_mh_mm": 1476.4,
+      "kelas_hujan_mh": "< 1.500 mm"
     },
     {
       "kecamatan": "Kutowinangun",
@@ -351,7 +379,10 @@
       "prakiraan_puncak_dasarian": 33.5,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Kutowinangun",
+      "total_hujan_mh_mm": 1522.2,
+      "kelas_hujan_mh": "1.500–1.600 mm"
     },
     {
       "kecamatan": "Alian",
@@ -370,7 +401,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Alian",
+      "total_hujan_mh_mm": 1785.2,
+      "kelas_hujan_mh": "> 1.750 mm"
     },
     {
       "kecamatan": "Kebumen",
@@ -389,7 +423,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Kebumen",
+      "total_hujan_mh_mm": 1637.4,
+      "kelas_hujan_mh": "1.600–1.750 mm"
     },
     {
       "kecamatan": "Pejagoan",
@@ -408,7 +445,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Pejagoan",
+      "total_hujan_mh_mm": 1808.7,
+      "kelas_hujan_mh": "> 1.750 mm"
     },
     {
       "kecamatan": "Sruweng",
@@ -427,7 +467,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Sruweng",
+      "total_hujan_mh_mm": 1770.1,
+      "kelas_hujan_mh": "> 1.750 mm"
     },
     {
       "kecamatan": "Adimulyo",
@@ -446,7 +489,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Adimulyo",
+      "total_hujan_mh_mm": 1642.0,
+      "kelas_hujan_mh": "1.600–1.750 mm"
     },
     {
       "kecamatan": "Kuwarasan",
@@ -465,7 +511,10 @@
       "prakiraan_puncak_dasarian": 33.5,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Kuwarasan",
+      "total_hujan_mh_mm": 1617.9,
+      "kelas_hujan_mh": "1.600–1.750 mm"
     },
     {
       "kecamatan": "Rowokele",
@@ -484,7 +533,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Rowokele",
+      "total_hujan_mh_mm": 1720.2,
+      "kelas_hujan_mh": "1.600–1.750 mm"
     },
     {
       "kecamatan": "Sempor",
@@ -503,7 +555,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Sempor",
+      "total_hujan_mh_mm": 1828.4,
+      "kelas_hujan_mh": "> 1.750 mm"
     },
     {
       "kecamatan": "Gombong",
@@ -522,7 +577,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Gombong",
+      "total_hujan_mh_mm": 1718.3,
+      "kelas_hujan_mh": "1.600–1.750 mm"
     },
     {
       "kecamatan": "Karanganyar",
@@ -541,7 +599,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Karanganyar",
+      "total_hujan_mh_mm": 1791.1,
+      "kelas_hujan_mh": "> 1.750 mm"
     },
     {
       "kecamatan": "Karanggayam",
@@ -560,7 +621,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Karanggayam",
+      "total_hujan_mh_mm": 1948.5,
+      "kelas_hujan_mh": "> 1.750 mm"
     },
     {
       "kecamatan": "Sadang",
@@ -579,7 +643,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Sadang",
+      "total_hujan_mh_mm": 2031.0,
+      "kelas_hujan_mh": "> 1.750 mm"
     },
     {
       "kecamatan": "Bonorowo",
@@ -598,7 +665,10 @@
       "prakiraan_puncak_dasarian": 33.0,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Bonorowo",
+      "total_hujan_mh_mm": 1329.4,
+      "kelas_hujan_mh": "< 1.500 mm"
     },
     {
       "kecamatan": "Padureso",
@@ -617,7 +687,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Padureso",
+      "total_hujan_mh_mm": 1712.1,
+      "kelas_hujan_mh": "1.600–1.750 mm"
     },
     {
       "kecamatan": "Poncowarno",
@@ -636,7 +709,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Poncowarno",
+      "total_hujan_mh_mm": 1664.3,
+      "kelas_hujan_mh": "1.600–1.750 mm"
     },
     {
       "kecamatan": "Karangsambung",
@@ -655,7 +731,10 @@
       "prakiraan_puncak_dasarian": 33.6,
       "prakiraan_puncak_label": "Januari 2027",
       "rekomendasi_olah_tanah": "Nov III",
-      "rekomendasi_tanam_padi_mt1": "Des I"
+      "rekomendasi_tanam_padi_mt1": "Des I",
+      "code": "Karangsambung",
+      "total_hujan_mh_mm": 1931.5,
+      "kelas_hujan_mh": "> 1.750 mm"
     }
   ],
   "kemarau": [
@@ -676,7 +755,12 @@
       "prakiraan_pmk_dasarian": 21.2,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei II",
-      "rekomendasi_tanam_palawija_mt3": "Mei III"
+      "rekomendasi_tanam_palawija_mt3": "Mei III",
+      "code": "Adimulyo",
+      "total_hujan_mk_mm": 500.2,
+      "kelas_hujan_mk": "485–525 mm",
+      "kekeringan_skor": 61.8,
+      "kelas_kekeringan": "Cukup Tinggi (60–65)"
     },
     {
       "kecamatan": "Alian",
@@ -695,7 +779,12 @@
       "prakiraan_pmk_dasarian": 21.8,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Apr III",
-      "rekomendasi_tanam_palawija_mt3": "Mei I"
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
+      "code": "Alian",
+      "total_hujan_mk_mm": 503.8,
+      "kelas_hujan_mk": "485–525 mm",
+      "kekeringan_skor": 60.1,
+      "kelas_kekeringan": "Cukup Tinggi (60–65)"
     },
     {
       "kecamatan": "Ambal",
@@ -714,7 +803,12 @@
       "prakiraan_pmk_dasarian": 24.6,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei II",
-      "rekomendasi_tanam_palawija_mt3": "Mei III"
+      "rekomendasi_tanam_palawija_mt3": "Mei III",
+      "code": "Ambal",
+      "total_hujan_mk_mm": 379.5,
+      "kelas_hujan_mk": "< 430 mm",
+      "kekeringan_skor": 70.5,
+      "kelas_kekeringan": "Sangat Tinggi (> 70)"
     },
     {
       "kecamatan": "Ayah",
@@ -733,7 +827,12 @@
       "prakiraan_pmk_dasarian": 20.3,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei III",
-      "rekomendasi_tanam_palawija_mt3": "Jun I"
+      "rekomendasi_tanam_palawija_mt3": "Jun I",
+      "code": "Ayah",
+      "total_hujan_mk_mm": 519.6,
+      "kelas_hujan_mk": "485–525 mm",
+      "kekeringan_skor": 67.2,
+      "kelas_kekeringan": "Tinggi (65–70)"
     },
     {
       "kecamatan": "Bonorowo",
@@ -752,7 +851,12 @@
       "prakiraan_pmk_dasarian": 24.5,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei I",
-      "rekomendasi_tanam_palawija_mt3": "Mei II"
+      "rekomendasi_tanam_palawija_mt3": "Mei II",
+      "code": "Bonorowo",
+      "total_hujan_mk_mm": 345.6,
+      "kelas_hujan_mk": "< 430 mm",
+      "kekeringan_skor": 69.5,
+      "kelas_kekeringan": "Tinggi (65–70)"
     },
     {
       "kecamatan": "Buayan",
@@ -771,7 +875,12 @@
       "prakiraan_pmk_dasarian": 20.8,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei III",
-      "rekomendasi_tanam_palawija_mt3": "Jun I"
+      "rekomendasi_tanam_palawija_mt3": "Jun I",
+      "code": "Buayan",
+      "total_hujan_mk_mm": 514.3,
+      "kelas_hujan_mk": "485–525 mm",
+      "kekeringan_skor": 64.0,
+      "kelas_kekeringan": "Cukup Tinggi (60–65)"
     },
     {
       "kecamatan": "Buluspesantren",
@@ -790,7 +899,12 @@
       "prakiraan_pmk_dasarian": 20.6,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei III",
-      "rekomendasi_tanam_palawija_mt3": "Jun I"
+      "rekomendasi_tanam_palawija_mt3": "Jun I",
+      "code": "Buluspesantren",
+      "total_hujan_mk_mm": 414.9,
+      "kelas_hujan_mk": "< 430 mm",
+      "kekeringan_skor": 69.2,
+      "kelas_kekeringan": "Tinggi (65–70)"
     },
     {
       "kecamatan": "Gombong",
@@ -809,7 +923,12 @@
       "prakiraan_pmk_dasarian": 21.0,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei II",
-      "rekomendasi_tanam_palawija_mt3": "Mei III"
+      "rekomendasi_tanam_palawija_mt3": "Mei III",
+      "code": "Gombong",
+      "total_hujan_mk_mm": 527.1,
+      "kelas_hujan_mk": "> 525 mm",
+      "kekeringan_skor": 56.0,
+      "kelas_kekeringan": "Sedang (< 60)"
     },
     {
       "kecamatan": "Karanganyar",
@@ -828,7 +947,12 @@
       "prakiraan_pmk_dasarian": 20.7,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei I",
-      "rekomendasi_tanam_palawija_mt3": "Mei II"
+      "rekomendasi_tanam_palawija_mt3": "Mei II",
+      "code": "Karanganyar",
+      "total_hujan_mk_mm": 529.3,
+      "kelas_hujan_mk": "> 525 mm",
+      "kekeringan_skor": 57.4,
+      "kelas_kekeringan": "Sedang (< 60)"
     },
     {
       "kecamatan": "Karanggayam",
@@ -847,7 +971,12 @@
       "prakiraan_pmk_dasarian": 20.1,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Apr III",
-      "rekomendasi_tanam_palawija_mt3": "Mei I"
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
+      "code": "Karanggayam",
+      "total_hujan_mk_mm": 582.5,
+      "kelas_hujan_mk": "> 525 mm",
+      "kekeringan_skor": 54.2,
+      "kelas_kekeringan": "Sedang (< 60)"
     },
     {
       "kecamatan": "Karangsambung",
@@ -866,7 +995,12 @@
       "prakiraan_pmk_dasarian": 20.6,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Apr III",
-      "rekomendasi_tanam_palawija_mt3": "Mei I"
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
+      "code": "Karangsambung",
+      "total_hujan_mk_mm": 571.1,
+      "kelas_hujan_mk": "> 525 mm",
+      "kekeringan_skor": 55.4,
+      "kelas_kekeringan": "Sedang (< 60)"
     },
     {
       "kecamatan": "Kebumen",
@@ -885,7 +1019,12 @@
       "prakiraan_pmk_dasarian": 21.5,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei I",
-      "rekomendasi_tanam_palawija_mt3": "Mei II"
+      "rekomendasi_tanam_palawija_mt3": "Mei II",
+      "code": "Kebumen",
+      "total_hujan_mk_mm": 465.2,
+      "kelas_hujan_mk": "430–485 mm",
+      "kekeringan_skor": 62.8,
+      "kelas_kekeringan": "Cukup Tinggi (60–65)"
     },
     {
       "kecamatan": "Klirong",
@@ -904,7 +1043,12 @@
       "prakiraan_pmk_dasarian": 21.3,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei I",
-      "rekomendasi_tanam_palawija_mt3": "Mei II"
+      "rekomendasi_tanam_palawija_mt3": "Mei II",
+      "code": "Klirong",
+      "total_hujan_mk_mm": 447.7,
+      "kelas_hujan_mk": "430–485 mm",
+      "kekeringan_skor": 67.6,
+      "kelas_kekeringan": "Tinggi (65–70)"
     },
     {
       "kecamatan": "Kutowinangun",
@@ -923,7 +1067,12 @@
       "prakiraan_pmk_dasarian": 22.3,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei I",
-      "rekomendasi_tanam_palawija_mt3": "Mei II"
+      "rekomendasi_tanam_palawija_mt3": "Mei II",
+      "code": "Kutowinangun",
+      "total_hujan_mk_mm": 420.0,
+      "kelas_hujan_mk": "< 430 mm",
+      "kekeringan_skor": 64.9,
+      "kelas_kekeringan": "Cukup Tinggi (60–65)"
     },
     {
       "kecamatan": "Kuwarasan",
@@ -942,7 +1091,12 @@
       "prakiraan_pmk_dasarian": 21.0,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei III",
-      "rekomendasi_tanam_palawija_mt3": "Jun I"
+      "rekomendasi_tanam_palawija_mt3": "Jun I",
+      "code": "Kuwarasan",
+      "total_hujan_mk_mm": 506.4,
+      "kelas_hujan_mk": "485–525 mm",
+      "kekeringan_skor": 60.6,
+      "kelas_kekeringan": "Cukup Tinggi (60–65)"
     },
     {
       "kecamatan": "Mirit",
@@ -961,7 +1115,12 @@
       "prakiraan_pmk_dasarian": 24.6,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei I",
-      "rekomendasi_tanam_palawija_mt3": "Mei II"
+      "rekomendasi_tanam_palawija_mt3": "Mei II",
+      "code": "Mirit",
+      "total_hujan_mk_mm": 349.0,
+      "kelas_hujan_mk": "< 430 mm",
+      "kekeringan_skor": 72.0,
+      "kelas_kekeringan": "Sangat Tinggi (> 70)"
     },
     {
       "kecamatan": "Padureso",
@@ -980,7 +1139,12 @@
       "prakiraan_pmk_dasarian": 24.6,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Apr III",
-      "rekomendasi_tanam_palawija_mt3": "Mei I"
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
+      "code": "Padureso",
+      "total_hujan_mk_mm": 464.4,
+      "kelas_hujan_mk": "430–485 mm",
+      "kekeringan_skor": 60.2,
+      "kelas_kekeringan": "Cukup Tinggi (60–65)"
     },
     {
       "kecamatan": "Pejagoan",
@@ -999,7 +1163,12 @@
       "prakiraan_pmk_dasarian": 20.9,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Apr III",
-      "rekomendasi_tanam_palawija_mt3": "Mei I"
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
+      "code": "Pejagoan",
+      "total_hujan_mk_mm": 527.9,
+      "kelas_hujan_mk": "> 525 mm",
+      "kekeringan_skor": 59.5,
+      "kelas_kekeringan": "Sedang (< 60)"
     },
     {
       "kecamatan": "Petanahan",
@@ -1018,7 +1187,12 @@
       "prakiraan_pmk_dasarian": 21.3,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei II",
-      "rekomendasi_tanam_palawija_mt3": "Mei III"
+      "rekomendasi_tanam_palawija_mt3": "Mei III",
+      "code": "Petanahan",
+      "total_hujan_mk_mm": 465.0,
+      "kelas_hujan_mk": "430–485 mm",
+      "kekeringan_skor": 67.4,
+      "kelas_kekeringan": "Tinggi (65–70)"
     },
     {
       "kecamatan": "Poncowarno",
@@ -1037,7 +1211,12 @@
       "prakiraan_pmk_dasarian": 23.1,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei I",
-      "rekomendasi_tanam_palawija_mt3": "Mei II"
+      "rekomendasi_tanam_palawija_mt3": "Mei II",
+      "code": "Poncowarno",
+      "total_hujan_mk_mm": 459.2,
+      "kelas_hujan_mk": "430–485 mm",
+      "kekeringan_skor": 62.1,
+      "kelas_kekeringan": "Cukup Tinggi (60–65)"
     },
     {
       "kecamatan": "Prembun",
@@ -1056,7 +1235,12 @@
       "prakiraan_pmk_dasarian": 23.0,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei II",
-      "rekomendasi_tanam_palawija_mt3": "Mei III"
+      "rekomendasi_tanam_palawija_mt3": "Mei III",
+      "code": "Prembun",
+      "total_hujan_mk_mm": 398.2,
+      "kelas_hujan_mk": "< 430 mm",
+      "kekeringan_skor": 64.7,
+      "kelas_kekeringan": "Cukup Tinggi (60–65)"
     },
     {
       "kecamatan": "Puring",
@@ -1075,7 +1259,12 @@
       "prakiraan_pmk_dasarian": 20.9,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei III",
-      "rekomendasi_tanam_palawija_mt3": "Jun I"
+      "rekomendasi_tanam_palawija_mt3": "Jun I",
+      "code": "Puring",
+      "total_hujan_mk_mm": 478.0,
+      "kelas_hujan_mk": "430–485 mm",
+      "kekeringan_skor": 67.3,
+      "kelas_kekeringan": "Tinggi (65–70)"
     },
     {
       "kecamatan": "Rowokele",
@@ -1094,7 +1283,12 @@
       "prakiraan_pmk_dasarian": 20.9,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei II",
-      "rekomendasi_tanam_palawija_mt3": "Mei III"
+      "rekomendasi_tanam_palawija_mt3": "Mei III",
+      "code": "Rowokele",
+      "total_hujan_mk_mm": 556.8,
+      "kelas_hujan_mk": "> 525 mm",
+      "kekeringan_skor": 57.2,
+      "kelas_kekeringan": "Sedang (< 60)"
     },
     {
       "kecamatan": "Sadang",
@@ -1113,7 +1307,12 @@
       "prakiraan_pmk_dasarian": 20.2,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei I",
-      "rekomendasi_tanam_palawija_mt3": "Mei II"
+      "rekomendasi_tanam_palawija_mt3": "Mei II",
+      "code": "Sadang",
+      "total_hujan_mk_mm": 612.1,
+      "kelas_hujan_mk": "> 525 mm",
+      "kekeringan_skor": 54.0,
+      "kelas_kekeringan": "Sedang (< 60)"
     },
     {
       "kecamatan": "Sempor",
@@ -1132,7 +1331,12 @@
       "prakiraan_pmk_dasarian": 20.4,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei I",
-      "rekomendasi_tanam_palawija_mt3": "Mei II"
+      "rekomendasi_tanam_palawija_mt3": "Mei II",
+      "code": "Sempor",
+      "total_hujan_mk_mm": 562.5,
+      "kelas_hujan_mk": "> 525 mm",
+      "kekeringan_skor": 53.9,
+      "kelas_kekeringan": "Sedang (< 60)"
     },
     {
       "kecamatan": "Sruweng",
@@ -1151,7 +1355,12 @@
       "prakiraan_pmk_dasarian": 20.9,
       "prakiraan_pmk_label": "Agustus 2026",
       "rekomendasi_keringkan_sawah_mt2": "Mei I",
-      "rekomendasi_tanam_palawija_mt3": "Mei II"
+      "rekomendasi_tanam_palawija_mt3": "Mei II",
+      "code": "Sruweng",
+      "total_hujan_mk_mm": 515.3,
+      "kelas_hujan_mk": "485–525 mm",
+      "kekeringan_skor": 60.4,
+      "kelas_kekeringan": "Cukup Tinggi (60–65)"
     }
   ]
 }

@@ -1,8 +1,12 @@
 export type SeasonId = "hujan" | "kemarau";
 
+export type AdminLevel = "kecamatan" | "desa";
+
 export type BasemapId = "jalan" | "satelit" | "topografi";
 
 export interface HujanRecord {
+  code?: string;
+  desa?: string;
   kecamatan: string;
   normal_amh_dasarian: number;
   normal_amh_label: string;
@@ -20,9 +24,15 @@ export interface HujanRecord {
   prakiraan_puncak_label: string;
   rekomendasi_olah_tanah: string;
   rekomendasi_tanam_padi_mt1: string;
+  total_hujan_mh_mm?: number;
+  kelas_hujan_mh?: string;
+  amh_dasarian_250m?: number;
+  amh_label_250m?: string;
 }
 
 export interface KemarauRecord {
+  code?: string;
+  desa?: string;
   kecamatan: string;
   normal_amk_dasarian: number;
   normal_amk_label: string;
@@ -40,6 +50,12 @@ export interface KemarauRecord {
   prakiraan_pmk_label: string;
   rekomendasi_keringkan_sawah_mt2: string;
   rekomendasi_tanam_palawija_mt3: string;
+  total_hujan_mk_mm?: number;
+  kelas_hujan_mk?: string;
+  amk_dasarian_250m?: number;
+  amk_label_250m?: string;
+  kekeringan_skor?: number;
+  kelas_kekeringan?: string;
 }
 
 export interface RasterOverlayMeta {
@@ -61,6 +77,7 @@ export interface SeasonalDataset {
     generated_at: string;
     kabupaten: string;
     total_kecamatan: number;
+    total_desa?: number;
     model: string;
     standard: string;
     seasons: {
@@ -73,6 +90,12 @@ export interface SeasonalDataset {
   kemarau: KemarauRecord[];
 }
 
+export interface SeasonalVillageDataset {
+  metadata: SeasonalDataset["metadata"];
+  hujan: HujanRecord[];
+  kemarau: KemarauRecord[];
+}
+
 export interface UnifiedLayerDef {
   id: string;
   kind: "polygon" | "raster";
@@ -80,6 +103,7 @@ export interface UnifiedLayerDef {
   label: string;
   bannerTitle: string;
   field?: string;
+  desaField?: string;
   colorMap?: Record<string, string>;
   order?: string[];
   rasterId?: string;

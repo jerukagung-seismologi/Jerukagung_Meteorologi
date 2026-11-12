@@ -4,12 +4,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { AlertTriangle, Layers, Loader2, MapPin, X } from "lucide-react";
+import { AlertTriangle, Layers, Loader2, MapPin, Search, X } from "lucide-react";
 import type {
+  AdminLevel,
   BasemapId,
   HujanRecord,
   KemarauRecord,
   SeasonalDataset,
+  SeasonalVillageDataset,
   SeasonId,
   UnifiedLayerDef,
 } from "@/lib/seasonalPredictionTypes";
@@ -42,6 +44,10 @@ const HUJAN_COLORS: Record<string, string> = {
   "Januari 2027": "#1f78b4",
   "Februari 2027": "#08519c",
   "Maret 2027": "#7fcdbb",
+  "< 1.500 mm": "#9ecae1",
+  "1.500–1.600 mm": "#4292c6",
+  "1.600–1.750 mm": "#2171b5",
+  "> 1.750 mm": "#08306b",
 };
 
 const KEMARAU_COLORS: Record<string, string> = {
@@ -62,6 +68,14 @@ const KEMARAU_COLORS: Record<string, string> = {
   "Juli 2026": "#fc4e2a",
   "Agustus 2026": "#b10026",
   "September 2026": "#800026",
+  "< 430 mm": "#fee08b",
+  "430–485 mm": "#abdda4",
+  "485–525 mm": "#66c2a5",
+  "> 525 mm": "#3288bd",
+  "Sedang (< 60)": "#abdda4",
+  "Cukup Tinggi (60–65)": "#fee08b",
+  "Tinggi (65–70)": "#f46d43",
+  "Sangat Tinggi (> 70)": "#d53e4f",
 };
 
 const CEWS_LAYERS: UnifiedLayerDef[] = [
@@ -75,6 +89,16 @@ const CEWS_LAYERS: UnifiedLayerDef[] = [
     field: "prakiraan_amh_label",
     colorMap: HUJAN_COLORS,
     order: ["Okt I", "Okt II", "Okt III", "Nov I", "Nov II", "Nov III", "Des I", "Des II"],
+  },
+  {
+    id: "hujan_curah_kelas",
+    kind: "polygon",
+    season: "hujan",
+    label: "Potensi Total Hujan MH",
+    bannerTitle: "ZONA POTENSI TOTAL CURAH HUJAN MUSIM HUJAN 2026/2027",
+    field: "kelas_hujan_mh",
+    colorMap: HUJAN_COLORS,
+    order: ["< 1.500 mm", "1.500–1.600 mm", "1.600–1.750 mm", "> 1.750 mm"],
   },
   {
     id: "hujan_anomali",
@@ -141,8 +165,29 @@ const CEWS_LAYERS: UnifiedLayerDef[] = [
     label: "Awal Musim Kemarau (AMK)",
     bannerTitle: "PRAKIRAAN AWAL MUSIM KEMARAU 2026",
     field: "prakiraan_amk_label",
+    desaField: "amk_label_250m",
     colorMap: KEMARAU_COLORS,
     order: ["Apr I", "Apr II", "Apr III", "Mei I", "Mei II", "Mei III", "Jun I", "Jun II"],
+  },
+  {
+    id: "kemarau_curah_kelas",
+    kind: "polygon",
+    season: "kemarau",
+    label: "Potensi Total Hujan MK",
+    bannerTitle: "ZONA POTENSI TOTAL CURAH HUJAN KEMARAU 2026",
+    field: "kelas_hujan_mk",
+    colorMap: KEMARAU_COLORS,
+    order: ["< 430 mm", "430–485 mm", "485–525 mm", "> 525 mm"],
+  },
+  {
+    id: "kemarau_kekeringan_kelas",
+    kind: "polygon",
+    season: "kemarau",
+    label: "Tingkat Risiko Kekeringan",
+    bannerTitle: "ZONASI TINGKAT KERAWANAN KEKERINGAN 2026",
+    field: "kelas_kekeringan",
+    colorMap: KEMARAU_COLORS,
+    order: ["Sedang (< 60)", "Cukup Tinggi (60–65)", "Tinggi (65–70)", "Sangat Tinggi (> 70)"],
   },
   {
     id: "kemarau_anomali",
@@ -223,17 +268,23 @@ interface SeasonalPredictionMapProps {
 }
 
 export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPredictionMapProps) {
-  const [geojson, setGeojson] = useState<GeoJSON.FeatureCollection | null>(null);
-  const [dataset, setDataset] = useState<SeasonalDataset | null>(null);
+  const [kecGeojson, setKecGeojson] = useState<GeoJSON.FeatureCollection | null>(null);
+  const [kecDataset, setKecDataset] = useState<SeasonalDataset | null>(null);
+  const [desaGeojson, setDesaGeojson] = useState<GeoJSON.FeatureCollection | null>(null);
+  const [desaDataset, setDesaDataset] = useState<SeasonalVillageDataset | null>(null);
+
   const [loading, setLoading] = useState(true);
+  const [loadingDesa, setLoadingDesa] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [activeLayerId, setActiveLayerId] = useState<string | null>("hujan_awal");
+  const [adminLevel, setAdminLevel] = useState<AdminLevel>("kecamatan");
+  const [activeLayerId, setActiveLayerId] = useState<string | null>("hujan_curah_kelas");
   const [lastSeason, setLastSeason] = useState<SeasonId>("hujan");
   const [opacityByLayer, setOpacityByLayer] = useState<Record<string, number>>({});
   const [panelOpen, setPanelOpen] = useState<boolean>(true);
   const [basemap, setBasemap] = useState<BasemapId>("jalan");
-  const [selectedDistrict, setSelectedDistrict] = useState<string | null>(null);
+  const [selectedCode, setSelectedCode] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
     let cancelled = false;
@@ -250,8 +301,25 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
         }
         const [geoData, predData] = await Promise.all([geoRes.json(), predRes.json()]);
         if (cancelled) return;
-        setGeojson(geoData);
-        setDataset(predData);
+        setKecGeojson(geoData);
+        setKecDataset(predData);
+
+        // Preload data 460 desa di latar belakang agar perpindahan mode instan
+        Promise.all([
+          fetch("/data/kebumen_desa.json"),
+          fetch("/data/prediksi_musim_desa.json"),
+        ])
+          .then(async ([dGeoRes, dPredRes]) => {
+            if (!dGeoRes.ok || !dPredRes.ok || cancelled) return;
+            const [dGeo, dPred] = await Promise.all([dGeoRes.json(), dPredRes.json()]);
+            if (!cancelled) {
+              setDesaGeojson(dGeo);
+              setDesaDataset(dPred);
+            }
+          })
+          .catch(() => {
+            // Akan dimuat ulang saat user berpindah ke mode Desa
+          });
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : "Terjadi kesalahan saat memuat peta.");
@@ -266,6 +334,36 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
     };
   }, []);
 
+  const handleSwitchAdminLevel = async (nextLevel: AdminLevel) => {
+    if (nextLevel === adminLevel) return;
+    setSelectedCode(null);
+    setSearchQuery("");
+
+    if (nextLevel === "desa" && (!desaGeojson || !desaDataset)) {
+      setLoadingDesa(true);
+      try {
+        const [dGeoRes, dPredRes] = await Promise.all([
+          fetch("/data/kebumen_desa.json"),
+          fetch("/data/prediksi_musim_desa.json"),
+        ]);
+        if (!dGeoRes.ok || !dPredRes.ok) {
+          throw new Error("Gagal mengambil data batas dan prakiraan per desa.");
+        }
+        const [dGeo, dPred] = await Promise.all([dGeoRes.json(), dPredRes.json()]);
+        setDesaGeojson(dGeo);
+        setDesaDataset(dPred);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Gagal memuat data desa.");
+        setLoadingDesa(false);
+        return;
+      } finally {
+        setLoadingDesa(false);
+      }
+    }
+
+    setAdminLevel(nextLevel);
+  };
+
   const activeLayer = useMemo(
     () => CEWS_LAYERS.find((l) => l.id === activeLayerId) ?? null,
     [activeLayerId]
@@ -274,27 +372,44 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
   const currentSeason: SeasonId = activeLayer?.season ?? lastSeason;
 
   const activeRasterOverlay = useMemo(() => {
-    if (!dataset?.overlays || activeLayer?.kind !== "raster" || !activeLayer.rasterId) {
+    if (!kecDataset?.overlays || activeLayer?.kind !== "raster" || !activeLayer.rasterId) {
       return null;
     }
-    return dataset.overlays.find((o) => o.id === activeLayer.rasterId) ?? null;
-  }, [dataset, activeLayer]);
+    return kecDataset.overlays.find((o) => o.id === activeLayer.rasterId) ?? null;
+  }, [kecDataset, activeLayer]);
 
   const currentOpacity = activeLayer ? (opacityByLayer[activeLayer.id] ?? 0.8) : 0.8;
 
+  const activeGeojson = adminLevel === "desa" && desaGeojson ? desaGeojson : kecGeojson;
+
   const currentRecords = useMemo(() => {
-    if (!dataset) return [];
-    return currentSeason === "hujan" ? dataset.hujan : dataset.kemarau;
-  }, [dataset, currentSeason]);
+    if (adminLevel === "desa" && desaDataset) {
+      return currentSeason === "hujan" ? desaDataset.hujan : desaDataset.kemarau;
+    }
+    if (!kecDataset) return [];
+    return currentSeason === "hujan" ? kecDataset.hujan : kecDataset.kemarau;
+  }, [adminLevel, desaDataset, kecDataset, currentSeason]);
 
   const selectedRecord = useMemo(() => {
-    if (!selectedDistrict || !currentRecords.length) return undefined;
+    if (!selectedCode || !currentRecords.length) return undefined;
     return currentRecords.find(
-      (r) => r.kecamatan.toLowerCase() === selectedDistrict.toLowerCase()
+      (r) => (r.code || r.kecamatan).toLowerCase() === selectedCode.toLowerCase()
     );
-  }, [currentRecords, selectedDistrict]);
+  }, [currentRecords, selectedCode]);
 
-  const activeSeasonMeta = dataset?.metadata?.seasons?.[currentSeason];
+  const searchMatches = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q || adminLevel !== "desa") return [];
+    return currentRecords
+      .filter((r) => {
+        const desa = (r.desa || "").toLowerCase();
+        const kec = (r.kecamatan || "").toLowerCase();
+        return desa.includes(q) || kec.includes(q);
+      })
+      .slice(0, 6);
+  }, [searchQuery, adminLevel, currentRecords]);
+
+  const activeSeasonMeta = kecDataset?.metadata?.seasons?.[currentSeason];
 
   const hujanLayers = useMemo(() => CEWS_LAYERS.filter((l) => l.season === "hujan"), []);
   const kemarauLayers = useMemo(() => CEWS_LAYERS.filter((l) => l.season === "kemarau"), []);
@@ -325,7 +440,7 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
     );
   }
 
-  if (error || !dataset || !geojson) {
+  if (error || !kecDataset || !activeGeojson) {
     return (
       <div className="flex flex-col items-center justify-center w-full h-full gap-2 text-center p-6 bg-slate-50 dark:bg-slate-950">
         <AlertTriangle className="h-8 w-8 text-amber-500" />
@@ -338,14 +453,15 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
     <div className="relative z-0 isolate w-full h-full overflow-hidden bg-slate-200 dark:bg-slate-900">
       {/* Kanvas Peta Leaflet Penuh */}
       <SeasonalLeafletCanvas
-        geojson={geojson}
+        geojson={activeGeojson}
         records={currentRecords}
+        adminLevel={adminLevel}
         activeLayer={activeLayer}
         activeRasterOverlay={activeRasterOverlay}
         basemap={basemap}
         opacity={currentOpacity}
-        selectedDistrict={selectedDistrict}
-        onSelectDistrict={setSelectedDistrict}
+        selectedCode={selectedCode}
+        onSelectCode={setSelectedCode}
         isDarkMode={isDarkMode}
       />
 
@@ -356,7 +472,8 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
             {activeLayer ? activeLayer.bannerTitle : "PETA DASAR WILAYAH KEBUMEN"}
           </p>
           <p className="text-[10px] sm:text-xs font-medium opacity-95 uppercase tracking-wide mt-0.5">
-            KABUPATEN KEBUMEN &bull; STANDAR BMKG
+            KABUPATEN KEBUMEN &bull;{" "}
+            {adminLevel === "desa" ? "460 DESA/KELURAHAN (250M)" : "26 KECAMATAN"}
             {activeSeasonMeta?.enso_context ? ` • ${activeSeasonMeta.enso_context}` : ""}
           </p>
         </div>
@@ -375,7 +492,84 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
         </button>
 
         {panelOpen && (
-          <div className="pointer-events-auto w-[290px] sm:w-[336px] max-h-[calc(100vh-220px)] overflow-y-auto rounded-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl border border-slate-200/90 dark:border-slate-700/90 text-slate-800 dark:text-slate-100">
+          <div className="pointer-events-auto w-[296px] sm:w-[342px] max-h-[calc(100vh-220px)] overflow-y-auto rounded-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl border border-slate-200/90 dark:border-slate-700/90 text-slate-800 dark:text-slate-100">
+            {/* Pengalih Tingkat Batas Wilayah (Mode Ganda) */}
+            <div className="px-3 py-2.5 bg-slate-50/80 dark:bg-slate-800/50">
+              <div className="flex items-center justify-between mb-1.5">
+                <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-200">
+                  Batas Wilayah Peta
+                </p>
+                {loadingDesa && <Loader2 className="h-3.5 w-3.5 animate-spin text-sky-600" />}
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => handleSwitchAdminLevel("kecamatan")}
+                  className={
+                    adminLevel === "kecamatan"
+                      ? "rounded border border-sky-600 bg-sky-600 px-2 py-1 text-[11px] font-semibold text-white shadow-sm"
+                      : "rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  }
+                >
+                  Kecamatan (26)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSwitchAdminLevel("desa")}
+                  className={
+                    adminLevel === "desa"
+                      ? "rounded border border-sky-600 bg-sky-600 px-2 py-1 text-[11px] font-semibold text-white shadow-sm"
+                      : "rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-[11px] font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700"
+                  }
+                >
+                  Desa / Kel (460)
+                </button>
+              </div>
+
+              {adminLevel === "desa" && (
+                <div className="relative mt-2">
+                  <Search className="h-3.5 w-3.5 text-slate-400 absolute left-2 top-2" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Cari nama desa atau kecamatan..."
+                    className="w-full h-7 pl-7 pr-6 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-[11px] focus:outline-none focus:ring-1 focus:ring-sky-500"
+                  />
+                  {searchQuery && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery("")}
+                      aria-label="Hapus pencarian"
+                      className="absolute right-1.5 top-1.5 text-slate-400 hover:text-slate-600"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                  {searchMatches.length > 0 && (
+                    <div className="mt-1 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-md max-h-36 overflow-y-auto">
+                      {searchMatches.map((m) => (
+                        <button
+                          key={m.code || m.desa}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCode(m.code || m.kecamatan);
+                            setSearchQuery("");
+                          }}
+                          className="w-full text-left px-2.5 py-1.5 text-[11px] hover:bg-sky-50 dark:hover:bg-slate-800 border-b last:border-b-0 border-slate-100 dark:border-slate-800 flex items-center justify-between gap-2"
+                        >
+                          <span className="font-medium truncate">{m.desa}</span>
+                          <span className="text-[10px] text-muted-foreground shrink-0">
+                            Kec. {m.kecamatan}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Grup 1: Musim Hujan */}
             <LayerGroupSection
               title="Prakiraan Musim Hujan 2026/2027"
@@ -425,19 +619,24 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
         )}
       </div>
 
-      {/* Bottom-Left Floating Dismissible District Detail Card */}
-      {selectedDistrict && selectedRecord && (
-        <div className="pointer-events-auto absolute bottom-3 left-2.5 z-[500] w-[calc(100%-20px)] sm:w-[400px] max-w-[420px] rounded-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl border border-slate-200 dark:border-slate-700 p-3 text-slate-800 dark:text-slate-100">
+      {/* Bottom-Left Floating Dismissible Detail Card (Kecamatan atau Desa/Kelurahan) */}
+      {selectedCode && selectedRecord && (
+        <div className="pointer-events-auto absolute bottom-3 left-2.5 z-[500] w-[calc(100%-20px)] sm:w-[410px] max-w-[430px] rounded-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-xl border border-slate-200 dark:border-slate-700 p-3 text-slate-800 dark:text-slate-100">
           <div className="flex items-start justify-between gap-2 pb-2 border-b border-slate-200/80 dark:border-slate-700/80">
             <div>
               <div className="flex flex-wrap items-center gap-1.5">
                 <MapPin className="h-4 w-4 text-sky-600 shrink-0" />
                 <h3 className="text-sm font-bold leading-tight">
-                  Kecamatan {selectedRecord.kecamatan}
+                  {adminLevel === "desa" && selectedRecord.desa
+                    ? `Desa/Kel. ${selectedRecord.desa}`
+                    : `Kecamatan ${selectedRecord.kecamatan}`}
                 </h3>
                 <AnomalyBadge value={selectedRecord.perbandingan_terhadap_normal} />
               </div>
               <p className="text-[11px] text-muted-foreground mt-0.5">
+                {adminLevel === "desa" && selectedRecord.desa
+                  ? `Kec. ${selectedRecord.kecamatan} · `
+                  : ""}
                 {currentSeason === "hujan"
                   ? "Prakiraan Musim Hujan 2026/2027"
                   : "Prakiraan Musim Kemarau 2026"}
@@ -445,8 +644,8 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
             </div>
             <button
               type="button"
-              onClick={() => setSelectedDistrict(null)}
-              aria-label="Tutup detail kecamatan"
+              onClick={() => setSelectedCode(null)}
+              aria-label="Tutup detail wilayah"
               className="rounded p-1 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-200"
             >
               <X className="h-4 w-4" />
@@ -457,10 +656,15 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
             {currentSeason === "hujan" ? (
               <HujanSelectedDetail record={selectedRecord as HujanRecord} />
             ) : (
-              <KemarauSelectedDetail record={selectedRecord as KemarauRecord} />
+              <KemarauSelectedDetail
+                record={selectedRecord as KemarauRecord}
+                adminLevel={adminLevel}
+              />
             )}
             <p className="text-[10px] text-muted-foreground mt-2 pt-1.5 border-t border-slate-200/70 dark:border-slate-800">
-              1 dasarian = ±10 hari (I: tgl 1–10, II: 11–20, III: 21–akhir bulan).
+              {adminLevel === "desa"
+                ? "Curah hujan & indeks mikro diekstrak dari raster downscaling 250m per poligon desa. 1 dasarian = ±10 hari."
+                : "1 dasarian = ±10 hari (I: tgl 1–10, II: 11–20, III: 21–akhir bulan)."}
             </p>
           </div>
         </div>
@@ -487,7 +691,7 @@ function LayerGroupSection({
   onChangeOpacity,
 }: LayerGroupSectionProps) {
   return (
-    <div className="border-t first:border-t-0 border-slate-200 dark:border-slate-700 px-3 py-2.5">
+    <div className="border-t border-slate-200 dark:border-slate-700 px-3 py-2.5">
       <p className="text-xs font-semibold text-slate-700 dark:text-slate-200 mb-2">{title}</p>
       <div className="space-y-1.5">
         {layers.map((layer) => {
@@ -583,25 +787,49 @@ function DetailTile({
 }
 
 function HujanSelectedDetail({ record }: { record: HujanRecord }) {
+  const rainDisplay =
+    record.total_hujan_mh_mm != null
+      ? `${record.total_hujan_mh_mm.toLocaleString("id-ID")} mm`
+      : record.prakiraan_sifat_hujan;
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-      <DetailTile label="Normal Awal Hujan" value={record.normal_amh_label} />
       <DetailTile label="Prakiraan Awal Hujan" value={record.prakiraan_amh_label} accent />
+      <DetailTile label="Normal Awal Hujan" value={record.normal_amh_label} />
       <DetailTile label="Puncak Musim (BMKG)" value={record.prakiraan_puncak_bulan} accent />
-      <DetailTile label="Sifat Hujan" value={record.prakiraan_sifat_hujan} />
+      <DetailTile label="Estimasi Hujan MH" value={rainDisplay} accent />
       <DetailTile label="Mulai Olah Tanah" value={record.rekomendasi_olah_tanah} />
       <DetailTile label="Tanam Padi MT1" value={record.rekomendasi_tanam_padi_mt1} accent />
     </div>
   );
 }
 
-function KemarauSelectedDetail({ record }: { record: KemarauRecord }) {
+function KemarauSelectedDetail({
+  record,
+  adminLevel,
+}: {
+  record: KemarauRecord;
+  adminLevel: AdminLevel;
+}) {
+  const amkDisplay =
+    adminLevel === "desa" && record.amk_label_250m
+      ? `${record.amk_label_250m} (250m)`
+      : record.prakiraan_amk_label;
+  const rainDisplay =
+    record.total_hujan_mk_mm != null
+      ? `${record.total_hujan_mk_mm.toLocaleString("id-ID")} mm`
+      : record.prakiraan_sifat_hujan_mk;
+  const droughtDisplay =
+    record.kekeringan_skor != null && record.kelas_kekeringan
+      ? `${record.kelas_kekeringan}`
+      : record.prakiraan_sifat_hujan_mk;
+
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-      <DetailTile label="Normal Awal Kemarau" value={record.normal_amk_label} />
-      <DetailTile label="Prakiraan Awal Kemarau" value={record.prakiraan_amk_label} accent />
+      <DetailTile label="Prakiraan Awal Kemarau" value={amkDisplay} accent />
       <DetailTile label="Puncak Kemarau (BMKG)" value={record.prakiraan_pmk_bulan} accent />
-      <DetailTile label="Sifat Hujan Kemarau" value={record.prakiraan_sifat_hujan_mk} />
+      <DetailTile label="Estimasi Hujan MK" value={rainDisplay} />
+      <DetailTile label="Risiko Kekeringan" value={droughtDisplay} accent />
       <DetailTile label="Keringkan Sawah MT2" value={record.rekomendasi_keringkan_sawah_mt2} />
       <DetailTile label="Tanam Palawija MT3" value={record.rekomendasi_tanam_palawija_mt3} accent />
     </div>

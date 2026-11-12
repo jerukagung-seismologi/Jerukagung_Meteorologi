@@ -5,6 +5,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { LocateFixed } from "lucide-react";
 import type {
+  AdminLevel,
   BasemapId,
   HujanRecord,
   KemarauRecord,
@@ -15,12 +16,13 @@ import type {
 interface SeasonalLeafletCanvasProps {
   geojson: GeoJSON.FeatureCollection;
   records: (HujanRecord | KemarauRecord)[];
+  adminLevel: AdminLevel;
   activeLayer: UnifiedLayerDef | null;
   activeRasterOverlay: RasterOverlayMeta | null;
   basemap: BasemapId;
   opacity: number;
-  selectedDistrict: string | null;
-  onSelectDistrict: (name: string | null) => void;
+  selectedCode: string | null;
+  onSelectCode: (code: string | null) => void;
   isDarkMode?: boolean;
 }
 
@@ -28,19 +30,13 @@ const BASEMAP_CONFIGS: Record<
   BasemapId,
   {
     url: string;
-    darkUrl?: string;
-    darkLabelUrl?: string;
     attribution: string;
     maxZoom: number;
   }
 > = {
   jalan: {
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}",
-    darkUrl:
-      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
-    darkLabelUrl:
-      "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
-    attribution: "&copy; Esri, HERE, Garmin, OpenStreetMap contributors",
+    url: "https://tile.openstreetmap.de/{z}/{x}/{y}.png",
+    attribution: "&copy; OpenStreetMap contributors",
     maxZoom: 18,
   },
   satelit: {
@@ -58,41 +54,43 @@ const BASEMAP_CONFIGS: Record<
 export default function SeasonalLeafletCanvas({
   geojson,
   records,
+  adminLevel,
   activeLayer,
   activeRasterOverlay,
   basemap,
   opacity,
-  selectedDistrict,
-  onSelectDistrict,
-  isDarkMode = false,
+  selectedCode,
+  onSelectCode,
 }: SeasonalLeafletCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
-  const labelTileLayerRef = useRef<L.TileLayer | null>(null);
   const rasterLayerRef = useRef<L.ImageOverlay | null>(null);
   const geoLayerRef = useRef<L.GeoJSON | null>(null);
   const boundsRef = useRef<L.LatLngBounds | null>(null);
-  const onSelectRef = useRef(onSelectDistrict);
+  const onSelectRef = useRef(onSelectCode);
 
-  onSelectRef.current = onSelectDistrict;
+  onSelectRef.current = onSelectCode;
+
+  const activeField =
+    adminLevel === "desa" && activeLayer?.desaField ? activeLayer.desaField : activeLayer?.field;
 
   const recordMap = useMemo(() => {
     const map = new Map<string, HujanRecord | KemarauRecord>();
     for (const r of records) {
-      map.set(r.kecamatan, r);
+      const key = r.code || r.kecamatan;
+      map.set(key, r);
     }
     return map;
   }, [records]);
 
   const legendItems = useMemo(() => {
-    if (!activeLayer || activeLayer.kind !== "polygon" || !activeLayer.field || !activeLayer.colorMap) {
+    if (!activeLayer || activeLayer.kind !== "polygon" || !activeField || !activeLayer.colorMap) {
       return [];
     }
-    const field = activeLayer.field;
     const colorMap = activeLayer.colorMap;
     const present = new Set(
-      records.map((r) => String((r as unknown as Record<string, unknown>)[field] ?? ""))
+      records.map((r) => String((r as unknown as Record<string, unknown>)[activeField] ?? ""))
     );
     const ordered = (activeLayer.order || []).filter((c) => present.has(c));
     const extras = Array.from(present).filter((c) => c && !ordered.includes(c));
@@ -100,7 +98,7 @@ export default function SeasonalLeafletCanvas({
       label: cat,
       color: colorMap[cat] || "#94a3b8",
     }));
-  }, [records, activeLayer]);
+  }, [records, activeLayer, activeField]);
 
   // Inisialisasi peta Leaflet satu kali dengan kontrol zoom di kanan atas (gaya CEWS)
   useEffect(() => {
@@ -139,11 +137,11 @@ export default function SeasonalLeafletCanvas({
       map.remove();
       mapRef.current = null;
       tileLayerRef.current = null;
-      labelTileLayerRef.current = null;
       rasterLayerRef.current = null;
       geoLayerRef.current = null;
     };
-  }, [geojson]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Perbarui Basemap Tile
   useEffect(() => {
@@ -154,28 +152,14 @@ export default function SeasonalLeafletCanvas({
       map.removeLayer(tileLayerRef.current);
       tileLayerRef.current = null;
     }
-    if (labelTileLayerRef.current) {
-      map.removeLayer(labelTileLayerRef.current);
-      labelTileLayerRef.current = null;
-    }
 
     const cfg = BASEMAP_CONFIGS[basemap];
-    const useDarkRoad = basemap === "jalan" && isDarkMode && Boolean(cfg.darkUrl);
-    const url = useDarkRoad && cfg.darkUrl ? cfg.darkUrl : cfg.url;
-    const tile = L.tileLayer(url, {
+    const tile = L.tileLayer(cfg.url, {
       attribution: cfg.attribution,
       maxZoom: cfg.maxZoom,
     }).addTo(map);
     tileLayerRef.current = tile;
-
-    if (useDarkRoad && cfg.darkLabelUrl) {
-      const labelTile = L.tileLayer(cfg.darkLabelUrl, {
-        maxZoom: cfg.maxZoom,
-        opacity: 0.9,
-      }).addTo(map);
-      labelTileLayerRef.current = labelTile;
-    }
-  }, [basemap, isDarkMode]);
+  }, [basemap]);
 
   // Perbarui Overlay Raster 250m
   useEffect(() => {
@@ -197,7 +181,7 @@ export default function SeasonalLeafletCanvas({
     }
   }, [activeLayer, activeRasterOverlay, opacity]);
 
-  // Perbarui Poligon Kecamatan
+  // Perbarui Poligon Wilayah (Kecamatan atau Desa/Kelurahan)
   useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
@@ -207,61 +191,83 @@ export default function SeasonalLeafletCanvas({
       geoLayerRef.current = null;
     }
 
-    const isDarkBasemap = basemap === "satelit" || (basemap === "jalan" && isDarkMode);
+    const isDarkBasemap = basemap === "satelit";
     const defaultBorderColor = isDarkBasemap ? "#e2e8f0" : "#1e293b";
-    const isPolygonFill = activeLayer?.kind === "polygon" && Boolean(activeLayer.field);
+    const defaultWeight = adminLevel === "desa" ? 0.65 : 1.25;
+    const isPolygonFill = activeLayer?.kind === "polygon" && Boolean(activeField);
 
     const layer = L.geoJSON(geojson, {
       style: (feature) => {
-        const name = String(feature?.properties?.nm_kecamatan || feature?.properties?.name || "");
-        const rec = recordMap.get(name);
+        const props = (feature?.properties || {}) as Record<string, unknown>;
+        const code = String(props.code || props.nm_kecamatan || props.name || "");
+        const rec = recordMap.get(code);
         const catVal =
-          isPolygonFill && rec && activeLayer?.field
-            ? String((rec as unknown as Record<string, unknown>)[activeLayer.field] ?? "")
+          isPolygonFill && rec && activeField
+            ? String((rec as unknown as Record<string, unknown>)[activeField] ?? "")
             : "";
         const fillColor =
           isPolygonFill && activeLayer?.colorMap ? activeLayer.colorMap[catVal] || "#94a3b8" : "transparent";
-        const isSelected = name === selectedDistrict;
+        const isSelected = code === selectedCode;
 
         return {
           fillColor,
           fillOpacity: isPolygonFill ? opacity : 0.03,
           color: isSelected ? "#0284c7" : defaultBorderColor,
-          weight: isSelected ? 3 : 1.25,
-          opacity: isSelected ? 1 : 0.85,
+          weight: isSelected ? 2.8 : defaultWeight,
+          opacity: isSelected ? 1 : adminLevel === "desa" ? 0.72 : 0.85,
         };
       },
       onEachFeature: (feature, featureLayer) => {
-        const name = String(feature?.properties?.nm_kecamatan || feature?.properties?.name || "");
-        const rec = recordMap.get(name);
+        const props = (feature?.properties || {}) as Record<string, unknown>;
+        const code = String(props.code || props.nm_kecamatan || props.name || "");
+        const name = String(props.name || props.nm_kelurahan || props.nm_kecamatan || "");
+        const parentKec = String(props.nm_kecamatan || "");
+        const rec = recordMap.get(code);
+
+        const titleHtml =
+          adminLevel === "desa"
+            ? `<div style="font-weight:700;">Desa/Kel. ${name}</div><div style="font-size:11px;opacity:0.8;">Kec. ${rec?.kecamatan || parentKec}</div>`
+            : `<div style="font-weight:700;">Kec. ${name}</div>`;
 
         let tooltipLine = "Klik untuk detail";
         if (rec && activeLayer) {
-          if (activeLayer.kind === "polygon" && activeLayer.field) {
-            const val = String((rec as unknown as Record<string, unknown>)[activeLayer.field] ?? "-");
+          if (activeLayer.kind === "polygon" && activeField) {
+            const val = String((rec as unknown as Record<string, unknown>)[activeField] ?? "-");
             tooltipLine = `${activeLayer.label}: <strong>${val}</strong>`;
           } else if (activeLayer.season === "hujan") {
-            tooltipLine = `Awal Hujan: <strong>${(rec as HujanRecord).prakiraan_amh_label}</strong>`;
+            const hr = rec as HujanRecord;
+            tooltipLine = hr.total_hujan_mh_mm
+              ? `Total Hujan MH: <strong>${hr.total_hujan_mh_mm.toLocaleString("id-ID")} mm</strong>`
+              : `Awal Hujan: <strong>${hr.prakiraan_amh_label}</strong>`;
           } else {
-            tooltipLine = `Awal Kemarau: <strong>${(rec as KemarauRecord).prakiraan_amk_label}</strong>`;
+            const kr = rec as KemarauRecord;
+            if (activeLayer.rasterId === "kekeringan_250m" && kr.kekeringan_skor != null) {
+              tooltipLine = `Skor Kekeringan: <strong>${kr.kekeringan_skor}</strong> (${kr.kelas_kekeringan})`;
+            } else if (activeLayer.rasterId === "amk_250m" && kr.amk_label_250m) {
+              tooltipLine = `Awal Kemarau (250m): <strong>${kr.amk_label_250m}</strong>`;
+            } else if (kr.total_hujan_mk_mm != null) {
+              tooltipLine = `Total Hujan MK: <strong>${kr.total_hujan_mk_mm.toLocaleString("id-ID")} mm</strong>`;
+            } else {
+              tooltipLine = `Awal Kemarau: <strong>${kr.prakiraan_amk_label}</strong>`;
+            }
           }
         }
 
         featureLayer.bindTooltip(
-          `<div style="font-family:inherit;font-size:12px;line-height:1.4;">
-            <div style="font-weight:700;">Kec. ${name}</div>
-            <div>${tooltipLine}</div>
+          `<div style="font-family:inherit;font-size:12px;line-height:1.35;">
+            ${titleHtml}
+            <div style="margin-top:2px;">${tooltipLine}</div>
           </div>`,
-          { sticky: true, direction: "auto", opacity: 0.95 }
+          { sticky: true, direction: "auto", opacity: 0.96 }
         );
 
         featureLayer.on({
           mouseover: (e) => {
             const target = e.target as L.Path;
             target.setStyle({
-              weight: 2.8,
+              weight: adminLevel === "desa" ? 2.2 : 2.8,
               color: "#0ea5e9",
-              fillOpacity: isPolygonFill ? Math.min(opacity + 0.12, 1) : 0.12,
+              fillOpacity: isPolygonFill ? Math.min(opacity + 0.12, 1) : 0.14,
             });
             if (!L.Browser.ie && !L.Browser.opera && !L.Browser.edge) {
               target.bringToFront();
@@ -271,14 +277,14 @@ export default function SeasonalLeafletCanvas({
             layer.resetStyle(e.target);
           },
           click: () => {
-            if (name) onSelectRef.current(name);
+            if (code) onSelectRef.current(code);
           },
         });
       },
     }).addTo(map);
 
     geoLayerRef.current = layer;
-  }, [geojson, recordMap, activeLayer, basemap, isDarkMode, opacity, selectedDistrict]);
+  }, [geojson, recordMap, adminLevel, activeLayer, activeField, basemap, opacity, selectedCode]);
 
   const handleResetView = () => {
     if (mapRef.current && boundsRef.current) {
@@ -303,7 +309,7 @@ export default function SeasonalLeafletCanvas({
 
       {/* Legenda Gaya CEWS di Pojok Kanan Bawah */}
       {activeLayer && (
-        <div className="absolute bottom-6 right-3 z-[500] min-w-[165px] max-w-[230px] rounded-md bg-white/92 dark:bg-gray-900/92 backdrop-blur-sm border border-gray-300 dark:border-gray-700 shadow-lg p-2.5 text-xs">
+        <div className="absolute bottom-6 right-3 z-[500] min-w-[165px] max-w-[235px] rounded-md bg-white/92 dark:bg-gray-900/92 backdrop-blur-sm border border-gray-300 dark:border-gray-700 shadow-lg p-2.5 text-xs">
           {activeLayer.kind === "raster" && activeRasterOverlay ? (
             <div className="space-y-1.5">
               <p className="font-semibold text-[11px] leading-tight text-foreground">
