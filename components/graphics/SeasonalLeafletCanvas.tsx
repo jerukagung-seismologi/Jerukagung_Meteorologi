@@ -226,39 +226,39 @@ export default function SeasonalLeafletCanvas({
 
         const titleHtml =
           adminLevel === "desa"
-            ? `<div style="font-weight:700;">Desa/Kel. ${name}</div><div style="font-size:11px;opacity:0.8;">Kec. ${rec?.kecamatan || parentKec}</div>`
-            : `<div style="font-weight:700;">Kec. ${name}</div>`;
+            ? `<div style="font-weight:700;color:#0f172a;">Desa/Kel. ${name}</div><div style="font-size:11px;font-weight:600;color:#334155;">Kec. ${rec?.kecamatan || parentKec}</div>`
+            : `<div style="font-weight:700;color:#0f172a;">Kec. ${name}</div>`;
 
         let tooltipLine = "Klik untuk detail";
         if (rec && activeLayer) {
           if (activeLayer.kind === "polygon" && activeField) {
             const val = String((rec as unknown as Record<string, unknown>)[activeField] ?? "-");
-            tooltipLine = `${activeLayer.label}: <strong>${val}</strong>`;
+            tooltipLine = `${activeLayer.label}: <strong style="color:#0f172a;">${val}</strong>`;
           } else if (activeLayer.season === "hujan") {
             const hr = rec as HujanRecord;
             tooltipLine = hr.total_hujan_mh_mm
-              ? `Total Hujan MH: <strong>${hr.total_hujan_mh_mm.toLocaleString("id-ID")} mm</strong>`
-              : `Awal Hujan: <strong>${hr.prakiraan_amh_label}</strong>`;
+              ? `Total Hujan MH: <strong style="color:#0f172a;">${hr.total_hujan_mh_mm.toLocaleString("id-ID")} mm</strong>`
+              : `Awal Hujan: <strong style="color:#0f172a;">${hr.prakiraan_amh_label}</strong>`;
           } else {
             const kr = rec as KemarauRecord;
             if (activeLayer.rasterId === "kekeringan_250m" && kr.kekeringan_skor != null) {
-              tooltipLine = `Skor Kekeringan: <strong>${kr.kekeringan_skor}</strong> (${kr.kelas_kekeringan})`;
+              tooltipLine = `Skor Kekeringan: <strong style="color:#0f172a;">${kr.kekeringan_skor}</strong> (${kr.kelas_kekeringan})`;
             } else if (activeLayer.rasterId === "amk_250m" && kr.amk_label_250m) {
-              tooltipLine = `Awal Kemarau (250m): <strong>${kr.amk_label_250m}</strong>`;
+              tooltipLine = `Awal Kemarau (250m): <strong style="color:#0f172a;">${kr.amk_label_250m}</strong>`;
             } else if (kr.total_hujan_mk_mm != null) {
-              tooltipLine = `Total Hujan MK: <strong>${kr.total_hujan_mk_mm.toLocaleString("id-ID")} mm</strong>`;
+              tooltipLine = `Total Hujan MK: <strong style="color:#0f172a;">${kr.total_hujan_mk_mm.toLocaleString("id-ID")} mm</strong>`;
             } else {
-              tooltipLine = `Awal Kemarau: <strong>${kr.prakiraan_amk_label}</strong>`;
+              tooltipLine = `Awal Kemarau: <strong style="color:#0f172a;">${kr.prakiraan_amk_label}</strong>`;
             }
           }
         }
 
         featureLayer.bindTooltip(
-          `<div style="font-family:inherit;font-size:12px;line-height:1.35;">
+          `<div style="font-family:inherit;font-size:12px;line-height:1.4;color:#1e293b;padding:2px 4px;">
             ${titleHtml}
-            <div style="margin-top:2px;">${tooltipLine}</div>
+            <div style="margin-top:3px;color:#334155;">${tooltipLine}</div>
           </div>`,
-          { sticky: true, direction: "auto", opacity: 0.96 }
+          { sticky: true, direction: "auto", opacity: 0.98 }
         );
 
         featureLayer.on({
@@ -309,36 +309,36 @@ export default function SeasonalLeafletCanvas({
 
       {/* Legenda Gaya CEWS di Pojok Kanan Bawah */}
       {activeLayer && (
-        <div className="absolute bottom-6 right-3 z-[500] min-w-[165px] max-w-[235px] rounded-md bg-white/92 dark:bg-gray-900/92 backdrop-blur-sm border border-gray-300 dark:border-gray-700 shadow-lg p-2.5 text-xs">
+        <div className="absolute bottom-6 right-3 z-[500] min-w-[170px] max-w-[245px] rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-300 dark:border-slate-700 shadow-xl p-3 text-xs">
           {activeLayer.kind === "raster" && activeRasterOverlay ? (
-            <div className="space-y-1.5">
-              <p className="font-semibold text-[11px] leading-tight text-foreground">
+            <div className="space-y-2">
+              <p className="font-bold text-xs leading-tight text-slate-900 dark:text-slate-100">
                 {activeRasterOverlay.label}
               </p>
               <div
-                className="h-3 w-44 rounded-sm border border-gray-300 dark:border-gray-600"
+                className="h-3.5 w-48 rounded border border-slate-400 dark:border-slate-600 shadow-xs"
                 style={{
                   background: `linear-gradient(to right, ${activeRasterOverlay.gradientColors.join(", ")})`,
                 }}
               />
-              <div className="flex justify-between text-[10px] font-medium text-muted-foreground">
+              <div className="flex justify-between text-[11px] font-bold text-slate-700 dark:text-slate-200">
                 <span>{activeRasterOverlay.minLabel}</span>
                 <span>{activeRasterOverlay.maxLabel}</span>
               </div>
             </div>
           ) : legendItems.length > 0 ? (
-            <div className="space-y-1.5">
-              <p className="font-semibold text-[11px] leading-tight text-foreground">
+            <div className="space-y-2">
+              <p className="font-bold text-xs leading-tight text-slate-900 dark:text-slate-100">
                 {activeLayer.label}
               </p>
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col gap-1.5">
                 {legendItems.map((item) => (
-                  <div key={item.label} className="flex items-center gap-2 text-[11px]">
+                  <div key={item.label} className="flex items-center gap-2.5 text-xs">
                     <span
-                      className="inline-block w-6 h-3.5 rounded-[2px] shrink-0 border border-black/25"
+                      className="inline-block w-6 h-4 rounded shrink-0 border border-slate-400 dark:border-slate-500 shadow-xs"
                       style={{ backgroundColor: item.color }}
                     />
-                    <span className="font-medium text-gray-800 dark:text-gray-200 truncate">
+                    <span className="font-semibold text-xs text-slate-800 dark:text-slate-100 truncate">
                       {item.label}
                     </span>
                   </div>
