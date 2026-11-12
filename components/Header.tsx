@@ -1,9 +1,9 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, LayoutDashboard, CloudSun, BarChart2, LineChart, Menu, X } from "lucide-react";
+import { Sun, Moon, LayoutDashboard, CloudSun, BarChart2, LineChart, Map as MapIcon, Menu, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -11,10 +11,11 @@ import { cn } from "@/lib/utils";
 
 // Daftar menu navigasi
 const navItems = [
-  { label: "Dashboard",     href: "/",           icon: LayoutDashboard },
-  { label: "Prakiraan",     href: "/prakiraan",  icon: CloudSun        },
-  { label: "Statistik",     href: "/statistik",  icon: BarChart2       },
-  { label: "Klimatologi",   href: "/klimatologi", icon: LineChart       },
+  { label: "Dashboard",      href: "/",            icon: LayoutDashboard },
+  { label: "Prakiraan",      href: "/prakiraan",   icon: CloudSun        },
+  { label: "Prediksi Musim", href: "/musim",       icon: MapIcon         },
+  { label: "Statistik",      href: "/statistik",   icon: BarChart2       },
+  { label: "Klimatologi",    href: "/klimatologi", icon: LineChart       },
 ];
 
 export default function Header() {
