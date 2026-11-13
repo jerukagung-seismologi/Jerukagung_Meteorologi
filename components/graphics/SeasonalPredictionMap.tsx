@@ -73,10 +73,15 @@ const HUJAN_COLORS: Record<string, string> = {
   "Januari 2027": "#1f78b4",
   "Februari 2027": "#08519c",
   "Maret 2027": "#253494",
-  "< 1.500 mm": "#9ecae1",
-  "1.500–1.600 mm": "#4292c6",
-  "1.600–1.750 mm": "#2171b5",
-  "> 1.750 mm": "#08306b",
+  "< 1.500 mm": "#c6dbef",
+  "1.500–1.750 mm": "#9ecae1",
+  "1.750–2.000 mm": "#6baed6",
+  "2.000–2.500 mm": "#4292c6",
+  "2.500–3.000 mm": "#2171b5",
+  "> 3.000 mm": "#08306b",
+  "1.500–1.600 mm": "#9ecae1",
+  "1.600–1.750 mm": "#6baed6",
+  "> 1.750 mm": "#4292c6",
 };
 
 const KEMARAU_COLORS: Record<string, string> = {
@@ -150,7 +155,17 @@ const CEWS_LAYERS: UnifiedLayerDef[] = [
     bannerTitle: "ZONA POTENSI TOTAL CURAH HUJAN MUSIM HUJAN",
     field: "kelas_hujan_mh",
     colorMap: HUJAN_COLORS,
-    order: ["< 1.500 mm", "1.500–1.600 mm", "1.600–1.750 mm", "> 1.750 mm"],
+    order: [
+      "< 1.500 mm",
+      "1.500–1.750 mm",
+      "1.750–2.000 mm",
+      "2.000–2.500 mm",
+      "2.500–3.000 mm",
+      "> 3.000 mm",
+      "1.500–1.600 mm",
+      "1.600–1.750 mm",
+      "> 1.750 mm",
+    ],
   },
   {
     id: "hujan_anomali",
