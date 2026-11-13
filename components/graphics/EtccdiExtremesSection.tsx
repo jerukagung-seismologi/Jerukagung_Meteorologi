@@ -123,7 +123,7 @@ export function EtccdiExtremesSection({
               <div className="text-xl font-black font-mono text-amber-900 dark:text-amber-100">
                 {indices.r50mm} <span className="text-[10px] font-normal">hari</span>
               </div>
-              <span className="text-[9px] text-slate-400 block">Ambang BMKG ≥50mm</span>
+              <span className="text-[9px] text-slate-400 block">Ambang ≥50 mm</span>
             </div>
 
             {/* R95p */}

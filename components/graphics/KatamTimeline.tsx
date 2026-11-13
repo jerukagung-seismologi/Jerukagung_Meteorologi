@@ -50,7 +50,6 @@ export default function KatamTimeline({ katam, sifatHujan }: KatamTimelineProps)
         <span className="font-semibold text-slate-800 dark:text-slate-200">
           Rekomendasi Pola Tanam Berdasarkan Awal Musim & Sifat Hujan ({sifatHujan || "Normal"})
         </span>
-        <span className="text-[10px] text-slate-500">Balitbangtan / BMKG</span>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2">

@@ -73,15 +73,15 @@ const HUJAN_COLORS: Record<string, string> = {
   "Januari 2027": "#1f78b4",
   "Februari 2027": "#08519c",
   "Maret 2027": "#253494",
-  "< 1.500 mm": "#c6dbef",
-  "1.500–1.750 mm": "#9ecae1",
-  "1.750–2.000 mm": "#6baed6",
-  "2.000–2.500 mm": "#4292c6",
-  "2.500–3.000 mm": "#2171b5",
-  "> 3.000 mm": "#08306b",
-  "1.500–1.600 mm": "#9ecae1",
-  "1.600–1.750 mm": "#6baed6",
-  "> 1.750 mm": "#4292c6",
+  "< 1.500 mm": "#fecc5c",
+  "1.500–1.750 mm": "#a1d99b",
+  "1.750–2.000 mm": "#41ab5d",
+  "2.000–2.500 mm": "#41b6c4",
+  "2.500–3.000 mm": "#225ea8",
+  "> 3.000 mm": "#7a0177",
+  "1.500–1.600 mm": "#a1d99b",
+  "1.600–1.750 mm": "#41ab5d",
+  "> 1.750 mm": "#41b6c4",
 };
 
 const KEMARAU_COLORS: Record<string, string> = {
@@ -1116,7 +1116,7 @@ function HujanSelectedDetail({ record }: { record: HujanRecord }) {
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
       <DetailTile label="Prakiraan Awal Hujan" value={record.prakiraan_amh_label} accent />
       <DetailTile label="Normal Awal Hujan" value={record.normal_amh_label} />
-      <DetailTile label="Puncak Musim (BMKG)" value={record.prakiraan_puncak_bulan} accent />
+      <DetailTile label="Puncak Musim" value={record.prakiraan_puncak_bulan} accent />
       <DetailTile label="Estimasi Hujan MH" value={rainDisplay} accent />
       <DetailTile label="Mulai Olah Tanah" value={record.rekomendasi_olah_tanah} />
       <DetailTile label="Tanam Padi MT1" value={record.rekomendasi_tanam_padi_mt1} accent />
@@ -1147,7 +1147,7 @@ function KemarauSelectedDetail({
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
       <DetailTile label="Prakiraan Awal Kemarau" value={amkDisplay} accent />
-      <DetailTile label="Puncak Kemarau (BMKG)" value={record.prakiraan_pmk_bulan} accent />
+      <DetailTile label="Puncak Kemarau" value={record.prakiraan_pmk_bulan} accent />
       <DetailTile label="Estimasi Hujan MK" value={rainDisplay} />
       <DetailTile label="Risiko Kekeringan" value={droughtDisplay} accent />
       <DetailTile label="Keringkan Sawah MT2" value={record.rekomendasi_keringkan_sawah_mt2} />

@@ -27,7 +27,6 @@ export default function CewsAlertCard({ cews }: CewsAlertCardProps) {
         <span className="font-semibold text-slate-800 dark:text-slate-200">
           Climate Early Warning System (CEWS) & Status Hidrometeorologi Terkini
         </span>
-        <span className="text-[10px] text-slate-500">Standar BMKG & WMO</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">

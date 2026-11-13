@@ -72,7 +72,7 @@ export default function SeasonEvaluationTab({
         <div className="flex items-center justify-between gap-2 mb-2">
           <div className="flex items-center gap-1.5 font-semibold text-slate-800 dark:text-slate-100">
             <span>🎯</span>
-            <span>Evaluasi Model Prediksi vs Realisasi BMKG/Lapangan</span>
+            <span>Evaluasi Model Prediksi vs Realisasi Lapangan</span>
           </div>
           <span
             className={`px-2 py-0.5 rounded text-[11px] font-medium border ${diffBadgeColor}`}
