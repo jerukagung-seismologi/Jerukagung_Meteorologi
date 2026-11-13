@@ -33,7 +33,9 @@ export default function SeasonEvaluationTab({
   const realNormal = isHujan ? hRec.realisasi_perbandingan_terhadap_normal : kRec.realisasi_perbandingan_terhadap_normal;
 
   const predSifat = isHujan ? hRec.prakiraan_sifat_hujan : kRec.prakiraan_sifat_hujan_mk;
-  const realSifat = isHujan ? hRec.realisasi_sifat_hujan : kRec.realisasi_sifat_hujan;
+  const realSifat = isHujan
+    ? hRec.realisasi_sifat_hujan
+    : (kRec.realisasi_sifat_hujan || (kRec as unknown as Record<string, unknown>).realisasi_sifat_hujan_mk as string | undefined);
   const statusSifat = isHujan ? hRec.status_evaluasi_sifat : kRec.status_evaluasi_sifat;
 
   const selisihDasarian = record.selisih_dasarian_eval ?? 0;

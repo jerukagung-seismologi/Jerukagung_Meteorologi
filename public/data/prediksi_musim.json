@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-11-13T10:38:40.984574+07:00",
+    "generated_at": "2026-11-13T19:29:12.896999+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "total_desa": 460,
@@ -60,11 +60,11 @@
       "minLabel": "30.9 (Nov I)",
       "maxLabel": "31.6 (Nov II)",
       "gradientColors": [
-        "#006837",
-        "#87cb67",
-        "#fffebe",
-        "#f88c51",
-        "#a50026"
+        "#081d58",
+        "#225ea8",
+        "#42b6c4",
+        "#c8e9b4",
+        "#ffffd9"
       ],
       "url": "/data/overlays/amh_dasarian_250m.png",
       "bounds": [
@@ -88,11 +88,11 @@
       "minLabel": "339 mm",
       "maxLabel": "617 mm",
       "gradientColors": [
-        "#ffffd9",
-        "#c6e9b4",
-        "#40b5c4",
-        "#225da8",
-        "#081d58"
+        "#ffffe5",
+        "#d9f0a3",
+        "#77c679",
+        "#228343",
+        "#004529"
       ],
       "url": "/data/overlays/total_hujan_mk_250m.png",
       "bounds": [
@@ -116,11 +116,11 @@
       "minLabel": "12.0 (Apr III)",
       "maxLabel": "13.1 (Mei I)",
       "gradientColors": [
-        "#800026",
-        "#e31a1c",
-        "#fd8e3c",
-        "#fed977",
-        "#ffffcc"
+        "#ffffcc",
+        "#fed976",
+        "#fd8c3c",
+        "#e2191c",
+        "#800026"
       ],
       "url": "/data/overlays/amk_dasarian_250m.png",
       "bounds": [

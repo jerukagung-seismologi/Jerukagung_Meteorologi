@@ -14,6 +14,7 @@ export interface SeasonCatalogEntry {
   has_evaluation: boolean;
   climate_desc: string;
   akurasi_amh_pct?: number | null;
+  akurasi_amk_pct?: number | null;
   akurasi_sifat_pct?: number | null;
   rata_selisih_dasarian?: number | null;
   folder: string;

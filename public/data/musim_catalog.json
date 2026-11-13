@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-13T18:47:59.755630+07:00",
+  "generated_at": "2026-11-13T19:29:45.497796+07:00",
   "total_seasons": 12,
   "active_season_id": "2026_2027",
   "seasons": [
@@ -13,6 +13,7 @@
       "has_evaluation": false,
       "climate_desc": "El Niño Kuat (ONI +2.16)",
       "akurasi_amh_pct": null,
+      "akurasi_amk_pct": null,
       "akurasi_sifat_pct": null,
       "rata_selisih_dasarian": null,
       "folder": ""
@@ -27,6 +28,7 @@
       "has_evaluation": true,
       "climate_desc": "Kondisi Netral / Normal",
       "akurasi_amh_pct": 100.0,
+      "akurasi_amk_pct": 38.5,
       "akurasi_sifat_pct": 0.0,
       "rata_selisih_dasarian": 2.63,
       "folder": "arsip/musim_2025"
@@ -41,6 +43,7 @@
       "has_evaluation": true,
       "climate_desc": "Transisi El Niño Menuju Netral",
       "akurasi_amh_pct": 65.4,
+      "akurasi_amk_pct": 84.6,
       "akurasi_sifat_pct": 15.4,
       "rata_selisih_dasarian": 0.86,
       "folder": "arsip/musim_2024"
@@ -55,6 +58,7 @@
       "has_evaluation": true,
       "climate_desc": "Super El Niño + IOD Positif Kuat (Kemarau ekstrem kering & panjang)",
       "akurasi_amh_pct": 100.0,
+      "akurasi_amk_pct": 11.5,
       "akurasi_sifat_pct": 11.5,
       "rata_selisih_dasarian": 0.73,
       "folder": "arsip/musim_2023"
@@ -69,6 +73,7 @@
       "has_evaluation": true,
       "climate_desc": "La Niña Lemah (Tahun 3 Triple-Dip La Niña)",
       "akurasi_amh_pct": 100.0,
+      "akurasi_amk_pct": 53.8,
       "akurasi_sifat_pct": 84.6,
       "rata_selisih_dasarian": 1.21,
       "folder": "arsip/musim_2022"
@@ -83,6 +88,7 @@
       "has_evaluation": true,
       "climate_desc": "La Niña Moderat (Tahun 2 Triple-Dip La Niña)",
       "akurasi_amh_pct": 50.0,
+      "akurasi_amk_pct": 0.0,
       "akurasi_sifat_pct": 100.0,
       "rata_selisih_dasarian": 2.67,
       "folder": "arsip/musim_2021"
@@ -97,6 +103,7 @@
       "has_evaluation": true,
       "climate_desc": "La Niña Moderat (Tahun 1 Triple-Dip La Niña)",
       "akurasi_amh_pct": 100.0,
+      "akurasi_amk_pct": 19.2,
       "akurasi_sifat_pct": 0.0,
       "rata_selisih_dasarian": 1.67,
       "folder": "arsip/musim_2020"
@@ -111,6 +118,7 @@
       "has_evaluation": true,
       "climate_desc": "IOD Positif Kuat + El Niño Lemah (Kemarau sangat kering di Jawa)",
       "akurasi_amh_pct": 100.0,
+      "akurasi_amk_pct": 26.9,
       "akurasi_sifat_pct": 34.6,
       "rata_selisih_dasarian": 1.48,
       "folder": "arsip/musim_2019"
@@ -125,6 +133,7 @@
       "has_evaluation": true,
       "climate_desc": "El Niño Lemah (Curah hujan cenderung di bawah normal)",
       "akurasi_amh_pct": 76.9,
+      "akurasi_amk_pct": 19.2,
       "akurasi_sifat_pct": 100.0,
       "rata_selisih_dasarian": 1.71,
       "folder": "arsip/musim_2018"
@@ -139,6 +148,7 @@
       "has_evaluation": true,
       "climate_desc": "Kondisi Netral / Normal",
       "akurasi_amh_pct": 0.0,
+      "akurasi_amk_pct": 42.3,
       "akurasi_sifat_pct": 19.2,
       "rata_selisih_dasarian": 2.01,
       "folder": "arsip/musim_2017"
@@ -153,6 +163,7 @@
       "has_evaluation": true,
       "climate_desc": "La Niña Lemah / Kemarau Basah (Curah hujan melimpah)",
       "akurasi_amh_pct": 100.0,
+      "akurasi_amk_pct": 76.9,
       "akurasi_sifat_pct": 0.0,
       "rata_selisih_dasarian": 0.84,
       "folder": "arsip/musim_2016"
@@ -167,6 +178,7 @@
       "has_evaluation": true,
       "climate_desc": "Super El Niño (Kemarau sangat panjang & ekstrem kering)",
       "akurasi_amh_pct": 73.1,
+      "akurasi_amk_pct": 84.6,
       "akurasi_sifat_pct": 0.0,
       "rata_selisih_dasarian": 0.8,
       "folder": "arsip/musim_2015"
