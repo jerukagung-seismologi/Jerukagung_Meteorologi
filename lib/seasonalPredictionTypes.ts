@@ -93,15 +93,17 @@ export interface HujanRecord {
   hth_kategori?: string;
   spi_1_bulan?: number;
   spi_1_kategori?: string;
+  spi_3_bulan?: number;
+  spi_3_kategori?: string;
   // Evaluasi Historis (Khusus Arsip)
-  realisasi_amh_dasarian?: number;
-  realisasi_amh_label?: string;
-  realisasi_perbandingan_terhadap_normal?: string;
-  realisasi_sifat_hujan?: string;
-  realisasi_puncak_bulan?: string;
-  selisih_dasarian_eval?: number;
-  status_evaluasi_amh?: string;
-  status_evaluasi_sifat?: string;
+  realisasi_amh_dasarian?: number | null;
+  realisasi_amh_label?: string | null;
+  realisasi_perbandingan_terhadap_normal?: string | null;
+  realisasi_sifat_hujan?: string | null;
+  realisasi_puncak_bulan?: string | null;
+  selisih_dasarian_eval?: number | null;
+  status_evaluasi_amh?: string | null;
+  status_evaluasi_sifat?: string | null;
 }
 
 export interface KemarauRecord {
@@ -138,15 +140,18 @@ export interface KemarauRecord {
   hth_kategori?: string;
   spi_1_bulan?: number;
   spi_1_kategori?: string;
+  spi_3_bulan?: number;
+  spi_3_kategori?: string;
   // Evaluasi Historis (Khusus Arsip)
-  realisasi_amk_dasarian?: number;
-  realisasi_amk_label?: string;
-  realisasi_perbandingan_terhadap_normal?: string;
-  realisasi_sifat_hujan?: string;
-  realisasi_pmk_bulan?: string;
-  selisih_dasarian_eval?: number;
-  status_evaluasi_amk?: string;
-  status_evaluasi_sifat?: string;
+  realisasi_amk_dasarian?: number | null;
+  realisasi_amk_label?: string | null;
+  realisasi_perbandingan_terhadap_normal?: string | null;
+  realisasi_sifat_hujan?: string | null;
+  realisasi_sifat_hujan_mk?: string | null;
+  realisasi_pmk_bulan?: string | null;
+  selisih_dasarian_eval?: number | null;
+  status_evaluasi_amk?: string | null;
+  status_evaluasi_sifat?: string | null;
 }
 
 export interface RasterOverlayMeta {
