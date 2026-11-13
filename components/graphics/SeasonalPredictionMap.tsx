@@ -725,7 +725,7 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
                       : "rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-1 text-[11px] font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }
                 >
-                  Kecamatan (26)
+                  Kecamatan
                 </button>
                 <button
                   type="button"
@@ -736,7 +736,7 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
                       : "rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-2 py-1 text-[11px] font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800"
                   }
                 >
-                  Desa / Kel (460)
+                  Desa / Kel
                 </button>
               </div>
 
