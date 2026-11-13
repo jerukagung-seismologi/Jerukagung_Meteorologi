@@ -4,7 +4,7 @@
     "season_id": "2015_2016",
     "year": 2015,
     "title": "Arsip Musim Hujan 2015/2016 & Musim Kemarau 2015",
-    "generated_at": "2026-11-13T22:07:47.687371+07:00",
+    "generated_at": "2026-11-13T22:50:18.155443+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "evaluasi": {
@@ -6357,11 +6357,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 704.4,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 11.8,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.11,
@@ -6380,9 +6380,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -6392,8 +6392,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -6403,8 +6403,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -6597,11 +6597,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 698.6,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 10.1,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.16,
@@ -6620,9 +6620,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -6632,8 +6632,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -6643,8 +6643,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -6837,11 +6837,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 501.0,
-      "kelas_hujan_mk": "400–600 mm",
+      "kelas_hujan_mk": "485–525 mm",
       "kekeringan_skor": 28.6,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov I",
-      "rekomendasi_tanam_palawija_mt3": "Nov II",
+      "rekomendasi_keringkan_sawah_mt2": "Mei II",
+      "rekomendasi_tanam_palawija_mt3": "Mei III",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.07,
@@ -6860,9 +6860,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr I",
-          "tanam": "Apr III",
-          "panen": "Jul III",
+          "olah_tanah": "Okt II",
+          "tanam": "Nov I",
+          "panen": "Feb I",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -6872,8 +6872,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu I",
-          "panen": "Nov I",
+          "tanam": "Feb II",
+          "panen": "Mei II",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -6883,8 +6883,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Nov II",
-          "panen": "Feb I",
+          "tanam": "Mei III",
+          "panen": "Agu II",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -7077,11 +7077,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 743.3,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 17.2,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.08,
@@ -7100,9 +7100,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -7112,8 +7112,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -7123,8 +7123,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -7317,11 +7317,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 440.9,
-      "kelas_hujan_mk": "400–600 mm",
+      "kelas_hujan_mk": "430–485 mm",
       "kekeringan_skor": 32.3,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov I",
-      "rekomendasi_tanam_palawija_mt3": "Nov II",
+      "rekomendasi_keringkan_sawah_mt2": "Mei II",
+      "rekomendasi_tanam_palawija_mt3": "Mei III",
       "hth_hari": 15,
       "hth_kategori": "Menengah (11–20 hari)",
       "spi_1_bulan": -1.07,
@@ -7340,9 +7340,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr I",
-          "tanam": "Apr III",
-          "panen": "Jul III",
+          "olah_tanah": "Okt II",
+          "tanam": "Nov I",
+          "panen": "Feb I",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -7352,8 +7352,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu I",
-          "panen": "Nov I",
+          "tanam": "Feb II",
+          "panen": "Mei II",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -7363,8 +7363,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Nov II",
-          "panen": "Feb I",
+          "tanam": "Mei III",
+          "panen": "Agu II",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -7557,11 +7557,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 700.2,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 14.0,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.1,
@@ -7580,9 +7580,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -7592,8 +7592,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -7603,8 +7603,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -7797,11 +7797,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 557.4,
-      "kelas_hujan_mk": "400–600 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 22.6,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Mei I",
+      "rekomendasi_tanam_palawija_mt3": "Mei II",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.08,
@@ -7820,9 +7820,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt II",
+          "tanam": "Nov I",
+          "panen": "Feb I",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -7832,8 +7832,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb II",
+          "panen": "Mei II",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -7843,8 +7843,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei III",
+          "panen": "Agu II",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -8037,11 +8037,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 722.6,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 6.0,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.16,
@@ -8060,9 +8060,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -8072,8 +8072,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -8083,8 +8083,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -8277,11 +8277,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 720.8,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 7.4,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.17,
@@ -8300,9 +8300,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -8312,8 +8312,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -8323,8 +8323,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -8517,11 +8517,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 823.2,
-      "kelas_hujan_mk": "> 800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 4.2,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Des I",
-      "rekomendasi_tanam_palawija_mt3": "Des II",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.23,
@@ -8540,9 +8540,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Mei I",
-          "tanam": "Mei III",
-          "panen": "Agu III",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -8552,8 +8552,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Sep I",
-          "panen": "Des I",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -8563,8 +8563,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des II",
-          "panen": "Mar I",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -8757,11 +8757,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 823.0,
-      "kelas_hujan_mk": "> 800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 5.4,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Des I",
-      "rekomendasi_tanam_palawija_mt3": "Des II",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.2,
@@ -8780,9 +8780,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Mei I",
-          "tanam": "Mei III",
-          "panen": "Agu III",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -8792,8 +8792,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Sep I",
-          "panen": "Des I",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -8803,8 +8803,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des II",
-          "panen": "Mar I",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -8997,11 +8997,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 638.0,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 13.0,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.12,
@@ -9020,9 +9020,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -9032,8 +9032,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -9043,8 +9043,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -9237,11 +9237,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 613.9,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 18.3,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.09,
@@ -9260,9 +9260,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -9272,8 +9272,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -9283,8 +9283,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -9477,11 +9477,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 554.1,
-      "kelas_hujan_mk": "400–600 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 17.5,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Mei I",
+      "rekomendasi_tanam_palawija_mt3": "Mei II",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.1,
@@ -9500,9 +9500,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt II",
+          "tanam": "Nov I",
+          "panen": "Feb I",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -9512,8 +9512,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb II",
+          "panen": "Mei II",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -9523,8 +9523,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei III",
+          "panen": "Agu II",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -9717,11 +9717,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 697.8,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 10.6,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.11,
@@ -9740,9 +9740,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -9752,8 +9752,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -9763,8 +9763,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -9957,11 +9957,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 440.7,
-      "kelas_hujan_mk": "400–600 mm",
+      "kelas_hujan_mk": "430–485 mm",
       "kekeringan_skor": 34.3,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov I",
-      "rekomendasi_tanam_palawija_mt3": "Nov II",
+      "rekomendasi_keringkan_sawah_mt2": "Mei II",
+      "rekomendasi_tanam_palawija_mt3": "Mei III",
       "hth_hari": 15,
       "hth_kategori": "Menengah (11–20 hari)",
       "spi_1_bulan": -1.06,
@@ -9980,9 +9980,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr I",
-          "tanam": "Apr III",
-          "panen": "Jul III",
+          "olah_tanah": "Okt II",
+          "tanam": "Nov I",
+          "panen": "Feb I",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -9992,8 +9992,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu I",
-          "panen": "Nov I",
+          "tanam": "Feb II",
+          "panen": "Mei II",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -10003,8 +10003,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Nov II",
-          "panen": "Feb I",
+          "tanam": "Mei III",
+          "panen": "Agu II",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -10197,11 +10197,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 613.7,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 10.3,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.16,
@@ -10220,9 +10220,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -10232,8 +10232,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -10243,8 +10243,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -10437,11 +10437,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 728.8,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 9.5,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.16,
@@ -10460,9 +10460,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -10472,8 +10472,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -10483,8 +10483,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -10677,11 +10677,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 660.0,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 17.4,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.08,
@@ -10700,9 +10700,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -10712,8 +10712,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -10723,8 +10723,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -10917,11 +10917,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 616.1,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 12.1,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.13,
@@ -10940,9 +10940,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -10952,8 +10952,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -10963,8 +10963,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -11157,11 +11157,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 511.4,
-      "kelas_hujan_mk": "400–600 mm",
+      "kelas_hujan_mk": "485–525 mm",
       "kekeringan_skor": 20.3,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Mei I",
+      "rekomendasi_tanam_palawija_mt3": "Mei II",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.11,
@@ -11180,9 +11180,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt II",
+          "tanam": "Nov I",
+          "panen": "Feb I",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -11192,8 +11192,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb II",
+          "panen": "Mei II",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -11203,8 +11203,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei III",
+          "panen": "Agu II",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -11397,11 +11397,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 677.7,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 17.3,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.07,
@@ -11420,9 +11420,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -11432,8 +11432,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -11443,8 +11443,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -11637,11 +11637,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 771.3,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 7.2,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.16,
@@ -11660,9 +11660,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -11672,8 +11672,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -11683,8 +11683,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -11877,11 +11877,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 859.1,
-      "kelas_hujan_mk": "> 800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 4.0,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Des II",
-      "rekomendasi_tanam_palawija_mt3": "Des III",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.26,
@@ -11900,9 +11900,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Mei II",
-          "tanam": "Jun I",
-          "panen": "Sep I",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -11912,8 +11912,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Sep II",
-          "panen": "Des II",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -11923,8 +11923,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des III",
-          "panen": "Mar II",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -12117,11 +12117,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 755.8,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 3.9,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.22,
@@ -12140,9 +12140,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -12152,8 +12152,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -12163,8 +12163,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",
@@ -12357,11 +12357,11 @@
       "prakiraan_pmk_dasarian": 17.0,
       "prakiraan_pmk_label": "Jun II",
       "total_hujan_mk_mm": 709.5,
-      "kelas_hujan_mk": "600–800 mm",
+      "kelas_hujan_mk": "> 525 mm",
       "kekeringan_skor": 10.4,
       "kelas_kekeringan": "Sedang (< 60)",
-      "rekomendasi_keringkan_sawah_mt2": "Nov III",
-      "rekomendasi_tanam_palawija_mt3": "Des I",
+      "rekomendasi_keringkan_sawah_mt2": "Apr III",
+      "rekomendasi_tanam_palawija_mt3": "Mei I",
       "hth_hari": 5,
       "hth_kategori": "Sangat Pendek (1–5 hari)",
       "spi_1_bulan": -1.14,
@@ -12380,9 +12380,9 @@
       "katam": {
         "mt1": {
           "nama": "MT1 (Padi Rendengan)",
-          "olah_tanah": "Apr III",
-          "tanam": "Mei II",
-          "panen": "Agu II",
+          "olah_tanah": "Okt I",
+          "tanam": "Okt III",
+          "panen": "Jan III",
           "varietas": [
             "Inpari 32 HDB",
             "Ciherang",
@@ -12392,8 +12392,8 @@
         },
         "mt2": {
           "nama": "MT2 (Padi Gadu)",
-          "tanam": "Agu III",
-          "panen": "Nov III",
+          "tanam": "Feb I",
+          "panen": "Mei I",
           "varietas": [
             "Inpari 32 HDB",
             "Mekongga",
@@ -12403,8 +12403,8 @@
         },
         "mt3": {
           "nama": "MT3 (Palawija/Bera)",
-          "tanam": "Des I",
-          "panen": "Feb III",
+          "tanam": "Mei II",
+          "panen": "Agu I",
           "komoditas": [
             "Jagung Hibrida Bisi-18",
             "Kedelai Anjasmoro",

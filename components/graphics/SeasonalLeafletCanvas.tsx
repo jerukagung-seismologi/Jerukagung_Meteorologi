@@ -89,12 +89,34 @@ export default function SeasonalLeafletCanvas({
       return [];
     }
     const colorMap = activeLayer.colorMap;
-    const present = new Set(
-      records.map((r) => String((r as unknown as Record<string, unknown>)[activeField] ?? ""))
+    const orderList = activeLayer.order || [];
+    const present = Array.from(
+      new Set(
+        records
+          .map((r) => String((r as unknown as Record<string, unknown>)[activeField] ?? ""))
+          .filter((v) => v && v !== "-" && v !== "null" && v !== "undefined")
+      )
     );
-    const ordered = (activeLayer.order || []).filter((c) => present.has(c));
-    const extras = Array.from(present).filter((c) => c && !ordered.includes(c));
-    return [...ordered, ...extras].map((cat) => ({
+
+    const getRank = (cat: string): number => {
+      const exactIdx = orderList.indexOf(cat);
+      if (exactIdx !== -1) return exactIdx;
+      const base = cat.split(" ")[0];
+      const baseIdx = orderList.indexOf(base);
+      if (baseIdx !== -1) return baseIdx;
+      const prefixIdx = orderList.findIndex((o) => o.startsWith(base) || base.startsWith(o));
+      if (prefixIdx !== -1) return prefixIdx;
+      return 999;
+    };
+
+    const sorted = [...present].sort((a, b) => {
+      const rankA = getRank(a);
+      const rankB = getRank(b);
+      if (rankA !== rankB) return rankA - rankB;
+      return a.localeCompare(b, "id", { numeric: true });
+    });
+
+    return sorted.map((cat) => ({
       label: cat,
       color: colorMap[cat] || colorMap[cat.split(" ")[0]] || "#94a3b8",
     }));
