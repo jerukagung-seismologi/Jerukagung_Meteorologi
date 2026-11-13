@@ -4,7 +4,7 @@
     "season_id": "2020_2021",
     "year": 2020,
     "title": "Arsip Musim Hujan 2020/2021 & Musim Kemarau 2020",
-    "generated_at": "2026-11-13T19:29:37.099571+07:00",
+    "generated_at": "2026-11-13T20:24:52.208838+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "evaluasi": {
@@ -34,7 +34,7 @@
   },
   "overlays": [
     {
-      "id": "amh_dasarian_250m_2020",
+      "id": "amh_250m",
       "season": "hujan",
       "label": "Awal Musim Hujan 250m (2020/2021)",
       "unit": "Dasarian",
@@ -62,7 +62,7 @@
       ]
     },
     {
-      "id": "amk_dasarian_250m_2020",
+      "id": "amk_250m",
       "season": "kemarau",
       "label": "Awal Musim Kemarau 250m (2020)",
       "unit": "Dasarian",
@@ -78,6 +78,62 @@
         "#800026"
       ],
       "url": "/data/arsip/musim_2020/overlays/amk_dasarian_250m.png",
+      "bounds": [
+        [
+          -7.84692938435426,
+          109.36374312723672
+        ],
+        [
+          -7.430640272145225,
+          109.85489248879333
+        ]
+      ]
+    },
+    {
+      "id": "total_hujan_mh",
+      "season": "hujan",
+      "label": "Total Curah Hujan MH 250m (2020/2021)",
+      "unit": "mm",
+      "min": 2238.48,
+      "max": 3481.27,
+      "minLabel": "2238 mm",
+      "maxLabel": "3481 mm",
+      "gradientColors": [
+        "#ffffd9",
+        "#c6e9b4",
+        "#40b5c4",
+        "#225da8",
+        "#081d58"
+      ],
+      "url": "/data/arsip/musim_2020/overlays/total_hujan_mh_250m.png",
+      "bounds": [
+        [
+          -7.84692938435426,
+          109.36374312723672
+        ],
+        [
+          -7.430640272145225,
+          109.85489248879333
+        ]
+      ]
+    },
+    {
+      "id": "total_hujan_mk",
+      "season": "kemarau",
+      "label": "Total Hujan Kemarau 250m (2020)",
+      "unit": "mm",
+      "min": 463.56,
+      "max": 842.98,
+      "minLabel": "464 mm",
+      "maxLabel": "843 mm",
+      "gradientColors": [
+        "#ffffe5",
+        "#d9f0a3",
+        "#77c679",
+        "#228343",
+        "#004529"
+      ],
+      "url": "/data/arsip/musim_2020/overlays/total_hujan_mk_250m.png",
       "bounds": [
         [
           -7.84692938435426,

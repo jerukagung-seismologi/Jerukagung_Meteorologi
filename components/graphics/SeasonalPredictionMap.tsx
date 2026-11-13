@@ -474,15 +474,21 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
     }
     // 1. Coba pencarian langsung berdasarkan rasterId
     if (activeLayer.rasterId) {
-      const match = kecDataset.overlays.find((o) => o.id === activeLayer.rasterId);
+      const match = kecDataset.overlays.find((o) => o.id === activeLayer.rasterId || o.id.startsWith(activeLayer.rasterId));
       if (match) return match;
     }
-    // 2. Pencarian untuk arsip tahunan (AMH / AMK 250m)
+    // 2. Pencarian untuk arsip tahunan (fallback nama/season)
+    if (activeLayer.id === "raster_total_hujan_mh") {
+      return kecDataset.overlays.find((o) => o.season === "hujan" && o.id.includes("total_hujan_mh")) ?? null;
+    }
     if (activeLayer.id === "raster_amh_250m") {
-      return kecDataset.overlays.find((o) => o.season === "hujan" && o.id.startsWith("amh")) ?? null;
+      return kecDataset.overlays.find((o) => o.season === "hujan" && o.id.includes("amh")) ?? null;
+    }
+    if (activeLayer.id === "raster_total_hujan_mk") {
+      return kecDataset.overlays.find((o) => o.season === "kemarau" && o.id.includes("total_hujan_mk")) ?? null;
     }
     if (activeLayer.id === "raster_amk_250m") {
-      return kecDataset.overlays.find((o) => o.season === "kemarau" && o.id.startsWith("amk")) ?? null;
+      return kecDataset.overlays.find((o) => o.season === "kemarau" && o.id.includes("amk")) ?? null;
     }
     return null;
   }, [kecDataset, activeLayer]);
