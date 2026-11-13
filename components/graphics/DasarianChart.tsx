@@ -28,10 +28,10 @@ export const DasarianChart: React.FC<DasarianChartProps> = ({
   }
 
   const option = useMemo(() => {
-    const labels = chartData.labels;
-    const normal = chartData.normal;
-    const aktual = chartData.aktual;
-    const proyeksi = chartData.proyeksi;
+    const labels = chartData.labels || [];
+    const normal = chartData.normal || [];
+    const aktual = chartData.aktual || [];
+    const proyeksi = chartData.proyeksi || [];
 
     return {
       tooltip: {

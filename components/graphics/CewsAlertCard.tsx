@@ -18,8 +18,8 @@ export default function CewsAlertCard({ cews }: CewsAlertCardProps) {
     );
   }
 
-  const isHthWarning = cews.hth_hari >= 11;
-  const isSpiDry = cews.spi_1_bulan <= -1.0 || cews.spi_3_bulan <= -1.0;
+  const isHthWarning = (cews.hth_hari || 0) >= 11;
+  const isSpiDry = (cews.spi_1_bulan || 0) <= -1.0 || (cews.spi_3_bulan || 0) <= -1.0;
 
   return (
     <div className="space-y-2.5 pt-1">
@@ -89,7 +89,7 @@ export default function CewsAlertCard({ cews }: CewsAlertCardProps) {
             </div>
             <div className="flex items-baseline gap-1.5">
               <span className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
-                {cews.spi_1_bulan > 0 ? `+${cews.spi_1_bulan.toFixed(2)}` : cews.spi_1_bulan.toFixed(2)}
+                {cews.spi_1_bulan != null ? (cews.spi_1_bulan > 0 ? `+${cews.spi_1_bulan.toFixed(2)}` : cews.spi_1_bulan.toFixed(2)) : "0.00"}
               </span>
             </div>
             <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 mt-0.5">
@@ -112,7 +112,7 @@ export default function CewsAlertCard({ cews }: CewsAlertCardProps) {
             </div>
             <div className="flex items-baseline gap-1.5">
               <span className="text-xl font-extrabold text-slate-900 dark:text-slate-100">
-                {cews.spi_3_bulan > 0 ? `+${cews.spi_3_bulan.toFixed(2)}` : cews.spi_3_bulan.toFixed(2)}
+                {cews.spi_3_bulan != null ? (cews.spi_3_bulan > 0 ? `+${cews.spi_3_bulan.toFixed(2)}` : cews.spi_3_bulan.toFixed(2)) : "0.00"}
               </span>
             </div>
             <p className="text-[11px] font-semibold text-slate-700 dark:text-slate-300 mt-0.5">

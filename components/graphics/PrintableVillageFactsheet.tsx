@@ -34,7 +34,7 @@ export const PrintableVillageFactsheet: React.FC<PrintableVillageFactsheetProps>
 }) => {
   const printAreaRef = useRef<HTMLDivElement>(null);
 
-  if (!record) return null;
+  if (!isOpen || !record) return null;
 
   const isHujan = season === "hujan";
   const katam = record.katam;
@@ -57,6 +57,13 @@ export const PrintableVillageFactsheet: React.FC<PrintableVillageFactsheetProps>
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto p-0 border border-gray-300 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-2xl print:max-w-none print:max-h-none print:overflow-visible print:border-none print:shadow-none print:p-0">
+        <DialogHeader className="sr-only">
+          <DialogTitle>Lembar Informasi Iklim & Kalender Tanam Desa</DialogTitle>
+          <DialogDescription>
+            Dokumen cetak resmi informasi prakiraan iklim, rekomendasi kalender tanam, dan indikator CEWS BMKG Kabupaten Kebumen
+          </DialogDescription>
+        </DialogHeader>
+
         {/* Header Action Bar (Hidden on print) */}
         <div className="sticky top-0 z-20 flex items-center justify-between px-6 py-3 bg-slate-100 dark:bg-gray-800/90 border-b border-gray-200 dark:border-gray-700 print:hidden">
           <div className="flex items-center gap-2">
@@ -190,51 +197,51 @@ export const PrintableVillageFactsheet: React.FC<PrintableVillageFactsheetProps>
                 {/* MT1 */}
                 <div className="p-3 border border-emerald-300 rounded-lg bg-emerald-50/40 print:bg-white print:border-black">
                   <div className="flex items-center justify-between pb-1 border-b border-emerald-200">
-                    <span className="font-extrabold text-emerald-950 text-xs uppercase">{katam.mt1.label}</span>
+                    <span className="font-extrabold text-emerald-950 text-xs uppercase">{katam.mt1?.nama || "MT1 (Padi Rendeng)"}</span>
                     <span className="text-[10px] font-bold px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded">Rendeng</span>
                   </div>
                   <div className="mt-2 text-xs font-black text-gray-900">
-                    Mulai Tanam: {katam.mt1.periode}
+                    Mulai Tanam: {katam.mt1?.tanam || "-"} (Panen: {katam.mt1?.panen || "-"})
                   </div>
                   <div className="mt-1 text-[11px] text-gray-700">
-                    <strong>Varietas:</strong> {katam.mt1.varietas.join(", ")}
+                    <strong>Varietas:</strong> {(katam.mt1?.varietas || []).join(", ") || "Inpari 32, Ciherang"}
                   </div>
                   <div className="mt-1.5 text-[10px] text-gray-600 leading-snug">
-                    <strong>Petunjuk:</strong> {katam.mt1.tips}
+                    <strong>Petunjuk:</strong> {katam.mt1?.tips || "-"}
                   </div>
                 </div>
 
                 {/* MT2 */}
                 <div className="p-3 border border-blue-300 rounded-lg bg-blue-50/40 print:bg-white print:border-black">
                   <div className="flex items-center justify-between pb-1 border-b border-blue-200">
-                    <span className="font-extrabold text-blue-950 text-xs uppercase">{katam.mt2.label}</span>
+                    <span className="font-extrabold text-blue-950 text-xs uppercase">{katam.mt2?.nama || "MT2 (Padi Gadu)"}</span>
                     <span className="text-[10px] font-bold px-1.5 py-0.2 bg-blue-100 text-blue-800 rounded">Gadu</span>
                   </div>
                   <div className="mt-2 text-xs font-black text-gray-900">
-                    Mulai Tanam: {katam.mt2.periode}
+                    Mulai Tanam: {katam.mt2?.tanam || "-"} (Panen: {katam.mt2?.panen || "-"})
                   </div>
                   <div className="mt-1 text-[11px] text-gray-700">
-                    <strong>Varietas:</strong> {katam.mt2.varietas.join(", ")}
+                    <strong>Varietas:</strong> {(katam.mt2?.varietas || []).join(", ") || "Inpari 32, Mekongga"}
                   </div>
                   <div className="mt-1.5 text-[10px] text-gray-600 leading-snug">
-                    <strong>Petunjuk:</strong> {katam.mt2.tips}
+                    <strong>Petunjuk:</strong> {katam.mt2?.tips || "-"}
                   </div>
                 </div>
 
                 {/* MT3 */}
                 <div className="p-3 border border-amber-300 rounded-lg bg-amber-50/40 print:bg-white print:border-black">
                   <div className="flex items-center justify-between pb-1 border-b border-amber-200">
-                    <span className="font-extrabold text-amber-950 text-xs uppercase">{katam.mt3.label}</span>
+                    <span className="font-extrabold text-amber-950 text-xs uppercase">{katam.mt3?.nama || "MT3 (Palawija)"}</span>
                     <span className="text-[10px] font-bold px-1.5 py-0.2 bg-amber-100 text-amber-800 rounded">Palawija</span>
                   </div>
                   <div className="mt-2 text-xs font-black text-gray-900">
-                    Mulai Tanam: {katam.mt3.periode}
+                    Mulai Tanam: {katam.mt3?.tanam || "-"} (Panen: {katam.mt3?.panen || "-"})
                   </div>
                   <div className="mt-1 text-[11px] text-gray-700">
-                    <strong>Komoditas:</strong> {katam.mt3.varietas.join(", ")}
+                    <strong>Komoditas:</strong> {(katam.mt3?.komoditas || katam.mt3?.varietas || []).join(", ") || "Kedelai, Jagung, Kacang Hijau"}
                   </div>
                   <div className="mt-1.5 text-[10px] text-gray-600 leading-snug">
-                    <strong>Petunjuk:</strong> {katam.mt3.tips}
+                    <strong>Petunjuk:</strong> {katam.mt3?.tips || "-"}
                   </div>
                 </div>
               </div>
@@ -242,6 +249,7 @@ export const PrintableVillageFactsheet: React.FC<PrintableVillageFactsheetProps>
               <p className="text-xs text-gray-500 italic">Data profil Kalender Tanam tidak tersedia.</p>
             )}
           </div>
+
 
           {/* SECTION 3: MONITORING KEKERINGAN & PERINGATAN DINI (CEWS BMKG) */}
           <div className="mb-6">
