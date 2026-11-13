@@ -4,6 +4,40 @@ export type AdminLevel = "kecamatan" | "desa";
 
 export type BasemapId = "jalan" | "satelit" | "topografi";
 
+export interface KatamStage {
+  nama: string;
+  olah_tanah?: string;
+  tanam: string;
+  panen: string;
+  varietas?: string[];
+  komoditas?: string[];
+  tips: string;
+}
+
+export interface KatamProfile {
+  mt1: KatamStage;
+  mt2: KatamStage;
+  mt3: KatamStage;
+}
+
+export interface CewsMetrics {
+  hth_hari: number;
+  hth_kategori: string;
+  hth_status: string;
+  pdcht_status: string;
+  spi_1_bulan: number;
+  spi_1_kategori: string;
+  spi_3_bulan: number;
+  spi_3_kategori: string;
+}
+
+export interface DasarianChartData {
+  labels: string[];
+  normal: number[];
+  aktual: (number | null)[];
+  proyeksi: (number | null)[];
+}
+
 export interface HujanRecord {
   code?: string;
   desa?: string;
@@ -28,6 +62,14 @@ export interface HujanRecord {
   kelas_hujan_mh?: string;
   amh_dasarian_250m?: number;
   amh_label_250m?: string;
+  // Fitur Tambahan
+  katam?: KatamProfile;
+  cews?: CewsMetrics;
+  chart?: DasarianChartData;
+  hth_hari?: number;
+  hth_kategori?: string;
+  spi_1_bulan?: number;
+  spi_1_kategori?: string;
 }
 
 export interface KemarauRecord {
@@ -56,6 +98,14 @@ export interface KemarauRecord {
   amk_label_250m?: string;
   kekeringan_skor?: number;
   kelas_kekeringan?: string;
+  // Fitur Tambahan
+  katam?: KatamProfile;
+  cews?: CewsMetrics;
+  chart?: DasarianChartData;
+  hth_hari?: number;
+  hth_kategori?: string;
+  spi_1_bulan?: number;
+  spi_1_kategori?: string;
 }
 
 export interface RasterOverlayMeta {

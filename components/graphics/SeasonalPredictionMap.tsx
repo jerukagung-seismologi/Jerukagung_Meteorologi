@@ -4,7 +4,10 @@ import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { AlertTriangle, Layers, Loader2, MapPin, Search, X } from "lucide-react";
+import { AlertTriangle, Layers, Loader2, MapPin, Printer, Search, X } from "lucide-react";
+import KatamTimeline from "./KatamTimeline";
+import CewsAlertCard from "./CewsAlertCard";
+import PrintableVillageFactsheet from "./PrintableVillageFactsheet";
 import type {
   AdminLevel,
   BasemapId,
@@ -21,6 +24,16 @@ const SeasonalLeafletCanvas = dynamic(() => import("./SeasonalLeafletCanvas"), {
   loading: () => (
     <div className="flex items-center justify-center w-full h-full bg-slate-100 dark:bg-slate-900">
       <Loader2 className="h-8 w-8 animate-spin text-sky-600" />
+    </div>
+  ),
+});
+
+const DasarianChart = dynamic(() => import("./DasarianChart"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-60 flex items-center justify-center text-xs text-slate-400">
+      <Loader2 className="h-4 w-4 animate-spin mr-1.5" />
+      Memuat profil 36 dasarian...
     </div>
   ),
 });
@@ -285,6 +298,8 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
   const [basemap, setBasemap] = useState<BasemapId>("jalan");
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [detailTab, setDetailTab] = useState<"ringkasan" | "katam" | "grafik" | "cews">("ringkasan");
+  const [isFactsheetOpen, setIsFactsheetOpen] = useState<boolean>(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -621,7 +636,8 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
 
       {/* Bottom-Left Floating Dismissible Detail Card (Kecamatan atau Desa/Kelurahan) */}
       {selectedCode && selectedRecord && (
-        <div className="pointer-events-auto absolute bottom-3 left-2.5 z-[500] w-[calc(100%-20px)] sm:w-[410px] max-w-[430px] rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xl border border-slate-300 dark:border-slate-700 p-3.5 text-slate-900 dark:text-slate-100">
+        <div className="pointer-events-auto absolute bottom-3 left-2.5 z-[500] w-[calc(100%-20px)] sm:w-[480px] md:w-[540px] max-w-[560px] max-h-[82vh] overflow-y-auto rounded-xl bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xl border border-slate-300 dark:border-slate-700 p-3.5 text-slate-900 dark:text-slate-100 flex flex-col">
+          {/* Card Header */}
           <div className="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-200 dark:border-slate-800">
             <div>
               <div className="flex flex-wrap items-center gap-2">
@@ -642,25 +658,113 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
                   : "Prakiraan Musim Kemarau 2026"}
               </p>
             </div>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => setIsFactsheetOpen(true)}
+                title="Cetak Lembar Informasi Iklim & Kalender Tanam Desa"
+                className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 text-[11px] font-semibold border border-blue-200 dark:border-blue-800 transition shadow-2xs"
+              >
+                <Printer className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
+                <span>Cetak Lembar</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedCode(null)}
+                aria-label="Tutup detail wilayah"
+                className="rounded p-1 text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Sub-Tab Navigation */}
+          <div className="flex items-center gap-1 border-b border-slate-200 dark:border-slate-800 pt-2 pb-1.5 overflow-x-auto text-[11px]">
             <button
               type="button"
-              onClick={() => setSelectedCode(null)}
-              aria-label="Tutup detail wilayah"
-              className="rounded p-1 text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white"
+              onClick={() => setDetailTab("ringkasan")}
+              className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 shrink-0 ${
+                detailTab === "ringkasan"
+                  ? "bg-blue-600 text-white font-bold shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
             >
-              <X className="h-4 w-4" />
+              <span>📋 Ringkasan</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDetailTab("katam")}
+              className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 shrink-0 ${
+                detailTab === "katam"
+                  ? "bg-emerald-600 text-white font-bold shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <span>🌾 Kalender Tanam</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDetailTab("grafik")}
+              className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 shrink-0 ${
+                detailTab === "grafik"
+                  ? "bg-indigo-600 text-white font-bold shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <span>📈 36 Dasarian</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setDetailTab("cews")}
+              className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 shrink-0 ${
+                detailTab === "cews"
+                  ? "bg-amber-600 text-white font-bold shadow-xs"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+              }`}
+            >
+              <span>⚠️ Peringatan (CEWS)</span>
             </button>
           </div>
 
-          <div className="pt-2.5">
-            {currentSeason === "hujan" ? (
-              <HujanSelectedDetail record={selectedRecord as HujanRecord} />
-            ) : (
-              <KemarauSelectedDetail
-                record={selectedRecord as KemarauRecord}
-                adminLevel={adminLevel}
+          {/* Sub-Tab Contents */}
+          <div className="pt-2.5 flex-1">
+            {detailTab === "ringkasan" && (
+              <>
+                {currentSeason === "hujan" ? (
+                  <HujanSelectedDetail record={selectedRecord as HujanRecord} />
+                ) : (
+                  <KemarauSelectedDetail
+                    record={selectedRecord as KemarauRecord}
+                    adminLevel={adminLevel}
+                  />
+                )}
+              </>
+            )}
+
+            {detailTab === "katam" && (
+              <KatamTimeline
+                katam={selectedRecord.katam}
+                sifatHujan={selectedRecord.sifat_hujan_label}
+                isDarkMode={isDarkMode}
               />
             )}
+
+            {detailTab === "grafik" && (
+              <div className="pt-1">
+                <DasarianChart
+                  chartData={selectedRecord.chart}
+                  wilayahName={adminLevel === "desa" && selectedRecord.desa ? selectedRecord.desa : selectedRecord.kecamatan}
+                  isDesa={adminLevel === "desa"}
+                  kecamatanName={selectedRecord.kecamatan}
+                />
+              </div>
+            )}
+
+            {detailTab === "cews" && (
+              <CewsAlertCard cews={selectedRecord.cews} />
+            )}
+
             <p className="text-[11px] font-medium text-slate-700 dark:text-slate-300 mt-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
               {adminLevel === "desa"
                 ? "Curah hujan & indeks mikro diekstrak dari raster downscaling 250m per poligon desa. 1 dasarian = ±10 hari."
@@ -668,6 +772,19 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
             </p>
           </div>
         </div>
+      )}
+
+      {/* Factsheet Modal Dialog */}
+      {selectedRecord && (
+        <PrintableVillageFactsheet
+          isOpen={isFactsheetOpen}
+          onClose={() => setIsFactsheetOpen(false)}
+          record={selectedRecord}
+          season={currentSeason}
+          wilayahName={adminLevel === "desa" && selectedRecord.desa ? selectedRecord.desa : selectedRecord.kecamatan}
+          isDesa={adminLevel === "desa"}
+          kecamatanName={selectedRecord.kecamatan}
+        />
       )}
     </div>
   );
