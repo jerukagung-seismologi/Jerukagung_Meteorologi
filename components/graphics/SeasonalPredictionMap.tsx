@@ -4,10 +4,9 @@ import React, { useEffect, useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { AlertTriangle, Layers, Loader2, MapPin, Printer, Search, X } from "lucide-react";
+import { AlertTriangle, Layers, Loader2, MapPin, Search, X } from "lucide-react";
 import KatamTimeline from "./KatamTimeline";
 import CewsAlertCard from "./CewsAlertCard";
-import PrintableVillageFactsheet from "./PrintableVillageFactsheet";
 import type {
   AdminLevel,
   BasemapId,
@@ -299,7 +298,6 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [detailTab, setDetailTab] = useState<"ringkasan" | "katam" | "grafik" | "cews">("ringkasan");
-  const [isFactsheetOpen, setIsFactsheetOpen] = useState<boolean>(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -658,25 +656,14 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
                   : "Prakiraan Musim Kemarau 2026"}
               </p>
             </div>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => setIsFactsheetOpen(true)}
-                title="Cetak Lembar Informasi Iklim & Kalender Tanam Desa"
-                className="flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-50 dark:bg-blue-950/70 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900 text-[11px] font-semibold border border-blue-200 dark:border-blue-800 transition shadow-2xs"
-              >
-                <Printer className="h-3.5 w-3.5 text-blue-600 dark:text-blue-400" />
-                <span>Cetak Lembar</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setSelectedCode(null)}
-                aria-label="Tutup detail wilayah"
-                className="rounded p-1 text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setSelectedCode(null)}
+              aria-label="Tutup detail wilayah"
+              className="rounded p-1 text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
           </div>
 
           {/* Sub-Tab Navigation */}
@@ -772,19 +759,6 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
             </p>
           </div>
         </div>
-      )}
-
-      {/* Factsheet Modal Dialog */}
-      {selectedRecord && (
-        <PrintableVillageFactsheet
-          isOpen={isFactsheetOpen}
-          onClose={() => setIsFactsheetOpen(false)}
-          record={selectedRecord}
-          season={currentSeason}
-          wilayahName={adminLevel === "desa" && selectedRecord.desa ? selectedRecord.desa : selectedRecord.kecamatan}
-          isDesa={adminLevel === "desa"}
-          kecamatanName={selectedRecord.kecamatan}
-        />
       )}
     </div>
   );
