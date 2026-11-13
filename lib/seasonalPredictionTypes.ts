@@ -4,6 +4,28 @@ export type AdminLevel = "kecamatan" | "desa";
 
 export type BasemapId = "jalan" | "satelit" | "topografi";
 
+export interface SeasonCatalogEntry {
+  season_id: string;
+  year: number;
+  label: string;
+  hujan_title: string;
+  kemarau_title: string;
+  is_active: boolean;
+  has_evaluation: boolean;
+  climate_desc: string;
+  akurasi_amh_pct?: number | null;
+  akurasi_sifat_pct?: number | null;
+  rata_selisih_dasarian?: number | null;
+  folder: string;
+}
+
+export interface SeasonCatalog {
+  generated_at: string;
+  total_seasons: number;
+  active_season_id: string;
+  seasons: SeasonCatalogEntry[];
+}
+
 export interface KatamStage {
   nama: string;
   olah_tanah?: string;
@@ -70,6 +92,15 @@ export interface HujanRecord {
   hth_kategori?: string;
   spi_1_bulan?: number;
   spi_1_kategori?: string;
+  // Evaluasi Historis (Khusus Arsip)
+  realisasi_amh_dasarian?: number;
+  realisasi_amh_label?: string;
+  realisasi_perbandingan_terhadap_normal?: string;
+  realisasi_sifat_hujan?: string;
+  realisasi_puncak_bulan?: string;
+  selisih_dasarian_eval?: number;
+  status_evaluasi_amh?: string;
+  status_evaluasi_sifat?: string;
 }
 
 export interface KemarauRecord {
@@ -106,6 +137,15 @@ export interface KemarauRecord {
   hth_kategori?: string;
   spi_1_bulan?: number;
   spi_1_kategori?: string;
+  // Evaluasi Historis (Khusus Arsip)
+  realisasi_amk_dasarian?: number;
+  realisasi_amk_label?: string;
+  realisasi_perbandingan_terhadap_normal?: string;
+  realisasi_sifat_hujan?: string;
+  realisasi_pmk_bulan?: string;
+  selisih_dasarian_eval?: number;
+  status_evaluasi_amk?: string;
+  status_evaluasi_sifat?: string;
 }
 
 export interface RasterOverlayMeta {
@@ -124,12 +164,22 @@ export interface RasterOverlayMeta {
 
 export interface SeasonalDataset {
   metadata: {
+    is_archive?: boolean;
+    season_id?: string;
+    year?: number;
+    title?: string;
     generated_at: string;
     kabupaten: string;
     total_kecamatan: number;
     total_desa?: number;
-    model: string;
-    standard: string;
+    model?: string;
+    standard?: string;
+    evaluasi?: {
+      akurasi_amh_pct: number;
+      akurasi_sifat_hujan_pct: number;
+      rata_selisih_dasarian: number;
+      keterangan_kinerja: string;
+    };
     seasons: {
       hujan: { id: string; title: string; enso_context: string; normal_period: string };
       kemarau: { id: string; title: string; enso_context: string; normal_period: string };

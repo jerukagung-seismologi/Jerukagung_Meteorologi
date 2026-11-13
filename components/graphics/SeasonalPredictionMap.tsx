@@ -7,11 +7,14 @@ import { Switch } from "@/components/ui/switch";
 import { AlertTriangle, Layers, Loader2, MapPin, Search, X } from "lucide-react";
 import KatamTimeline from "./KatamTimeline";
 import CewsAlertCard from "./CewsAlertCard";
+import SeasonEvaluationTab from "./SeasonEvaluationTab";
 import type {
   AdminLevel,
   BasemapId,
   HujanRecord,
   KemarauRecord,
+  SeasonCatalog,
+  SeasonCatalogEntry,
   SeasonalDataset,
   SeasonalVillageDataset,
   SeasonId,
@@ -287,7 +290,11 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
 
   const [loading, setLoading] = useState(true);
   const [loadingDesa, setLoadingDesa] = useState(false);
+  const [loadingSeason, setLoadingSeason] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [catalog, setCatalog] = useState<SeasonCatalogEntry[]>([]);
+  const [selectedSeasonId, setSelectedSeasonId] = useState<string>("2026_2027");
 
   const [adminLevel, setAdminLevel] = useState<AdminLevel>("kecamatan");
   const [activeLayerId, setActiveLayerId] = useState<string | null>("hujan_curah_kelas");
@@ -297,7 +304,7 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
   const [basemap, setBasemap] = useState<BasemapId>("jalan");
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [detailTab, setDetailTab] = useState<"ringkasan" | "katam" | "grafik" | "cews">("ringkasan");
+  const [detailTab, setDetailTab] = useState<"ringkasan" | "evaluasi" | "katam" | "grafik" | "cews">("ringkasan");
 
   useEffect(() => {
     let cancelled = false;
@@ -305,9 +312,10 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
       setLoading(true);
       setError(null);
       try {
-        const [geoRes, predRes] = await Promise.all([
+        const [geoRes, predRes, catRes] = await Promise.all([
           fetch("/data/kebumen_kecamatan.json"),
           fetch("/data/prediksi_musim.json"),
+          fetch("/data/musim_catalog.json").catch(() => null),
         ]);
         if (!geoRes.ok || !predRes.ok) {
           throw new Error("Gagal mengambil data peta atau prakiraan musim.");
@@ -316,6 +324,16 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
         if (cancelled) return;
         setKecGeojson(geoData);
         setKecDataset(predData);
+
+        if (catRes && catRes.ok) {
+          const catData: SeasonCatalog = await catRes.json();
+          if (!cancelled && catData?.seasons) {
+            setCatalog(catData.seasons);
+            if (catData.active_season_id) {
+              setSelectedSeasonId(catData.active_season_id);
+            }
+          }
+        }
 
         // Preload data 460 desa di latar belakang agar perpindahan mode instan
         Promise.all([
@@ -347,6 +365,52 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
     };
   }, []);
 
+  const handleSwitchSeason = async (nextSeasonId: string) => {
+    if (nextSeasonId === selectedSeasonId) return;
+    setLoadingSeason(true);
+    setSelectedCode(null);
+    setSearchQuery("");
+
+    try {
+      const selectedEntry = catalog.find((c) => c.season_id === nextSeasonId);
+      const basePath = selectedEntry?.folder ? `/data/${selectedEntry.folder}` : "/data";
+
+      const predRes = await fetch(`${basePath}/prediksi_musim.json`);
+      if (!predRes.ok) throw new Error("Gagal memuat berkas prakiraan musim.");
+      const predData = await predRes.json();
+      setKecDataset(predData);
+      setSelectedSeasonId(nextSeasonId);
+
+      // Jika user sebelumnya di tab evaluasi tapi musim aktif tidak punya evaluasi, balik ke ringkasan
+      if (selectedEntry?.is_active && detailTab === "evaluasi") {
+        setDetailTab("ringkasan");
+      }
+
+      // Muat data desa untuk musim terpilih
+      if (adminLevel === "desa") {
+        const dPredRes = await fetch(`${basePath}/prediksi_musim_desa.json`);
+        if (dPredRes.ok) {
+          const dPred = await dPredRes.json();
+          setDesaDataset(dPred);
+        }
+      } else {
+        // Latar belakang preload desa
+        fetch(`${basePath}/prediksi_musim_desa.json`)
+          .then(async (res) => {
+            if (res.ok) {
+              const dPred = await res.json();
+              setDesaDataset(dPred);
+            }
+          })
+          .catch(() => {});
+      }
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Gagal mengganti periode musim.");
+    } finally {
+      setLoadingSeason(false);
+    }
+  };
+
   const handleSwitchAdminLevel = async (nextLevel: AdminLevel) => {
     if (nextLevel === adminLevel) return;
     setSelectedCode(null);
@@ -355,9 +419,11 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
     if (nextLevel === "desa" && (!desaGeojson || !desaDataset)) {
       setLoadingDesa(true);
       try {
+        const selectedEntry = catalog.find((c) => c.season_id === selectedSeasonId);
+        const basePath = selectedEntry?.folder ? `/data/${selectedEntry.folder}` : "/data";
         const [dGeoRes, dPredRes] = await Promise.all([
           fetch("/data/kebumen_desa.json"),
-          fetch("/data/prediksi_musim_desa.json"),
+          fetch(`${basePath}/prediksi_musim_desa.json`),
         ]);
         if (!dGeoRes.ok || !dPredRes.ok) {
           throw new Error("Gagal mengambil data batas dan prakiraan per desa.");
@@ -377,6 +443,13 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
     setAdminLevel(nextLevel);
   };
 
+  const activeCatalogEntry = useMemo(
+    () => catalog.find((c) => c.season_id === selectedSeasonId) ?? catalog[0] ?? null,
+    [catalog, selectedSeasonId]
+  );
+
+  const isArchiveSeason = Boolean(activeCatalogEntry && !activeCatalogEntry.is_active);
+
   const activeLayer = useMemo(
     () => CEWS_LAYERS.find((l) => l.id === activeLayerId) ?? null,
     [activeLayerId]
@@ -385,10 +458,22 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
   const currentSeason: SeasonId = activeLayer?.season ?? lastSeason;
 
   const activeRasterOverlay = useMemo(() => {
-    if (!kecDataset?.overlays || activeLayer?.kind !== "raster" || !activeLayer.rasterId) {
+    if (!kecDataset?.overlays || activeLayer?.kind !== "raster") {
       return null;
     }
-    return kecDataset.overlays.find((o) => o.id === activeLayer.rasterId) ?? null;
+    // 1. Coba pencarian langsung berdasarkan rasterId
+    if (activeLayer.rasterId) {
+      const match = kecDataset.overlays.find((o) => o.id === activeLayer.rasterId);
+      if (match) return match;
+    }
+    // 2. Pencarian untuk arsip tahunan (AMH / AMK 250m)
+    if (activeLayer.id === "raster_amh_250m") {
+      return kecDataset.overlays.find((o) => o.season === "hujan" && o.id.startsWith("amh")) ?? null;
+    }
+    if (activeLayer.id === "raster_amk_250m") {
+      return kecDataset.overlays.find((o) => o.season === "kemarau" && o.id.startsWith("amk")) ?? null;
+    }
+    return null;
   }, [kecDataset, activeLayer]);
 
   const currentOpacity = activeLayer ? (opacityByLayer[activeLayer.id] ?? 0.8) : 0.8;
@@ -482,12 +567,21 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
       <div className="pointer-events-none absolute top-2.5 left-14 right-14 z-[450] flex justify-center">
         <div className="pointer-events-auto max-w-2xl rounded-md bg-blue-900/95 dark:bg-slate-900/95 backdrop-blur-md px-4 sm:px-8 py-2 text-center text-white shadow-xl border border-blue-400/40">
           <p className="text-xs sm:text-sm font-extrabold tracking-wider uppercase text-white leading-tight">
-            {activeLayer ? activeLayer.bannerTitle : "PETA DASAR WILAYAH KEBUMEN"}
+            {activeLayer
+              ? `${activeLayer.label.toUpperCase()} • ${
+                  currentSeason === "hujan"
+                    ? (activeCatalogEntry?.hujan_title.toUpperCase() ?? "")
+                    : (activeCatalogEntry?.kemarau_title.toUpperCase() ?? "")
+                }`
+              : "PETA DASAR WILAYAH KEBUMEN"}
           </p>
           <p className="text-[11px] sm:text-xs font-semibold text-blue-100 uppercase tracking-wide mt-0.5">
             KABUPATEN KEBUMEN &bull;{" "}
             {adminLevel === "desa" ? "460 DESA/KELURAHAN (250M)" : "26 KECAMATAN"}
-            {activeSeasonMeta?.enso_context ? ` • ${activeSeasonMeta.enso_context}` : ""}
+            {activeCatalogEntry?.climate_desc ? ` • ${activeCatalogEntry.climate_desc}` : ""}
+            {isArchiveSeason && activeCatalogEntry?.akurasi_amh_pct != null
+              ? ` • Akurasi AMH: ${activeCatalogEntry.akurasi_amh_pct}%`
+              : ""}
           </p>
         </div>
       </div>
@@ -506,6 +600,41 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
 
         {panelOpen && (
           <div className="pointer-events-auto w-[296px] sm:w-[342px] max-h-[calc(100vh-220px)] overflow-y-auto rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xl border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100">
+            {/* Pemilih Periode Musim (Aktif / Arsip 10 Tahun) */}
+            <div className="px-3 py-2.5 border-b border-slate-200 dark:border-slate-700 bg-blue-50/70 dark:bg-slate-800/90">
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="season-select" className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                  <span>📅</span>
+                  <span>Periode Prakiraan</span>
+                </label>
+                {loadingSeason && <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600 dark:text-sky-400" />}
+                {isArchiveSeason && (
+                  <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/30">
+                    Arsip Evaluasi
+                  </span>
+                )}
+              </div>
+              <select
+                id="season-select"
+                value={selectedSeasonId}
+                onChange={(e) => handleSwitchSeason(e.target.value)}
+                className="w-full h-8 px-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-xs cursor-pointer"
+              >
+                {catalog.length > 0 ? (
+                  catalog.map((cat) => (
+                    <option key={cat.season_id} value={cat.season_id}>
+                      {cat.is_active ? `⭐ ${cat.label}` : `📜 Musim ${cat.label} (Evaluasi)`}
+                    </option>
+                  ))
+                ) : (
+                  <option value="2026_2027">2026/2027 (Berjalan)</option>
+                )}
+              </select>
+              <p className="text-[10.5px] text-slate-600 dark:text-slate-300 mt-1 leading-tight">
+                {activeCatalogEntry?.climate_desc || "Prediksi operasional multi-model ensemble."}
+              </p>
+            </div>
+
             {/* Pengalih Tingkat Batas Wilayah (Mode Ganda) */}
             <div className="px-3 py-2.5 bg-slate-100 dark:bg-slate-800/70">
               <div className="flex items-center justify-between mb-1.5">
@@ -585,7 +714,7 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
 
             {/* Grup 1: Musim Hujan */}
             <LayerGroupSection
-              title="Prakiraan Musim Hujan 2026/2027"
+              title={activeCatalogEntry?.hujan_title || "Prakiraan Musim Hujan 2026/2027"}
               layers={hujanLayers}
               activeLayerId={activeLayerId}
               opacityByLayer={opacityByLayer}
@@ -595,7 +724,7 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
 
             {/* Grup 2: Musim Kemarau */}
             <LayerGroupSection
-              title="Prakiraan Musim Kemarau 2026"
+              title={activeCatalogEntry?.kemarau_title || "Prakiraan Musim Kemarau 2026"}
               layers={kemarauLayers}
               activeLayerId={activeLayerId}
               opacityByLayer={opacityByLayer}
@@ -652,8 +781,8 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
                   ? `Kec. ${selectedRecord.kecamatan} · `
                   : ""}
                 {currentSeason === "hujan"
-                  ? "Prakiraan Musim Hujan 2026/2027"
-                  : "Prakiraan Musim Kemarau 2026"}
+                  ? (activeCatalogEntry?.hujan_title ?? "Prakiraan Musim Hujan 2026/2027")
+                  : (activeCatalogEntry?.kemarau_title ?? "Prakiraan Musim Kemarau 2026")}
               </p>
             </div>
             <button
@@ -679,6 +808,19 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
             >
               <span>📋 Ringkasan</span>
             </button>
+            {isArchiveSeason && (
+              <button
+                type="button"
+                onClick={() => setDetailTab("evaluasi")}
+                className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 shrink-0 ${
+                  detailTab === "evaluasi"
+                    ? "bg-indigo-600 text-white font-bold shadow-xs"
+                    : "text-indigo-600 dark:text-indigo-400 font-semibold hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+                }`}
+              >
+                <span>🎯 Evaluasi Akurasi</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setDetailTab("katam")}
@@ -695,7 +837,7 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
               onClick={() => setDetailTab("grafik")}
               className={`px-2.5 py-1 rounded-md transition flex items-center gap-1 shrink-0 ${
                 detailTab === "grafik"
-                  ? "bg-indigo-600 text-white font-bold shadow-xs"
+                  ? "bg-sky-600 text-white font-bold shadow-xs"
                   : "text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
               }`}
             >
@@ -716,6 +858,16 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
 
           {/* Sub-Tab Contents */}
           <div className="pt-2.5 flex-1">
+            {detailTab === "evaluasi" && isArchiveSeason && (
+              <SeasonEvaluationTab
+                record={selectedRecord}
+                season={currentSeason}
+                isDarkMode={isDarkMode}
+                climateDesc={activeCatalogEntry?.climate_desc}
+                year={activeCatalogEntry?.year}
+              />
+            )}
+
             {detailTab === "ringkasan" && (
               <>
                 {currentSeason === "hujan" ? (

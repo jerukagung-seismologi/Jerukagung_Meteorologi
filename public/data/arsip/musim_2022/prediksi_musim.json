@@ -4,7 +4,7 @@
     "season_id": "2022_2023",
     "year": 2022,
     "title": "Arsip Musim Hujan 2022/2023 & Musim Kemarau 2022",
-    "generated_at": "2026-11-13T18:37:03.674024+07:00",
+    "generated_at": "2026-11-13T18:47:48.320955+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "evaluasi": {
@@ -31,7 +31,64 @@
       }
     }
   },
-  "overlays": [],
+  "overlays": [
+    {
+      "id": "amh_dasarian_250m_2022",
+      "season": "hujan",
+      "label": "Awal Musim Hujan 250m (2022/2023)",
+      "unit": "Dasarian",
+      "min": 22.37,
+      "max": 26.93,
+      "minLabel": "22.4 (Agu I)",
+      "maxLabel": "26.9 (Sep III)",
+      "gradientColors": [
+        "#081d58",
+        "#225ea8",
+        "#42b6c4",
+        "#c8e9b4",
+        "#ffffd9"
+      ],
+      "url": "/data/arsip/musim_2022/overlays/amh_dasarian_250m.png",
+      "bounds": [
+        [
+          -7.84692938435426,
+          109.36374312723672
+        ],
+        [
+          -7.430640272145225,
+          109.85489248879333
+        ]
+      ]
+    },
+    {
+      "id": "amk_dasarian_250m_2022",
+      "season": "kemarau",
+      "label": "Awal Musim Kemarau 250m (2022)",
+      "unit": "Dasarian",
+      "min": 13.36,
+      "max": 16.62,
+      "minLabel": "13.4 (Mei I)",
+      "maxLabel": "16.6 (Jun II)",
+      "gradientColors": [
+        "#ffffcc",
+        "#fed976",
+        "#fd8c3c",
+        "#e2191c",
+        "#800026"
+      ],
+      "url": "/data/arsip/musim_2022/overlays/amk_dasarian_250m.png",
+      "bounds": [
+        [
+          -7.84692938435426,
+          109.36374312723672
+        ],
+        [
+          -7.430640272145225,
+          109.85489248879333
+        ]
+      ]
+    }
+  ],
   "hujan": [
     {
       "kecamatan": "Ayah",

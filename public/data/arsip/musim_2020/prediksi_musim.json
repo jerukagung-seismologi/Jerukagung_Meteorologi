@@ -4,7 +4,7 @@
     "season_id": "2020_2021",
     "year": 2020,
     "title": "Arsip Musim Hujan 2020/2021 & Musim Kemarau 2020",
-    "generated_at": "2026-11-13T18:37:04.533013+07:00",
+    "generated_at": "2026-11-13T18:47:51.468490+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "evaluasi": {
@@ -31,7 +31,64 @@
       }
     }
   },
-  "overlays": [],
+  "overlays": [
+    {
+      "id": "amh_dasarian_250m_2020",
+      "season": "hujan",
+      "label": "Awal Musim Hujan 250m (2020/2021)",
+      "unit": "Dasarian",
+      "min": 28.47,
+      "max": 29.54,
+      "minLabel": "28.5 (Okt I)",
+      "maxLabel": "29.5 (Okt III)",
+      "gradientColors": [
+        "#081d58",
+        "#225ea8",
+        "#42b6c4",
+        "#c8e9b4",
+        "#ffffd9"
+      ],
+      "url": "/data/arsip/musim_2020/overlays/amh_dasarian_250m.png",
+      "bounds": [
+        [
+          -7.84692938435426,
+          109.36374312723672
+        ],
+        [
+          -7.430640272145225,
+          109.85489248879333
+        ]
+      ]
+    },
+    {
+      "id": "amk_dasarian_250m_2020",
+      "season": "kemarau",
+      "label": "Awal Musim Kemarau 250m (2020)",
+      "unit": "Dasarian",
+      "min": 9.74,
+      "max": 15.13,
+      "minLabel": "9.7 (Apr I)",
+      "maxLabel": "15.1 (Mei III)",
+      "gradientColors": [
+        "#ffffcc",
+        "#fed976",
+        "#fd8c3c",
+        "#e2191c",
+        "#800026"
+      ],
+      "url": "/data/arsip/musim_2020/overlays/amk_dasarian_250m.png",
+      "bounds": [
+        [
+          -7.84692938435426,
+          109.36374312723672
+        ],
+        [
+          -7.430640272145225,
+          109.85489248879333
+        ]
+      ]
+    }
+  ],
   "hujan": [
     {
       "kecamatan": "Ayah",

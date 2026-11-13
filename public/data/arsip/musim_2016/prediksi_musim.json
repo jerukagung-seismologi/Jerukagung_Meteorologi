@@ -4,7 +4,7 @@
     "season_id": "2016_2017",
     "year": 2016,
     "title": "Arsip Musim Hujan 2016/2017 & Musim Kemarau 2016",
-    "generated_at": "2026-11-13T18:37:09.653611+07:00",
+    "generated_at": "2026-11-13T18:47:57.849946+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "evaluasi": {
@@ -31,7 +31,64 @@
       }
     }
   },
-  "overlays": [],
+  "overlays": [
+    {
+      "id": "amh_dasarian_250m_2016",
+      "season": "hujan",
+      "label": "Awal Musim Hujan 250m (2016/2017)",
+      "unit": "Dasarian",
+      "min": 22.21,
+      "max": 27.44,
+      "minLabel": "22.2 (Agu I)",
+      "maxLabel": "27.4 (Sep III)",
+      "gradientColors": [
+        "#081d58",
+        "#225ea8",
+        "#42b6c4",
+        "#c8e9b4",
+        "#ffffd9"
+      ],
+      "url": "/data/arsip/musim_2016/overlays/amh_dasarian_250m.png",
+      "bounds": [
+        [
+          -7.84692938435426,
+          109.36374312723672
+        ],
+        [
+          -7.430640272145225,
+          109.85489248879333
+        ]
+      ]
+    },
+    {
+      "id": "amk_dasarian_250m_2016",
+      "season": "kemarau",
+      "label": "Awal Musim Kemarau 250m (2016)",
+      "unit": "Dasarian",
+      "min": 11.16,
+      "max": 14.37,
+      "minLabel": "11.2 (Apr II)",
+      "maxLabel": "14.4 (Mei II)",
+      "gradientColors": [
+        "#ffffcc",
+        "#fed976",
+        "#fd8c3c",
+        "#e2191c",
+        "#800026"
+      ],
+      "url": "/data/arsip/musim_2016/overlays/amk_dasarian_250m.png",
+      "bounds": [
+        [
+          -7.84692938435426,
+          109.36374312723672
+        ],
+        [
+          -7.430640272145225,
+          109.85489248879333
+        ]
+      ]
+    }
+  ],
   "hujan": [
     {
       "kecamatan": "Ayah",

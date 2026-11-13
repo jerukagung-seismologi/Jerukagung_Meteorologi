@@ -4,7 +4,7 @@
     "season_id": "2018_2019",
     "year": 2018,
     "title": "Arsip Musim Hujan 2018/2019 & Musim Kemarau 2018",
-    "generated_at": "2026-11-13T18:37:06.209950+07:00",
+    "generated_at": "2026-11-13T18:47:54.825843+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "evaluasi": {
@@ -31,7 +31,64 @@
       }
     }
   },
-  "overlays": [],
+  "overlays": [
+    {
+      "id": "amh_dasarian_250m_2018",
+      "season": "hujan",
+      "label": "Awal Musim Hujan 250m (2018/2019)",
+      "unit": "Dasarian",
+      "min": 28.49,
+      "max": 30.12,
+      "minLabel": "28.5 (Okt I)",
+      "maxLabel": "30.1 (Okt III)",
+      "gradientColors": [
+        "#081d58",
+        "#225ea8",
+        "#42b6c4",
+        "#c8e9b4",
+        "#ffffd9"
+      ],
+      "url": "/data/arsip/musim_2018/overlays/amh_dasarian_250m.png",
+      "bounds": [
+        [
+          -7.84692938435426,
+          109.36374312723672
+        ],
+        [
+          -7.430640272145225,
+          109.85489248879333
+        ]
+      ]
+    },
+    {
+      "id": "amk_dasarian_250m_2018",
+      "season": "kemarau",
+      "label": "Awal Musim Kemarau 250m (2018)",
+      "unit": "Dasarian",
+      "min": 13.3,
+      "max": 18.52,
+      "minLabel": "13.3 (Mei I)",
+      "maxLabel": "18.5 (Jul I)",
+      "gradientColors": [
+        "#ffffcc",
+        "#fed976",
+        "#fd8c3c",
+        "#e2191c",
+        "#800026"
+      ],
+      "url": "/data/arsip/musim_2018/overlays/amk_dasarian_250m.png",
+      "bounds": [
+        [
+          -7.84692938435426,
+          109.36374312723672
+        ],
+        [
+          -7.430640272145225,
+          109.85489248879333
+        ]
+      ]
+    }
+  ],
   "hujan": [
     {
       "kecamatan": "Ayah",
