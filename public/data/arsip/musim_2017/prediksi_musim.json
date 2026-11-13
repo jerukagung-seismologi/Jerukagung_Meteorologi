@@ -4,13 +4,13 @@
     "season_id": "2017_2018",
     "year": 2017,
     "title": "Arsip Musim Hujan 2017/2018 & Musim Kemarau 2017",
-    "generated_at": "2026-11-13T23:13:11.509694+07:00",
+    "generated_at": "2026-11-13T23:41:53.977769+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "evaluasi": {
       "musim_hujan": "2017/2018",
       "musim_kemarau": "2017",
-      "iklim_global": "Kondisi Netral / Normal",
+      "iklim_global": "Netral",
       "akurasi_kategori_amh_pct": 0.0,
       "akurasi_kategori_amk_pct": 42.3,
       "akurasi_sifat_hujan_pct": 19.2,
@@ -21,13 +21,13 @@
       "hujan": {
         "id": "hujan",
         "title": "Musim Hujan 2017/2018",
-        "enso_context": "Kondisi Netral / Normal",
+        "enso_context": "Netral",
         "normal_period": "Normal 2000–2025"
       },
       "kemarau": {
         "id": "kemarau",
         "title": "Musim Kemarau 2017",
-        "enso_context": "Kondisi Netral / Normal",
+        "enso_context": "Netral",
         "normal_period": "Normal 2000–2025"
       }
     }

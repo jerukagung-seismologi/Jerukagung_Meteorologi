@@ -4,13 +4,13 @@
     "season_id": "2018_2019",
     "year": 2018,
     "title": "Arsip Musim Hujan 2018/2019 & Musim Kemarau 2018",
-    "generated_at": "2026-11-13T23:13:04.135132+07:00",
+    "generated_at": "2026-11-13T23:41:30.104979+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "evaluasi": {
       "musim_hujan": "2018/2019",
       "musim_kemarau": "2018",
-      "iklim_global": "El Niño Lemah (Curah hujan cenderung di bawah normal)",
+      "iklim_global": "El Niño Lemah",
       "akurasi_kategori_amh_pct": 76.9,
       "akurasi_kategori_amk_pct": 19.2,
       "akurasi_sifat_hujan_pct": 100.0,
@@ -21,13 +21,13 @@
       "hujan": {
         "id": "hujan",
         "title": "Musim Hujan 2018/2019",
-        "enso_context": "El Niño Lemah (Curah hujan cenderung di bawah normal)",
+        "enso_context": "El Niño Lemah",
         "normal_period": "Normal 2000–2025"
       },
       "kemarau": {
         "id": "kemarau",
         "title": "Musim Kemarau 2018",
-        "enso_context": "El Niño Lemah (Curah hujan cenderung di bawah normal)",
+        "enso_context": "El Niño Lemah",
         "normal_period": "Normal 2000–2025"
       }
     }

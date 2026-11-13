@@ -4,13 +4,13 @@
     "season_id": "2023_2024",
     "year": 2023,
     "title": "Arsip Musim Hujan 2023/2024 & Musim Kemarau 2023",
-    "generated_at": "2026-11-13T23:12:23.157976+07:00",
+    "generated_at": "2026-11-13T23:39:30.723530+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "evaluasi": {
       "musim_hujan": "2023/2024",
       "musim_kemarau": "2023",
-      "iklim_global": "Super El Niño + IOD Positif Kuat (Kemarau ekstrem kering & panjang)",
+      "iklim_global": "Super El Niño",
       "akurasi_kategori_amh_pct": 100.0,
       "akurasi_kategori_amk_pct": 11.5,
       "akurasi_sifat_hujan_pct": 11.5,
@@ -21,13 +21,13 @@
       "hujan": {
         "id": "hujan",
         "title": "Musim Hujan 2023/2024",
-        "enso_context": "Super El Niño + IOD Positif Kuat (Kemarau ekstrem kering & panjang)",
+        "enso_context": "Super El Niño",
         "normal_period": "Normal 2000–2025"
       },
       "kemarau": {
         "id": "kemarau",
         "title": "Musim Kemarau 2023",
-        "enso_context": "Super El Niño + IOD Positif Kuat (Kemarau ekstrem kering & panjang)",
+        "enso_context": "Super El Niño",
         "normal_period": "Normal 2000–2025"
       }
     }

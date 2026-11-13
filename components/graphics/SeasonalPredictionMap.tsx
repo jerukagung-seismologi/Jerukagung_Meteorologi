@@ -655,7 +655,6 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
           <p className="text-[11px] sm:text-xs font-semibold text-blue-100 uppercase tracking-wide mt-0.5">
             KABUPATEN KEBUMEN &bull;{" "}
             {adminLevel === "desa" ? "460 DESA/KELURAHAN (250M)" : "26 KECAMATAN"}
-            {activeCatalogEntry?.climate_desc ? ` • ${activeCatalogEntry.climate_desc}` : ""}
             {isArchiveSeason && activeCatalogEntry?.akurasi_amh_pct != null
               ? ` • Akurasi AMH: ${activeCatalogEntry.akurasi_amh_pct}%`
               : ""}
@@ -707,9 +706,6 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
                   <option value="2026_2027">2026/2027 (Berjalan)</option>
                 )}
               </select>
-              <p className="text-[10.5px] text-slate-600 dark:text-slate-300 mt-1 leading-tight">
-                {activeCatalogEntry?.climate_desc || "Prediksi operasional multi-model ensemble."}
-              </p>
             </div>
 
             {/* Pengalih Tingkat Batas Wilayah (Mode Ganda) */}

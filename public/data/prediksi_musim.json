@@ -1,6 +1,6 @@
 {
   "metadata": {
-    "generated_at": "2026-11-13T23:11:47.911304+07:00",
+    "generated_at": "2026-11-13T23:37:56.760117+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "total_desa": 460,
@@ -10,13 +10,13 @@
       "hujan": {
         "id": "hujan",
         "title": "Musim Hujan 2026/2027",
-        "enso_context": "El Niño Kuat (ONI +2.16)",
+        "enso_context": "El Niño Kuat",
         "normal_period": "Normal 2000–2025"
       },
       "kemarau": {
         "id": "kemarau",
         "title": "Musim Kemarau 2026",
-        "enso_context": "El Niño (ONI +1.85)",
+        "enso_context": "El Niño",
         "normal_period": "Normal 2000–2025"
       }
     }

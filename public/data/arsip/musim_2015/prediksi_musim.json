@@ -4,13 +4,13 @@
     "season_id": "2015_2016",
     "year": 2015,
     "title": "Arsip Musim Hujan 2015/2016 & Musim Kemarau 2015",
-    "generated_at": "2026-11-13T23:13:26.917510+07:00",
+    "generated_at": "2026-11-13T23:42:39.715744+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "evaluasi": {
       "musim_hujan": "2015/2016",
       "musim_kemarau": "2015",
-      "iklim_global": "Super El Niño (Kemarau sangat panjang & ekstrem kering)",
+      "iklim_global": "Super El Niño",
       "akurasi_kategori_amh_pct": 73.1,
       "akurasi_kategori_amk_pct": 84.6,
       "akurasi_sifat_hujan_pct": 0.0,
@@ -21,13 +21,13 @@
       "hujan": {
         "id": "hujan",
         "title": "Musim Hujan 2015/2016",
-        "enso_context": "Super El Niño (Kemarau sangat panjang & ekstrem kering)",
+        "enso_context": "Super El Niño",
         "normal_period": "Normal 2000–2025"
       },
       "kemarau": {
         "id": "kemarau",
         "title": "Musim Kemarau 2015",
-        "enso_context": "Super El Niño (Kemarau sangat panjang & ekstrem kering)",
+        "enso_context": "Super El Niño",
         "normal_period": "Normal 2000–2025"
       }
     }

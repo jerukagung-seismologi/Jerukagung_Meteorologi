@@ -4,13 +4,13 @@
     "season_id": "2019_2020",
     "year": 2019,
     "title": "Arsip Musim Hujan 2019/2020 & Musim Kemarau 2019",
-    "generated_at": "2026-11-13T23:12:56.821916+07:00",
+    "generated_at": "2026-11-13T23:41:06.310078+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "evaluasi": {
       "musim_hujan": "2019/2020",
       "musim_kemarau": "2019",
-      "iklim_global": "IOD Positif Kuat + El Niño Lemah (Kemarau sangat kering di Jawa)",
+      "iklim_global": "El Niño Lemah / IOD+",
       "akurasi_kategori_amh_pct": 100.0,
       "akurasi_kategori_amk_pct": 26.9,
       "akurasi_sifat_hujan_pct": 34.6,
@@ -21,13 +21,13 @@
       "hujan": {
         "id": "hujan",
         "title": "Musim Hujan 2019/2020",
-        "enso_context": "IOD Positif Kuat + El Niño Lemah (Kemarau sangat kering di Jawa)",
+        "enso_context": "El Niño Lemah / IOD+",
         "normal_period": "Normal 2000–2025"
       },
       "kemarau": {
         "id": "kemarau",
         "title": "Musim Kemarau 2019",
-        "enso_context": "IOD Positif Kuat + El Niño Lemah (Kemarau sangat kering di Jawa)",
+        "enso_context": "El Niño Lemah / IOD+",
         "normal_period": "Normal 2000–2025"
       }
     }

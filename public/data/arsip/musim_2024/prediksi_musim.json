@@ -4,13 +4,13 @@
     "season_id": "2024_2025",
     "year": 2024,
     "title": "Arsip Musim Hujan 2024/2025 & Musim Kemarau 2024",
-    "generated_at": "2026-11-13T23:12:15.326255+07:00",
+    "generated_at": "2026-11-13T23:39:04.657642+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "evaluasi": {
       "musim_hujan": "2024/2025",
       "musim_kemarau": "2024",
-      "iklim_global": "Transisi El Niño Menuju Netral",
+      "iklim_global": "Transisi Netral",
       "akurasi_kategori_amh_pct": 65.4,
       "akurasi_kategori_amk_pct": 84.6,
       "akurasi_sifat_hujan_pct": 15.4,
@@ -21,13 +21,13 @@
       "hujan": {
         "id": "hujan",
         "title": "Musim Hujan 2024/2025",
-        "enso_context": "Transisi El Niño Menuju Netral",
+        "enso_context": "Transisi Netral",
         "normal_period": "Normal 2000–2025"
       },
       "kemarau": {
         "id": "kemarau",
         "title": "Musim Kemarau 2024",
-        "enso_context": "Transisi El Niño Menuju Netral",
+        "enso_context": "Transisi Netral",
         "normal_period": "Normal 2000–2025"
       }
     }

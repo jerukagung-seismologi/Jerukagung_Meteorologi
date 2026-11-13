@@ -4,13 +4,13 @@
     "season_id": "2016_2017",
     "year": 2016,
     "title": "Arsip Musim Hujan 2016/2017 & Musim Kemarau 2016",
-    "generated_at": "2026-11-13T23:13:19.034867+07:00",
+    "generated_at": "2026-11-13T23:42:17.764829+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "evaluasi": {
       "musim_hujan": "2016/2017",
       "musim_kemarau": "2016",
-      "iklim_global": "La Niña Lemah / Kemarau Basah (Curah hujan melimpah)",
+      "iklim_global": "La Niña Lemah",
       "akurasi_kategori_amh_pct": 100.0,
       "akurasi_kategori_amk_pct": 76.9,
       "akurasi_sifat_hujan_pct": 0.0,
@@ -21,13 +21,13 @@
       "hujan": {
         "id": "hujan",
         "title": "Musim Hujan 2016/2017",
-        "enso_context": "La Niña Lemah / Kemarau Basah (Curah hujan melimpah)",
+        "enso_context": "La Niña Lemah",
         "normal_period": "Normal 2000–2025"
       },
       "kemarau": {
         "id": "kemarau",
         "title": "Musim Kemarau 2016",
-        "enso_context": "La Niña Lemah / Kemarau Basah (Curah hujan melimpah)",
+        "enso_context": "La Niña Lemah",
         "normal_period": "Normal 2000–2025"
       }
     }

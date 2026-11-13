@@ -4,13 +4,13 @@
     "season_id": "2022_2023",
     "year": 2022,
     "title": "Arsip Musim Hujan 2022/2023 & Musim Kemarau 2022",
-    "generated_at": "2026-11-13T23:12:31.853289+07:00",
+    "generated_at": "2026-11-13T23:39:55.219624+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "evaluasi": {
       "musim_hujan": "2022/2023",
       "musim_kemarau": "2022",
-      "iklim_global": "La Niña Lemah (Tahun 3 Triple-Dip La Niña)",
+      "iklim_global": "La Niña Lemah",
       "akurasi_kategori_amh_pct": 100.0,
       "akurasi_kategori_amk_pct": 53.8,
       "akurasi_sifat_hujan_pct": 84.6,
@@ -21,13 +21,13 @@
       "hujan": {
         "id": "hujan",
         "title": "Musim Hujan 2022/2023",
-        "enso_context": "La Niña Lemah (Tahun 3 Triple-Dip La Niña)",
+        "enso_context": "La Niña Lemah",
         "normal_period": "Normal 2000–2025"
       },
       "kemarau": {
         "id": "kemarau",
         "title": "Musim Kemarau 2022",
-        "enso_context": "La Niña Lemah (Tahun 3 Triple-Dip La Niña)",
+        "enso_context": "La Niña Lemah",
         "normal_period": "Normal 2000–2025"
       }
     }

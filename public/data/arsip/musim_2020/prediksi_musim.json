@@ -4,13 +4,13 @@
     "season_id": "2020_2021",
     "year": 2020,
     "title": "Arsip Musim Hujan 2020/2021 & Musim Kemarau 2020",
-    "generated_at": "2026-11-13T23:12:49.224202+07:00",
+    "generated_at": "2026-11-13T23:40:42.497027+07:00",
     "kabupaten": "Kabupaten Kebumen",
     "total_kecamatan": 26,
     "evaluasi": {
       "musim_hujan": "2020/2021",
       "musim_kemarau": "2020",
-      "iklim_global": "La Niña Moderat (Tahun 1 Triple-Dip La Niña)",
+      "iklim_global": "La Niña Moderat",
       "akurasi_kategori_amh_pct": 100.0,
       "akurasi_kategori_amk_pct": 19.2,
       "akurasi_sifat_hujan_pct": 0.0,
@@ -21,13 +21,13 @@
       "hujan": {
         "id": "hujan",
         "title": "Musim Hujan 2020/2021",
-        "enso_context": "La Niña Moderat (Tahun 1 Triple-Dip La Niña)",
+        "enso_context": "La Niña Moderat",
         "normal_period": "Normal 2000–2025"
       },
       "kemarau": {
         "id": "kemarau",
         "title": "Musim Kemarau 2020",
-        "enso_context": "La Niña Moderat (Tahun 1 Triple-Dip La Niña)",
+        "enso_context": "La Niña Moderat",
         "normal_period": "Normal 2000–2025"
       }
     }
