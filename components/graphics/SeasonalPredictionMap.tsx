@@ -490,6 +490,9 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
     if (activeLayer.id === "raster_amk_250m") {
       return kecDataset.overlays.find((o) => o.season === "kemarau" && o.id.includes("amk")) ?? null;
     }
+    if (activeLayer.id === "raster_kekeringan_250m") {
+      return kecDataset.overlays.find((o) => o.id.includes("kekeringan")) ?? null;
+    }
     return null;
   }, [kecDataset, activeLayer]);
 
