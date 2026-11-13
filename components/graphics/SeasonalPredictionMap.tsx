@@ -680,7 +680,6 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
             <div className="px-3 py-2.5 border-b border-slate-200 dark:border-slate-700 bg-blue-50/70 dark:bg-slate-800/90">
               <div className="flex items-center justify-between mb-1.5">
                 <label htmlFor="season-select" className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
-                  <span>📅</span>
                   <span>Periode Prakiraan</span>
                 </label>
                 {loadingSeason && <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600 dark:text-sky-400" />}
@@ -699,7 +698,7 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
                 {catalog.length > 0 ? (
                   catalog.map((cat) => (
                     <option key={cat.season_id} value={cat.season_id}>
-                      {cat.is_active ? `⭐ ${cat.label}` : `📜 Musim ${cat.label} (Evaluasi)`}
+                      {cat.is_active ? `${cat.label}` : `Musim ${cat.label} (Evaluasi)`}
                     </option>
                   ))
                 ) : (
