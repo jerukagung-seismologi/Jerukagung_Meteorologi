@@ -96,7 +96,7 @@ export default function SeasonalLeafletCanvas({
     const extras = Array.from(present).filter((c) => c && !ordered.includes(c));
     return [...ordered, ...extras].map((cat) => ({
       label: cat,
-      color: colorMap[cat] || "#94a3b8",
+      color: colorMap[cat] || colorMap[cat.split(" ")[0]] || "#94a3b8",
     }));
   }, [records, activeLayer, activeField]);
 
@@ -206,7 +206,9 @@ export default function SeasonalLeafletCanvas({
             ? String((rec as unknown as Record<string, unknown>)[activeField] ?? "")
             : "";
         const fillColor =
-          isPolygonFill && activeLayer?.colorMap ? activeLayer.colorMap[catVal] || "#94a3b8" : "transparent";
+          isPolygonFill && activeLayer?.colorMap
+            ? activeLayer.colorMap[catVal] || activeLayer.colorMap[catVal.split(" ")[0]] || "#94a3b8"
+            : "transparent";
         const isSelected = code === selectedCode;
 
         return {
