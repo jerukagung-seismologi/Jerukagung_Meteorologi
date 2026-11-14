@@ -8,6 +8,7 @@ import { AlertTriangle, Layers, Loader2, MapPin, Search, X } from "lucide-react"
 import KatamTimeline from "./KatamTimeline";
 import CewsAlertCard from "./CewsAlertCard";
 import SeasonEvaluationTab from "./SeasonEvaluationTab";
+import { getActiveSeasonData, getSeasonalCatalog } from "@/lib/SeasonalFirestoreService";
 import type {
   AdminLevel,
   BasemapId,
@@ -380,40 +381,38 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
       setLoading(true);
       setError(null);
       try {
-        const [geoRes, predRes, catRes] = await Promise.all([
+        const [geoRes, seasonData, catData] = await Promise.all([
           fetch("/data/kebumen_kecamatan.json"),
-          fetch("/data/prediksi_musim.json"),
-          fetch("/data/musim_catalog.json").catch(() => null),
+          getActiveSeasonData("2026_2027"),
+          getSeasonalCatalog().catch(() => null),
         ]);
-        if (!geoRes.ok || !predRes.ok) {
+        if (!geoRes.ok || !seasonData?.kecDataset) {
           throw new Error("Gagal mengambil data peta atau prakiraan musim.");
         }
-        const [geoData, predData] = await Promise.all([geoRes.json(), predRes.json()]);
+        const geoData = await geoRes.json();
         if (cancelled) return;
         setKecGeojson(geoData);
-        setKecDataset(predData);
+        setKecDataset(seasonData.kecDataset as any);
 
-        if (catRes && catRes.ok) {
-          const catData: SeasonCatalog = await catRes.json();
-          if (!cancelled && catData?.seasons) {
-            setCatalog(catData.seasons);
-            if (catData.active_season_id) {
-              setSelectedSeasonId(catData.active_season_id);
-            }
+        if (catData?.seasons) {
+          setCatalog(catData.seasons);
+          if (catData.active_season_id) {
+            setSelectedSeasonId(catData.active_season_id);
           }
         }
 
-        // Preload data 460 desa di latar belakang agar perpindahan mode instan
-        Promise.all([
-          fetch("/data/kebumen_desa.json"),
-          fetch("/data/prediksi_musim_desa.json"),
-        ])
-          .then(async ([dGeoRes, dPredRes]) => {
-            if (!dGeoRes.ok || !dPredRes.ok || cancelled) return;
-            const [dGeo, dPred] = await Promise.all([dGeoRes.json(), dPredRes.json()]);
+        // Jika desaDataset sudah disediakan langsung oleh Firestore, gunakan langsung
+        if (seasonData.desaDataset) {
+          setDesaDataset(seasonData.desaDataset as any);
+        }
+
+        // Preload geometri batas 460 desa di latar belakang agar perpindahan mode instan
+        fetch("/data/kebumen_desa.json")
+          .then(async (dGeoRes) => {
+            if (!dGeoRes.ok || cancelled) return;
+            const dGeo = await dGeoRes.json();
             if (!cancelled) {
               setDesaGeojson(dGeo);
-              setDesaDataset(dPred);
             }
           })
           .catch(() => {
@@ -443,34 +442,45 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
       const selectedEntry = catalog.find((c) => c.season_id === nextSeasonId);
       const basePath = selectedEntry?.folder ? `/data/${selectedEntry.folder}` : "/data";
 
-      const predRes = await fetch(`${basePath}/prediksi_musim.json`);
-      if (!predRes.ok) throw new Error("Gagal memuat berkas prakiraan musim.");
-      const predData = await predRes.json();
-      setKecDataset(predData);
+      if (selectedEntry?.is_active) {
+        // Musim aktif dibaca langsung dari Cloud Firestore (dengan fallback lokal)
+        const seasonData = await getActiveSeasonData(nextSeasonId);
+        setKecDataset(seasonData.kecDataset as any);
+        if (seasonData.desaDataset) {
+          setDesaDataset(seasonData.desaDataset as any);
+        }
+      } else {
+        // Arsip historis dibaca dari berkas statis CDN
+        const predRes = await fetch(`${basePath}/prediksi_musim.json`);
+        if (!predRes.ok) throw new Error("Gagal memuat berkas prakiraan musim.");
+        const predData = await predRes.json();
+        setKecDataset(predData);
+
+        // Muat data desa untuk musim terpilih
+        if (adminLevel === "desa") {
+          const dPredRes = await fetch(`${basePath}/prediksi_musim_desa.json`);
+          if (dPredRes.ok) {
+            const dPred = await dPredRes.json();
+            setDesaDataset(dPred);
+          }
+        } else {
+          // Latar belakang preload desa
+          fetch(`${basePath}/prediksi_musim_desa.json`)
+            .then(async (res) => {
+              if (res.ok) {
+                const dPred = await res.json();
+                setDesaDataset(dPred);
+              }
+            })
+            .catch(() => {});
+        }
+      }
+
       setSelectedSeasonId(nextSeasonId);
 
       // Jika user sebelumnya di tab evaluasi tapi musim aktif tidak punya evaluasi, balik ke ringkasan
       if (selectedEntry?.is_active && detailTab === "evaluasi") {
         setDetailTab("ringkasan");
-      }
-
-      // Muat data desa untuk musim terpilih
-      if (adminLevel === "desa") {
-        const dPredRes = await fetch(`${basePath}/prediksi_musim_desa.json`);
-        if (dPredRes.ok) {
-          const dPred = await dPredRes.json();
-          setDesaDataset(dPred);
-        }
-      } else {
-        // Latar belakang preload desa
-        fetch(`${basePath}/prediksi_musim_desa.json`)
-          .then(async (res) => {
-            if (res.ok) {
-              const dPred = await res.json();
-              setDesaDataset(dPred);
-            }
-          })
-          .catch(() => {});
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Gagal mengganti periode musim.");

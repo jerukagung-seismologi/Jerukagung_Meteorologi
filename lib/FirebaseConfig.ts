@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app"
 import { getDatabase, ref, query, set, update, remove, orderByKey, limitToLast, get, onValue, off, startAt, endAt} from "firebase/database"
+import { getFirestore } from "firebase/firestore"
 import { 
   getAuth, 
   onAuthStateChanged, 
@@ -25,10 +26,12 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 const database = getDatabase(app)
+const firestore = getFirestore(app)
 const auth = getAuth(app)
 
 export { 
   database, 
+  firestore,
   auth,
   ref, 
   query, 
