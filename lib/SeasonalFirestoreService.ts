@@ -8,16 +8,22 @@ export interface SeasonDataset {
   kemarau?: any[];
 }
 
+let catalogCache: any = null;
+const seasonDataCache = new Map<string, any>();
+
 /**
  * Mengambil data master katalog musim dari Cloud Firestore
  * dengan fallback otomatis ke /data/musim_catalog.json jika offline/gagal.
  */
 export async function getSeasonalCatalog(): Promise<any> {
+  if (catalogCache) return catalogCache;
+
   try {
     const docRef = doc(firestore, "musim_kebumen", "catalog");
     const snap = await getDoc(docRef);
     if (snap.exists()) {
-      return snap.data();
+      catalogCache = snap.data();
+      return catalogCache;
     }
   } catch (err) {
     console.warn("[Firestore] Gagal memuat katalog dari Firestore, menggunakan fallback JSON:", err);
@@ -26,7 +32,8 @@ export async function getSeasonalCatalog(): Promise<any> {
   // Fallback ke berkas lokal
   const res = await fetch("/data/musim_catalog.json");
   if (!res.ok) throw new Error("Gagal mengambil master katalog musim.");
-  return res.json();
+  catalogCache = await res.json();
+  return catalogCache;
 }
 
 /**
@@ -42,6 +49,17 @@ export async function getSeasonData(
   desaDataset: SeasonDataset;
   source: "firestore" | "fallback_json";
 }> {
+  const cacheKey = `${seasonId}_${folder}`;
+  if (seasonDataCache.has(cacheKey)) {
+    return seasonDataCache.get(cacheKey);
+  }
+
+  let result: {
+    kecDataset: SeasonDataset;
+    desaDataset: SeasonDataset;
+    source: "firestore" | "fallback_json";
+  };
+
   try {
     const seasonDocRef = doc(firestore, "musim_kebumen", seasonId);
     const seasonSnap = await getDoc(seasonDocRef);
@@ -86,11 +104,13 @@ export async function getSeasonData(
           kemarau: kemarauDesa,
         };
 
-        return {
+        result = {
           kecDataset,
           desaDataset,
           source: "firestore",
         };
+        seasonDataCache.set(cacheKey, result);
+        return result;
       }
     }
   } catch (err) {
@@ -108,11 +128,13 @@ export async function getSeasonData(
   const kecDataset = await kecRes.json();
   const desaDataset = desaRes && desaRes.ok ? await desaRes.json() : null;
 
-  return {
+  result = {
     kecDataset,
     desaDataset,
     source: "fallback_json",
   };
+  seasonDataCache.set(cacheKey, result);
+  return result;
 }
 
 /** Alias untuk kompatibilitas ke belakang */
