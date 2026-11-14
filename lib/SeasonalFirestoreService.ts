@@ -30,11 +30,14 @@ export async function getSeasonalCatalog(): Promise<any> {
 }
 
 /**
- * Mengambil data musim aktif (2026/2027) langsung dari Cloud Firestore (Chunked Architecture: 27 reads)
- * dengan rekonstruksi otomatis untuk dataset kecamatan dan dataset 460 desa.
- * Dilengkapi graceful fallback ke berkas JSON lokal (/data/prediksi_musim.json & /data/prediksi_musim_desa.json).
+ * Mengambil data musim (aktif 2026/2027 maupun 11 tahun arsip 2015–2025) langsung dari Cloud Firestore
+ * (Chunked Architecture: 27 reads per musim) dengan rekonstruksi otomatis untuk dataset kecamatan dan 460 desa.
+ * Dilengkapi graceful fallback ganda ke berkas JSON lokal di CDN.
  */
-export async function getActiveSeasonData(seasonId = "2026_2027"): Promise<{
+export async function getSeasonData(
+  seasonId = "2026_2027",
+  folder = ""
+): Promise<{
   kecDataset: SeasonDataset;
   desaDataset: SeasonDataset;
   source: "firestore" | "fallback_json";
@@ -91,16 +94,17 @@ export async function getActiveSeasonData(seasonId = "2026_2027"): Promise<{
       }
     }
   } catch (err) {
-    console.warn("[Firestore] Gagal memuat musim dari Firestore, beralih ke fallback JSON statis:", err);
+    console.warn(`[Firestore] Gagal memuat musim ${seasonId} dari Firestore, beralih ke fallback JSON statis:`, err);
   }
 
   // Fallback ganda ke JSON statis lokal
+  const basePath = folder ? `/data/${folder}` : "/data";
   const [kecRes, desaRes] = await Promise.all([
-    fetch("/data/prediksi_musim.json"),
-    fetch("/data/prediksi_musim_desa.json").catch(() => null),
+    fetch(`${basePath}/prediksi_musim.json`),
+    fetch(`${basePath}/prediksi_musim_desa.json`).catch(() => null),
   ]);
 
-  if (!kecRes.ok) throw new Error("Gagal memuat dataset prediksi musim.");
+  if (!kecRes.ok) throw new Error(`Gagal memuat dataset prediksi musim (${seasonId}).`);
   const kecDataset = await kecRes.json();
   const desaDataset = desaRes && desaRes.ok ? await desaRes.json() : null;
 
@@ -110,3 +114,6 @@ export async function getActiveSeasonData(seasonId = "2026_2027"): Promise<{
     source: "fallback_json",
   };
 }
+
+/** Alias untuk kompatibilitas ke belakang */
+export const getActiveSeasonData = getSeasonData;

@@ -8,7 +8,7 @@ import { AlertTriangle, Layers, Loader2, MapPin, Search, X } from "lucide-react"
 import KatamTimeline from "./KatamTimeline";
 import CewsAlertCard from "./CewsAlertCard";
 import SeasonEvaluationTab from "./SeasonEvaluationTab";
-import { getActiveSeasonData, getSeasonalCatalog } from "@/lib/SeasonalFirestoreService";
+import { getSeasonData, getSeasonalCatalog } from "@/lib/SeasonalFirestoreService";
 import type {
   AdminLevel,
   BasemapId,
@@ -440,40 +440,11 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
 
     try {
       const selectedEntry = catalog.find((c) => c.season_id === nextSeasonId);
-      const basePath = selectedEntry?.folder ? `/data/${selectedEntry.folder}` : "/data";
-
-      if (selectedEntry?.is_active) {
-        // Musim aktif dibaca langsung dari Cloud Firestore (dengan fallback lokal)
-        const seasonData = await getActiveSeasonData(nextSeasonId);
-        setKecDataset(seasonData.kecDataset as any);
-        if (seasonData.desaDataset) {
-          setDesaDataset(seasonData.desaDataset as any);
-        }
-      } else {
-        // Arsip historis dibaca dari berkas statis CDN
-        const predRes = await fetch(`${basePath}/prediksi_musim.json`);
-        if (!predRes.ok) throw new Error("Gagal memuat berkas prakiraan musim.");
-        const predData = await predRes.json();
-        setKecDataset(predData);
-
-        // Muat data desa untuk musim terpilih
-        if (adminLevel === "desa") {
-          const dPredRes = await fetch(`${basePath}/prediksi_musim_desa.json`);
-          if (dPredRes.ok) {
-            const dPred = await dPredRes.json();
-            setDesaDataset(dPred);
-          }
-        } else {
-          // Latar belakang preload desa
-          fetch(`${basePath}/prediksi_musim_desa.json`)
-            .then(async (res) => {
-              if (res.ok) {
-                const dPred = await res.json();
-                setDesaDataset(dPred);
-              }
-            })
-            .catch(() => {});
-        }
+      // Memuat musim terpilih dari Cloud Firestore (dengan fallback instan ke CDN lokal)
+      const seasonData = await getSeasonData(nextSeasonId, selectedEntry?.folder || "");
+      setKecDataset(seasonData.kecDataset as any);
+      if (seasonData.desaDataset) {
+        setDesaDataset(seasonData.desaDataset as any);
       }
 
       setSelectedSeasonId(nextSeasonId);
