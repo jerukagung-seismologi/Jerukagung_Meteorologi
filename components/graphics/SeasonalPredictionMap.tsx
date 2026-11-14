@@ -8,7 +8,7 @@ import { AlertTriangle, Layers, Loader2, MapPin, Search, X } from "lucide-react"
 import KatamTimeline from "./KatamTimeline";
 import CewsAlertCard from "./CewsAlertCard";
 import SeasonEvaluationTab from "./SeasonEvaluationTab";
-import { getSeasonData, getSeasonalCatalog } from "@/lib/SeasonalFirestoreService";
+import { getSeasonData, getSeasonalCatalog, getActiveSeasonData } from "@/lib/SeasonalFirestoreService";
 import type {
   AdminLevel,
   BasemapId,
@@ -383,7 +383,7 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
       try {
         const [geoRes, seasonData, catData] = await Promise.all([
           fetch("/data/kebumen_kecamatan.json"),
-          getActiveSeasonData("2026_2027"),
+          getSeasonData("2026_2027"),
           getSeasonalCatalog().catch(() => null),
         ]);
         if (!geoRes.ok || !seasonData?.kecDataset) {
