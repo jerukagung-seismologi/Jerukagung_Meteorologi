@@ -32,9 +32,13 @@ export async function getSeasonalCatalog(kabupaten: string = "kebumen"): Promise
     console.warn(`[Firestore] Gagal memuat katalog ${kab} dari Firestore, menggunakan fallback JSON:`, err);
   }
 
-  // Fallback ke berkas lokal
-  const fallbackPath = kab === "purworejo" ? "/data/purworejo/musim_catalog.json" : "/data/musim_catalog.json";
-  const res = await fetch(fallbackPath);
+  // Fallback ke berkas lokal modular per kabupaten
+  const fallbackPath = `/data/${kab}/musim_catalog.json`;
+  let res = await fetch(fallbackPath);
+  if (!res.ok) {
+    // Backward compatibility fallback jika file berada di root
+    res = await fetch("/data/musim_catalog.json");
+  }
   if (!res.ok) throw new Error(`Gagal mengambil master katalog musim untuk ${kab}.`);
   const data = await res.json();
   catalogCache.set(kab, data);
@@ -126,8 +130,8 @@ export async function getSeasonData(
     console.warn(`[Firestore] Gagal memuat musim ${seasonId} (${kab}) dari Firestore, beralih ke fallback JSON statis:`, err);
   }
 
-  // Fallback ganda ke JSON statis lokal
-  const kabBase = kab === "purworejo" ? "/data/purworejo" : "/data";
+  // Fallback ganda ke JSON statis lokal modular per kabupaten
+  const kabBase = `/data/${kab}`;
   const basePath = folder ? `${kabBase}/${folder}` : kabBase;
   const [kecRes, desaRes] = await Promise.all([
     fetch(`${basePath}/prediksi_musim.json`),
