@@ -380,6 +380,76 @@ export const KABUPATEN_CONFIGS: KabupatenConfig[] = [
     totalKec: 16,
     totalDesa: 494,
   },
+  {
+    id: "wonosobo",
+    name: "Kabupaten Wonosobo",
+    shortName: "Wonosobo",
+    code: "33.07",
+    kecGeoUrl: "/data/wonosobo/wonosobo_kecamatan.json",
+    desaGeoUrl: "/data/wonosobo/wonosobo_desa.json",
+    totalKec: 15,
+    totalDesa: 265,
+  },
+  {
+    id: "magelang",
+    name: "Kabupaten Magelang",
+    shortName: "Magelang",
+    code: "33.08",
+    kecGeoUrl: "/data/magelang/magelang_kecamatan.json",
+    desaGeoUrl: "/data/magelang/magelang_desa.json",
+    totalKec: 21,
+    totalDesa: 372,
+  },
+  {
+    id: "kota_magelang",
+    name: "Kota Magelang",
+    shortName: "Kota Magelang",
+    code: "33.71",
+    kecGeoUrl: "/data/kota_magelang/kota_magelang_kecamatan.json",
+    desaGeoUrl: "/data/kota_magelang/kota_magelang_desa.json",
+    totalKec: 3,
+    totalDesa: 17,
+  },
+  {
+    id: "temanggung",
+    name: "Kabupaten Temanggung",
+    shortName: "Temanggung",
+    code: "33.23",
+    kecGeoUrl: "/data/temanggung/temanggung_kecamatan.json",
+    desaGeoUrl: "/data/temanggung/temanggung_desa.json",
+    totalKec: 20,
+    totalDesa: 289,
+  },
+  {
+    id: "klaten",
+    name: "Kabupaten Klaten",
+    shortName: "Klaten",
+    code: "33.10",
+    kecGeoUrl: "/data/klaten/klaten_kecamatan.json",
+    desaGeoUrl: "/data/klaten/klaten_desa.json",
+    totalKec: 26,
+    totalDesa: 401,
+  },
+  {
+    id: "madiun",
+    name: "Kabupaten Madiun",
+    shortName: "Madiun",
+    code: "35.19",
+    kecGeoUrl: "/data/madiun/madiun_kecamatan.json",
+    desaGeoUrl: "/data/madiun/madiun_desa.json",
+    totalKec: 15,
+    totalDesa: 206,
+  },
+  {
+    id: "kota_madiun",
+    name: "Kota Madiun",
+    shortName: "Kota Madiun",
+    code: "35.77",
+    kecGeoUrl: "/data/kota_madiun/kota_madiun_kecamatan.json",
+    desaGeoUrl: "/data/kota_madiun/kota_madiun_desa.json",
+    totalKec: 3,
+    totalDesa: 27,
+  },
 ];
 
 interface SeasonalPredictionMapProps {
@@ -834,12 +904,22 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
                 onChange={(e) => setSelectedKabupaten(e.target.value)}
                 className="w-full h-8 px-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs font-bold text-blue-900 dark:text-sky-300 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-xs cursor-pointer"
               >
-                <option value="all">Semua</option>
-                {KABUPATEN_CONFIGS.map((kab) => (
-                  <option key={kab.id} value={kab.id}>
-                    {kab.name}
-                  </option>
-                ))}
+                <option value="all">Semua Wilayah</option>
+                <optgroup label="Wilayah Kedu (Jawa Tengah)">
+                  <option value="kebumen">Kabupaten Kebumen</option>
+                  <option value="purworejo">Kabupaten Purworejo</option>
+                  <option value="wonosobo">Kabupaten Wonosobo</option>
+                  <option value="magelang">Kabupaten Magelang</option>
+                  <option value="kota_magelang">Kota Magelang</option>
+                  <option value="temanggung">Kabupaten Temanggung</option>
+                </optgroup>
+                <optgroup label="Solo Raya">
+                  <option value="klaten">Kabupaten Klaten</option>
+                </optgroup>
+                <optgroup label="Jawa Timur">
+                  <option value="madiun">Kabupaten Madiun</option>
+                  <option value="kota_madiun">Kota Madiun</option>
+                </optgroup>
               </select>
             </div>
 
