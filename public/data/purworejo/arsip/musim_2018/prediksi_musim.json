@@ -4,7 +4,7 @@
     "season_id": "2018_2019",
     "year": 2018,
     "title": "Arsip Musim Hujan 2018/2019 & Musim Kemarau 2018 (Purworejo)",
-    "generated_at": "2026-11-16T11:37:36.871767+07:00",
+    "generated_at": "2026-11-16T12:19:10.574862+07:00",
     "kabupaten": "Kabupaten Purworejo",
     "total_kecamatan": 16,
     "evaluasi": {
@@ -161,7 +161,7 @@
         "#e2191c",
         "#800026"
       ],
-      "url": "/data/arsip/musim_2018/overlays/kerawanan_kekeringan_250m.png",
+      "url": "/data/purworejo/arsip/musim_2018/overlays/kerawanan_kekeringan_250m.png",
       "bounds": [
         [
           -7.916441280841492,

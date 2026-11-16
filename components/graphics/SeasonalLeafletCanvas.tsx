@@ -18,7 +18,7 @@ interface SeasonalLeafletCanvasProps {
   records: (HujanRecord | KemarauRecord)[];
   adminLevel: AdminLevel;
   activeLayer: UnifiedLayerDef | null;
-  activeRasterOverlay: RasterOverlayMeta | null;
+  activeRasterOverlay: RasterOverlayMeta | RasterOverlayMeta[] | null;
   basemap: BasemapId;
   opacity: number;
   selectedCode: string | null;
@@ -67,7 +67,7 @@ export default function SeasonalLeafletCanvas({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
-  const rasterLayerRef = useRef<L.ImageOverlay | null>(null);
+  const rasterLayersRef = useRef<L.ImageOverlay[]>([]);
   const geoLayerRef = useRef<L.GeoJSON | null>(null);
   const boundsRef = useRef<L.LatLngBounds | null>(null);
   const prevGeojsonRef = useRef<GeoJSON.FeatureCollection | null>(null);
@@ -162,7 +162,7 @@ export default function SeasonalLeafletCanvas({
       map.remove();
       mapRef.current = null;
       tileLayerRef.current = null;
-      rasterLayerRef.current = null;
+      rasterLayersRef.current = [];
       geoLayerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -191,18 +191,23 @@ export default function SeasonalLeafletCanvas({
     const map = mapRef.current;
     if (!map) return;
 
-    if (rasterLayerRef.current) {
-      map.removeLayer(rasterLayerRef.current);
-      rasterLayerRef.current = null;
+    if (rasterLayersRef.current.length > 0) {
+      rasterLayersRef.current.forEach((lyr) => map.removeLayer(lyr));
+      rasterLayersRef.current = [];
     }
 
     if (activeLayer?.kind === "raster" && activeRasterOverlay) {
-      const overlay = L.imageOverlay(activeRasterOverlay.url, activeRasterOverlay.bounds, {
-        opacity,
-        interactive: false,
-        pane: "raster250mPane",
-      }).addTo(map);
-      rasterLayerRef.current = overlay;
+      const overlays = Array.isArray(activeRasterOverlay) ? activeRasterOverlay : [activeRasterOverlay];
+      overlays.forEach((meta) => {
+        if (meta?.url && meta?.bounds) {
+          const overlay = L.imageOverlay(meta.url, meta.bounds, {
+            opacity,
+            interactive: false,
+            pane: "raster250mPane",
+          }).addTo(map);
+          rasterLayersRef.current.push(overlay);
+        }
+      });
     }
   }, [activeLayer, activeRasterOverlay, opacity]);
 
@@ -346,21 +351,29 @@ export default function SeasonalLeafletCanvas({
       {activeLayer && (
         <div className="absolute bottom-6 right-3 z-[500] min-w-[170px] max-w-[245px] rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-300 dark:border-slate-700 shadow-xl p-3 text-xs">
           {activeLayer.kind === "raster" && activeRasterOverlay ? (
-            <div className="space-y-2">
-              <p className="font-bold text-xs leading-tight text-slate-900 dark:text-slate-100">
-                {activeRasterOverlay.label}
-              </p>
-              <div
-                className="h-3.5 w-48 rounded border border-slate-400 dark:border-slate-600 shadow-xs"
-                style={{
-                  background: `linear-gradient(to right, ${activeRasterOverlay.gradientColors.join(", ")})`,
-                }}
-              />
-              <div className="flex justify-between text-[11px] font-bold text-slate-700 dark:text-slate-200">
-                <span>{activeRasterOverlay.minLabel}</span>
-                <span>{activeRasterOverlay.maxLabel}</span>
-              </div>
-            </div>
+            (() => {
+              const primaryOverlay = Array.isArray(activeRasterOverlay)
+                ? activeRasterOverlay[0]
+                : activeRasterOverlay;
+              if (!primaryOverlay) return null;
+              return (
+                <div className="space-y-2">
+                  <p className="font-bold text-xs leading-tight text-slate-900 dark:text-slate-100">
+                    {primaryOverlay.label}
+                  </p>
+                  <div
+                    className="h-3.5 w-48 rounded border border-slate-400 dark:border-slate-600 shadow-xs"
+                    style={{
+                      background: `linear-gradient(to right, ${primaryOverlay.gradientColors.join(", ")})`,
+                    }}
+                  />
+                  <div className="flex justify-between text-[11px] font-bold text-slate-700 dark:text-slate-200">
+                    <span>{primaryOverlay.minLabel}</span>
+                    <span>{primaryOverlay.maxLabel}</span>
+                  </div>
+                </div>
+              );
+            })()
           ) : legendItems.length > 0 ? (
             <div className="space-y-2">
               <p className="font-bold text-xs leading-tight text-slate-900 dark:text-slate-100">

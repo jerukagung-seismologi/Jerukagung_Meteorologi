@@ -4,7 +4,7 @@
     "season_id": "2004_2005",
     "year": 2004,
     "title": "Arsip Musim Hujan 2004/2005 & Musim Kemarau 2004 (Purworejo)",
-    "generated_at": "2026-11-16T11:40:03.366882+07:00",
+    "generated_at": "2026-11-16T12:20:46.385209+07:00",
     "kabupaten": "Kabupaten Purworejo",
     "total_kecamatan": 16,
     "evaluasi": {
@@ -161,7 +161,7 @@
         "#e2191c",
         "#800026"
       ],
-      "url": "/data/arsip/musim_2004/overlays/kerawanan_kekeringan_250m.png",
+      "url": "/data/purworejo/arsip/musim_2004/overlays/kerawanan_kekeringan_250m.png",
       "bounds": [
         [
           -7.916441280841492,

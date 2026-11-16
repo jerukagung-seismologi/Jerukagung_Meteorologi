@@ -4,7 +4,7 @@
     "season_id": "2006_2007",
     "year": 2006,
     "title": "Arsip Musim Hujan 2006/2007 & Musim Kemarau 2006 (Purworejo)",
-    "generated_at": "2026-11-16T11:39:42.777671+07:00",
+    "generated_at": "2026-11-16T12:20:32.557874+07:00",
     "kabupaten": "Kabupaten Purworejo",
     "total_kecamatan": 16,
     "evaluasi": {
@@ -161,7 +161,7 @@
         "#e2191c",
         "#800026"
       ],
-      "url": "/data/arsip/musim_2006/overlays/kerawanan_kekeringan_250m.png",
+      "url": "/data/purworejo/arsip/musim_2006/overlays/kerawanan_kekeringan_250m.png",
       "bounds": [
         [
           -7.916441280841492,

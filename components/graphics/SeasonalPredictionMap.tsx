@@ -20,6 +20,7 @@ import type {
   SeasonalVillageDataset,
   SeasonId,
   UnifiedLayerDef,
+  RasterOverlayMeta,
 } from "@/lib/seasonalPredictionTypes";
 
 const SeasonalLeafletCanvas = dynamic(() => import("./SeasonalLeafletCanvas"), {
@@ -347,6 +348,40 @@ const BASEMAP_OPTIONS: { id: BasemapId; label: string }[] = [
   { id: "topografi", label: "Topografi" },
 ];
 
+export interface KabupatenConfig {
+  id: string;
+  name: string;
+  shortName: string;
+  code: string;
+  kecGeoUrl: string;
+  desaGeoUrl: string;
+  totalKec: number;
+  totalDesa: number;
+}
+
+export const KABUPATEN_CONFIGS: KabupatenConfig[] = [
+  {
+    id: "kebumen",
+    name: "Kabupaten Kebumen",
+    shortName: "Kebumen",
+    code: "33.05",
+    kecGeoUrl: "/data/kebumen_kecamatan.json",
+    desaGeoUrl: "/data/kebumen_desa.json",
+    totalKec: 26,
+    totalDesa: 460,
+  },
+  {
+    id: "purworejo",
+    name: "Kabupaten Purworejo",
+    shortName: "Purworejo",
+    code: "33.06",
+    kecGeoUrl: "/data/purworejo/purworejo_kecamatan.json",
+    desaGeoUrl: "/data/purworejo/purworejo_desa.json",
+    totalKec: 16,
+    totalDesa: 494,
+  },
+];
+
 interface SeasonalPredictionMapProps {
   isDarkMode?: boolean;
 }
@@ -364,7 +399,7 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
 
   const [catalog, setCatalog] = useState<SeasonCatalogEntry[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>("2026_2027");
-  const [selectedKabupaten, setSelectedKabupaten] = useState<"kebumen" | "purworejo">("kebumen");
+  const [selectedKabupaten, setSelectedKabupaten] = useState<string>("all");
 
   const [adminLevel, setAdminLevel] = useState<AdminLevel>("kecamatan");
   const [activeLayerId, setActiveLayerId] = useState<string | null>("hujan_curah_kelas");
@@ -386,26 +421,49 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
       setDesaGeojson(null);
       setDesaDataset(null);
 
-      const kecGeoUrl = selectedKabupaten === "purworejo" 
-        ? "/data/purworejo/purworejo_kecamatan.json" 
-        : "/data/kebumen_kecamatan.json";
-      const desaGeoUrl = selectedKabupaten === "purworejo" 
-        ? "/data/purworejo/purworejo_desa.json" 
-        : "/data/kebumen_desa.json";
+      const targetKabupatens = selectedKabupaten === "all"
+        ? KABUPATEN_CONFIGS
+        : KABUPATEN_CONFIGS.filter((k) => k.id === selectedKabupaten);
 
       try {
-        const [geoRes, seasonData, catData] = await Promise.all([
-          fetch(kecGeoUrl),
-          getSeasonData("2026_2027", "", selectedKabupaten),
-          getSeasonalCatalog(selectedKabupaten).catch(() => null),
+        // 1. Fetch GeoJSON Kecamatan
+        const geoResults = await Promise.all(
+          targetKabupatens.map(async (k) => {
+            const res = await fetch(k.kecGeoUrl);
+            if (!res.ok) throw new Error(`Gagal memuat batas kecamatan ${k.name}`);
+            return res.json();
+          })
+        );
+        const mergedKecGeo: GeoJSON.FeatureCollection = {
+          type: "FeatureCollection",
+          features: geoResults.flatMap((g) => g.features || []),
+        };
+
+        // 2. Fetch Season Data & Catalog
+        const [catData, ...seasonDataResults] = await Promise.all([
+          getSeasonalCatalog(targetKabupatens[0]?.id || "kebumen").catch(() => null),
+          ...targetKabupatens.map((k) => getSeasonData("2026_2027", "", k.id)),
         ]);
-        if (!geoRes.ok || !seasonData?.kecDataset) {
-          throw new Error(`Gagal mengambil data peta atau prakiraan musim (${selectedKabupaten}).`);
-        }
-        const geoData = await geoRes.json();
+
         if (cancelled) return;
-        setKecGeojson(geoData);
-        setKecDataset(seasonData.kecDataset as any);
+
+        setKecGeojson(mergedKecGeo);
+
+        const mergedHujan = seasonDataResults.flatMap((s) => s.kecDataset?.hujan || []);
+        const mergedKemarau = seasonDataResults.flatMap((s) => s.kecDataset?.kemarau || []);
+        const mergedOverlays = seasonDataResults.flatMap((s) => s.kecDataset?.overlays || []);
+
+        const mergedKecDataset: SeasonalDataset = {
+          metadata: {
+            ...seasonDataResults[0]?.kecDataset?.metadata,
+            kabupaten: selectedKabupaten === "all" ? "Semua Wilayah" : targetKabupatens[0]?.name,
+            total_kecamatan: targetKabupatens.reduce((acc, k) => acc + k.totalKec, 0),
+          },
+          overlays: mergedOverlays,
+          hujan: mergedHujan,
+          kemarau: mergedKemarau,
+        };
+        setKecDataset(mergedKecDataset as any);
 
         if (catData?.seasons) {
           setCatalog(catData.seasons);
@@ -414,23 +472,36 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
           }
         }
 
-        // Jika desaDataset sudah disediakan langsung oleh Firestore, gunakan langsung
-        if (seasonData.desaDataset) {
-          setDesaDataset(seasonData.desaDataset as any);
+        const hasDesa = seasonDataResults.some((s) => Boolean(s.desaDataset));
+        if (hasDesa) {
+          const mergedDesaHujan = seasonDataResults.flatMap((s) => s.desaDataset?.hujan || []);
+          const mergedDesaKemarau = seasonDataResults.flatMap((s) => s.desaDataset?.kemarau || []);
+          setDesaDataset({
+            metadata: mergedKecDataset.metadata,
+            hujan: mergedDesaHujan,
+            kemarau: mergedDesaKemarau,
+          } as any);
         }
 
         // Preload geometri batas desa di latar belakang agar perpindahan mode instan
-        fetch(desaGeoUrl)
-          .then(async (dGeoRes) => {
-            if (!dGeoRes.ok || cancelled) return;
-            const dGeo = await dGeoRes.json();
-            if (!cancelled) {
-              setDesaGeojson(dGeo);
+        Promise.all(
+          targetKabupatens.map(async (k) => {
+            const res = await fetch(k.desaGeoUrl);
+            if (!res.ok) return null;
+            return res.json();
+          })
+        )
+          .then((dGeos) => {
+            if (cancelled) return;
+            const valid = dGeos.filter(Boolean);
+            if (valid.length > 0) {
+              setDesaGeojson({
+                type: "FeatureCollection",
+                features: valid.flatMap((g) => g.features || []),
+              });
             }
           })
-          .catch(() => {
-            // Akan dimuat ulang saat user berpindah ke mode Desa
-          });
+          .catch(() => {});
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : "Terjadi kesalahan saat memuat peta.");
@@ -453,16 +524,45 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
 
     try {
       const selectedEntry = catalog.find((c) => c.season_id === nextSeasonId);
-      // Memuat musim terpilih dari Cloud Firestore (dengan fallback instan ke CDN lokal)
-      const seasonData = await getSeasonData(nextSeasonId, selectedEntry?.folder || "", selectedKabupaten);
-      setKecDataset(seasonData.kecDataset as any);
-      if (seasonData.desaDataset) {
-        setDesaDataset(seasonData.desaDataset as any);
+      const folder = selectedEntry?.folder || "";
+
+      const targetKabupatens = selectedKabupaten === "all"
+        ? KABUPATEN_CONFIGS
+        : KABUPATEN_CONFIGS.filter((k) => k.id === selectedKabupaten);
+
+      const seasonDataResults = await Promise.all(
+        targetKabupatens.map((k) => getSeasonData(nextSeasonId, folder, k.id))
+      );
+
+      const mergedHujan = seasonDataResults.flatMap((s) => s.kecDataset?.hujan || []);
+      const mergedKemarau = seasonDataResults.flatMap((s) => s.kecDataset?.kemarau || []);
+      const mergedOverlays = seasonDataResults.flatMap((s) => s.kecDataset?.overlays || []);
+
+      const mergedKecDataset: SeasonalDataset = {
+        metadata: {
+          ...seasonDataResults[0]?.kecDataset?.metadata,
+          kabupaten: selectedKabupaten === "all" ? "Semua Wilayah" : targetKabupatens[0]?.name,
+          total_kecamatan: targetKabupatens.reduce((acc, k) => acc + k.totalKec, 0),
+        },
+        overlays: mergedOverlays,
+        hujan: mergedHujan,
+        kemarau: mergedKemarau,
+      };
+      setKecDataset(mergedKecDataset as any);
+
+      const hasDesa = seasonDataResults.some((s) => Boolean(s.desaDataset));
+      if (hasDesa) {
+        const mergedDesaHujan = seasonDataResults.flatMap((s) => s.desaDataset?.hujan || []);
+        const mergedDesaKemarau = seasonDataResults.flatMap((s) => s.desaDataset?.kemarau || []);
+        setDesaDataset({
+          metadata: mergedKecDataset.metadata,
+          hujan: mergedDesaHujan,
+          kemarau: mergedDesaKemarau,
+        } as any);
       }
 
       setSelectedSeasonId(nextSeasonId);
 
-      // Jika user sebelumnya di tab evaluasi tapi musim aktif tidak punya evaluasi, balik ke ringkasan
       if (selectedEntry?.is_active && detailTab === "evaluasi") {
         setDetailTab("ringkasan");
       }
@@ -482,22 +582,38 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
       setLoadingDesa(true);
       try {
         const selectedEntry = catalog.find((c) => c.season_id === selectedSeasonId);
-        const kabBase = selectedKabupaten === "purworejo" ? "/data/purworejo" : "/data";
-        const basePath = selectedEntry?.folder ? `${kabBase}/${selectedEntry.folder}` : kabBase;
-        const desaGeoUrl = selectedKabupaten === "purworejo" 
-          ? "/data/purworejo/purworejo_desa.json" 
-          : "/data/kebumen_desa.json";
+        const folder = selectedEntry?.folder || "";
 
-        const [dGeoRes, dPredRes] = await Promise.all([
-          desaGeojson ? Promise.resolve({ ok: true, json: () => Promise.resolve(desaGeojson) } as any) : fetch(desaGeoUrl),
-          desaDataset ? Promise.resolve({ ok: true, json: () => Promise.resolve(desaDataset) } as any) : fetch(`${basePath}/prediksi_musim_desa.json`),
-        ]);
-        if (!dGeoRes.ok || !dPredRes.ok) {
-          throw new Error("Gagal mengambil data batas dan prakiraan per desa.");
+        const targetKabupatens = selectedKabupaten === "all"
+          ? KABUPATEN_CONFIGS
+          : KABUPATEN_CONFIGS.filter((k) => k.id === selectedKabupaten);
+
+        if (!desaGeojson) {
+          const dGeos = await Promise.all(
+            targetKabupatens.map(async (k) => {
+              const res = await fetch(k.desaGeoUrl);
+              if (!res.ok) throw new Error(`Gagal memuat batas desa ${k.name}`);
+              return res.json();
+            })
+          );
+          setDesaGeojson({
+            type: "FeatureCollection",
+            features: dGeos.flatMap((g) => g.features || []),
+          });
         }
-        const [dGeo, dPred] = await Promise.all([dGeoRes.json(), dPredRes.json()]);
-        setDesaGeojson(dGeo);
-        setDesaDataset(dPred);
+
+        if (!desaDataset) {
+          const seasonDataResults = await Promise.all(
+            targetKabupatens.map((k) => getSeasonData(selectedSeasonId, folder, k.id))
+          );
+          const mergedDesaHujan = seasonDataResults.flatMap((s) => s.desaDataset?.hujan || []);
+          const mergedDesaKemarau = seasonDataResults.flatMap((s) => s.desaDataset?.kemarau || []);
+          setDesaDataset({
+            metadata: kecDataset?.metadata,
+            hujan: mergedDesaHujan,
+            kemarau: mergedDesaKemarau,
+          } as any);
+        }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Gagal memuat data desa.");
         setLoadingDesa(false);
@@ -528,29 +644,33 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
     if (!kecDataset?.overlays || activeLayer?.kind !== "raster") {
       return null;
     }
+    const targetOverlays = kecDataset.overlays;
+    const matches: RasterOverlayMeta[] = [];
+
     // 1. Coba pencarian langsung berdasarkan rasterId
     const rid = activeLayer.rasterId;
     if (rid) {
-      const match = kecDataset.overlays.find((o) => o.id === rid || o.id.startsWith(rid));
-      if (match) return match;
+      const found = targetOverlays.filter((o) => o.id === rid || o.id.startsWith(rid));
+      if (found.length > 0) matches.push(...found);
     }
-    // 2. Pencarian untuk arsip tahunan (fallback nama/season)
-    if (activeLayer.id === "raster_total_hujan_mh") {
-      return kecDataset.overlays.find((o) => o.season === "hujan" && o.id.includes("total_hujan_mh")) ?? null;
+
+    // 2. Fallback pencarian untuk arsip tahunan (fallback nama/season)
+    if (matches.length === 0) {
+      if (activeLayer.id === "raster_total_hujan_mh") {
+        matches.push(...targetOverlays.filter((o) => o.season === "hujan" && o.id.includes("total_hujan_mh")));
+      } else if (activeLayer.id === "raster_amh_250m") {
+        matches.push(...targetOverlays.filter((o) => o.season === "hujan" && o.id.includes("amh")));
+      } else if (activeLayer.id === "raster_total_hujan_mk") {
+        matches.push(...targetOverlays.filter((o) => o.season === "kemarau" && o.id.includes("total_hujan_mk")));
+      } else if (activeLayer.id === "raster_amk_250m") {
+        matches.push(...targetOverlays.filter((o) => o.season === "kemarau" && o.id.includes("amk")));
+      } else if (activeLayer.id === "raster_kekeringan_250m") {
+        matches.push(...targetOverlays.filter((o) => o.id.includes("kekeringan")));
+      }
     }
-    if (activeLayer.id === "raster_amh_250m") {
-      return kecDataset.overlays.find((o) => o.season === "hujan" && o.id.includes("amh")) ?? null;
-    }
-    if (activeLayer.id === "raster_total_hujan_mk") {
-      return kecDataset.overlays.find((o) => o.season === "kemarau" && o.id.includes("total_hujan_mk")) ?? null;
-    }
-    if (activeLayer.id === "raster_amk_250m") {
-      return kecDataset.overlays.find((o) => o.season === "kemarau" && o.id.includes("amk")) ?? null;
-    }
-    if (activeLayer.id === "raster_kekeringan_250m") {
-      return kecDataset.overlays.find((o) => o.id.includes("kekeringan")) ?? null;
-    }
-    return null;
+
+    if (matches.length === 0) return null;
+    return matches.length === 1 ? matches[0] : matches;
   }, [kecDataset, activeLayer]);
 
   const currentOpacity = activeLayer ? (opacityByLayer[activeLayer.id] ?? 0.8) : 0.8;
@@ -611,7 +731,11 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
       <div className="flex flex-col items-center justify-center w-full h-full gap-3 bg-slate-100 dark:bg-slate-950">
         <Loader2 className="h-8 w-8 animate-spin text-sky-600" />
         <p className="text-sm text-muted-foreground">
-          Memuat peta prakiraan musim {selectedKabupaten === "purworejo" ? "Purworejo" : "Kebumen"}...
+          Memuat peta prakiraan musim{" "}
+          {selectedKabupaten === "all"
+            ? "semua wilayah"
+            : KABUPATEN_CONFIGS.find((k) => k.id === selectedKabupaten)?.shortName || "Kebumen"}
+          ...
         </p>
       </div>
     );
@@ -639,7 +763,11 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
         opacity={currentOpacity}
         selectedCode={selectedCode}
         onSelectCode={setSelectedCode}
-        kabupatenName={selectedKabupaten === "purworejo" ? "Kabupaten Purworejo" : "Kabupaten Kebumen"}
+        kabupatenName={
+          selectedKabupaten === "all"
+            ? "Semua Wilayah"
+            : KABUPATEN_CONFIGS.find((k) => k.id === selectedKabupaten)?.name || "Kabupaten Kebumen"
+        }
         isDarkMode={isDarkMode}
       />
 
@@ -653,13 +781,23 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
                     ? (activeCatalogEntry?.hujan_title.toUpperCase() ?? "")
                     : (activeCatalogEntry?.kemarau_title.toUpperCase() ?? "")
                 }`
-              : `PETA DASAR WILAYAH ${selectedKabupaten.toUpperCase()}`}
+              : `PETA DASAR WILAYAH ${selectedKabupaten === "all" ? "SEMUA KABUPATEN" : selectedKabupaten.toUpperCase()}`}
           </p>
           <p className="text-[11px] sm:text-xs font-semibold text-blue-100 uppercase tracking-wide mt-0.5">
-            {selectedKabupaten === "purworejo" ? "KABUPATEN PURWOREJO" : "KABUPATEN KEBUMEN"} &bull;{" "}
+            {selectedKabupaten === "all"
+              ? "SEMUA WILAYAH (REGIONAL)"
+              : (KABUPATEN_CONFIGS.find((k) => k.id === selectedKabupaten)?.name.toUpperCase() || "KABUPATEN KEBUMEN")}{" "}
+            &bull;{" "}
             {adminLevel === "desa"
-              ? (selectedKabupaten === "purworejo" ? "494 DESA/KELURAHAN (250M)" : "460 DESA/KELURAHAN (250M)")
-              : (selectedKabupaten === "purworejo" ? "16 KECAMATAN" : "26 KECAMATAN")}
+              ? `${(selectedKabupaten === "all"
+                  ? KABUPATEN_CONFIGS.reduce((s, k) => s + k.totalDesa, 0)
+                  : KABUPATEN_CONFIGS.find((k) => k.id === selectedKabupaten)?.totalDesa || 460
+                ).toLocaleString("id-ID")} DESA/KELURAHAN (250M)`
+              : `${
+                  selectedKabupaten === "all"
+                    ? KABUPATEN_CONFIGS.reduce((s, k) => s + k.totalKec, 0)
+                    : KABUPATEN_CONFIGS.find((k) => k.id === selectedKabupaten)?.totalKec || 26
+                } KECAMATAN`}
             {isArchiveSeason && activeCatalogEntry?.akurasi_amh_pct != null
               ? ` • Akurasi AMH: ${activeCatalogEntry.akurasi_amh_pct}%`
               : ""}
@@ -693,11 +831,15 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
               <select
                 id="kabupaten-select"
                 value={selectedKabupaten}
-                onChange={(e) => setSelectedKabupaten(e.target.value as "kebumen" | "purworejo")}
+                onChange={(e) => setSelectedKabupaten(e.target.value)}
                 className="w-full h-8 px-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs font-bold text-blue-900 dark:text-sky-300 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-xs cursor-pointer"
               >
-                <option value="kebumen">Kabupaten Kebumen (33.05)</option>
-                <option value="purworejo">Kabupaten Purworejo (33.06)</option>
+                <option value="all">Semua</option>
+                {KABUPATEN_CONFIGS.map((kab) => (
+                  <option key={kab.id} value={kab.id}>
+                    {kab.name}
+                  </option>
+                ))}
               </select>
             </div>
 
