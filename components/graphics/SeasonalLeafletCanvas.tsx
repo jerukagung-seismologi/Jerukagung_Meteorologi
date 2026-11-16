@@ -9,7 +9,6 @@ import type {
   BasemapId,
   HujanRecord,
   KemarauRecord,
-  RasterOverlayMeta,
   UnifiedLayerDef,
 } from "@/lib/seasonalPredictionTypes";
 
@@ -18,7 +17,6 @@ interface SeasonalLeafletCanvasProps {
   records: (HujanRecord | KemarauRecord)[];
   adminLevel: AdminLevel;
   activeLayer: UnifiedLayerDef | null;
-  activeRasterOverlay: RasterOverlayMeta | RasterOverlayMeta[] | null;
   basemap: BasemapId;
   opacity: number;
   selectedCode: string | null;
@@ -57,7 +55,6 @@ export default function SeasonalLeafletCanvas({
   records,
   adminLevel,
   activeLayer,
-  activeRasterOverlay,
   basemap,
   opacity,
   selectedCode,
@@ -67,7 +64,6 @@ export default function SeasonalLeafletCanvas({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
   const tileLayerRef = useRef<L.TileLayer | null>(null);
-  const rasterLayersRef = useRef<L.ImageOverlay[]>([]);
   const geoLayerRef = useRef<L.GeoJSON | null>(null);
   const boundsRef = useRef<L.LatLngBounds | null>(null);
   const prevGeojsonRef = useRef<GeoJSON.FeatureCollection | null>(null);
@@ -88,7 +84,7 @@ export default function SeasonalLeafletCanvas({
   }, [records]);
 
   const legendItems = useMemo(() => {
-    if (!activeLayer || activeLayer.kind !== "polygon" || !activeField || !activeLayer.colorMap) {
+    if (!activeLayer || !activeField || !activeLayer.colorMap) {
       return [];
     }
     const colorMap = activeLayer.colorMap;
@@ -139,10 +135,6 @@ export default function SeasonalLeafletCanvas({
 
     L.control.zoom({ position: "topright" }).addTo(map);
 
-    const rasterPane = map.createPane("raster250mPane");
-    rasterPane.style.zIndex = "350";
-    rasterPane.style.pointerEvents = "none";
-
     const initialGeo = L.geoJSON(geojson);
     const bounds = initialGeo.getBounds();
     if (bounds.isValid()) {
@@ -162,7 +154,6 @@ export default function SeasonalLeafletCanvas({
       map.remove();
       mapRef.current = null;
       tileLayerRef.current = null;
-      rasterLayersRef.current = [];
       geoLayerRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -186,31 +177,6 @@ export default function SeasonalLeafletCanvas({
     tileLayerRef.current = tile;
   }, [basemap]);
 
-  // Perbarui Overlay Raster 250m
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map) return;
-
-    if (rasterLayersRef.current.length > 0) {
-      rasterLayersRef.current.forEach((lyr) => map.removeLayer(lyr));
-      rasterLayersRef.current = [];
-    }
-
-    if (activeLayer?.kind === "raster" && activeRasterOverlay) {
-      const overlays = Array.isArray(activeRasterOverlay) ? activeRasterOverlay : [activeRasterOverlay];
-      overlays.forEach((meta) => {
-        if (meta?.url && meta?.bounds) {
-          const overlay = L.imageOverlay(meta.url, meta.bounds, {
-            opacity,
-            interactive: false,
-            pane: "raster250mPane",
-          }).addTo(map);
-          rasterLayersRef.current.push(overlay);
-        }
-      });
-    }
-  }, [activeLayer, activeRasterOverlay, opacity]);
-
   // Perbarui Poligon Wilayah (Kecamatan atau Desa/Kelurahan)
   useEffect(() => {
     const map = mapRef.current;
@@ -224,7 +190,7 @@ export default function SeasonalLeafletCanvas({
     const isDarkBasemap = basemap === "satelit";
     const defaultBorderColor = isDarkBasemap ? "#e2e8f0" : "#1e293b";
     const defaultWeight = adminLevel === "desa" ? 0.65 : 1.25;
-    const isPolygonFill = activeLayer?.kind === "polygon" && Boolean(activeField);
+    const isPolygonFill = Boolean(activeLayer && activeField);
 
     const layer = L.geoJSON(geojson, {
       style: (feature) => {
@@ -243,7 +209,7 @@ export default function SeasonalLeafletCanvas({
 
         return {
           fillColor,
-          fillOpacity: isPolygonFill ? opacity : 0.03,
+          fillOpacity: isPolygonFill ? opacity : 0.05,
           color: isSelected ? "#0284c7" : defaultBorderColor,
           weight: isSelected ? 2.8 : defaultWeight,
           opacity: isSelected ? 1 : adminLevel === "desa" ? 0.72 : 0.85,
@@ -262,27 +228,9 @@ export default function SeasonalLeafletCanvas({
             : `<div style="font-weight:700;color:#0f172a;">Kec. ${name}</div>`;
 
         let tooltipLine = "Klik untuk detail";
-        if (rec && activeLayer) {
-          if (activeLayer.kind === "polygon" && activeField) {
-            const val = String((rec as unknown as Record<string, unknown>)[activeField] ?? "-");
-            tooltipLine = `${activeLayer.label}: <strong style="color:#0f172a;">${val}</strong>`;
-          } else if (activeLayer.season === "hujan") {
-            const hr = rec as HujanRecord;
-            tooltipLine = hr.total_hujan_mh_mm
-              ? `Total Hujan MH: <strong style="color:#0f172a;">${hr.total_hujan_mh_mm.toLocaleString("id-ID")} mm</strong>`
-              : `Awal Hujan: <strong style="color:#0f172a;">${hr.prakiraan_amh_label}</strong>`;
-          } else {
-            const kr = rec as KemarauRecord;
-            if (activeLayer.rasterId === "kekeringan_250m" && kr.kekeringan_skor != null) {
-              tooltipLine = `Skor Kekeringan: <strong style="color:#0f172a;">${kr.kekeringan_skor}</strong> (${kr.kelas_kekeringan})`;
-            } else if (activeLayer.rasterId === "amk_250m" && kr.amk_label_250m) {
-              tooltipLine = `Awal Kemarau (250m): <strong style="color:#0f172a;">${kr.amk_label_250m}</strong>`;
-            } else if (kr.total_hujan_mk_mm != null) {
-              tooltipLine = `Total Hujan MK: <strong style="color:#0f172a;">${kr.total_hujan_mk_mm.toLocaleString("id-ID")} mm</strong>`;
-            } else {
-              tooltipLine = `Awal Kemarau: <strong style="color:#0f172a;">${kr.prakiraan_amk_label}</strong>`;
-            }
-          }
+        if (rec && activeLayer && activeField) {
+          const val = String((rec as unknown as Record<string, unknown>)[activeField] ?? "-");
+          tooltipLine = `${activeLayer.label}: <strong style="color:#0f172a;">${val}</strong>`;
         }
 
         featureLayer.bindTooltip(
@@ -348,52 +296,26 @@ export default function SeasonalLeafletCanvas({
       </button>
 
       {/* Legenda Gaya CEWS di Pojok Kanan Bawah */}
-      {activeLayer && (
+      {activeLayer && legendItems.length > 0 && (
         <div className="absolute bottom-6 right-3 z-[500] min-w-[170px] max-w-[245px] rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-300 dark:border-slate-700 shadow-xl p-3 text-xs">
-          {activeLayer.kind === "raster" && activeRasterOverlay ? (
-            (() => {
-              const primaryOverlay = Array.isArray(activeRasterOverlay)
-                ? activeRasterOverlay[0]
-                : activeRasterOverlay;
-              if (!primaryOverlay) return null;
-              return (
-                <div className="space-y-2">
-                  <p className="font-bold text-xs leading-tight text-slate-900 dark:text-slate-100">
-                    {primaryOverlay.label}
-                  </p>
-                  <div
-                    className="h-3.5 w-48 rounded border border-slate-400 dark:border-slate-600 shadow-xs"
-                    style={{
-                      background: `linear-gradient(to right, ${primaryOverlay.gradientColors.join(", ")})`,
-                    }}
+          <div className="space-y-2">
+            <p className="font-bold text-xs leading-tight text-slate-900 dark:text-slate-100">
+              {activeLayer.label}
+            </p>
+            <div className="flex flex-col gap-1.5">
+              {legendItems.map((item) => (
+                <div key={item.label} className="flex items-center gap-2.5 text-xs">
+                  <span
+                    className="inline-block w-6 h-4 rounded shrink-0 border border-slate-400 dark:border-slate-500 shadow-xs"
+                    style={{ backgroundColor: item.color }}
                   />
-                  <div className="flex justify-between text-[11px] font-bold text-slate-700 dark:text-slate-200">
-                    <span>{primaryOverlay.minLabel}</span>
-                    <span>{primaryOverlay.maxLabel}</span>
-                  </div>
+                  <span className="font-semibold text-xs text-slate-800 dark:text-slate-100 truncate">
+                    {item.label}
+                  </span>
                 </div>
-              );
-            })()
-          ) : legendItems.length > 0 ? (
-            <div className="space-y-2">
-              <p className="font-bold text-xs leading-tight text-slate-900 dark:text-slate-100">
-                {activeLayer.label}
-              </p>
-              <div className="flex flex-col gap-1.5">
-                {legendItems.map((item) => (
-                  <div key={item.label} className="flex items-center gap-2.5 text-xs">
-                    <span
-                      className="inline-block w-6 h-4 rounded shrink-0 border border-slate-400 dark:border-slate-500 shadow-xs"
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <span className="font-semibold text-xs text-slate-800 dark:text-slate-100 truncate">
-                      {item.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
-          ) : null}
+          </div>
         </div>
       )}
     </div>

@@ -204,13 +204,12 @@ export interface SeasonalVillageDataset {
 
 export interface UnifiedLayerDef {
   id: string;
-  kind: "polygon" | "raster";
+  kind: "polygon";
   season: SeasonId;
   label: string;
   bannerTitle: string;
-  field?: string;
+  field: string;
   desaField?: string;
-  colorMap?: Record<string, string>;
+  colorMap: Record<string, string>;
   order?: string[];
-  rasterId?: string;
 }

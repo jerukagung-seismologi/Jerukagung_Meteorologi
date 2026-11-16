@@ -20,7 +20,6 @@ import type {
   SeasonalVillageDataset,
   SeasonId,
   UnifiedLayerDef,
-  RasterOverlayMeta,
 } from "@/lib/seasonalPredictionTypes";
 
 const SeasonalLeafletCanvas = dynamic(() => import("./SeasonalLeafletCanvas"), {
@@ -215,22 +214,6 @@ const CEWS_LAYERS: UnifiedLayerDef[] = [
       "Des I", "Des II", "Des III",
     ],
   },
-  {
-    id: "raster_total_hujan_mh",
-    kind: "raster",
-    season: "hujan",
-    label: "Total Curah Hujan (250m)",
-    bannerTitle: "SEBARAN TOTAL CURAH HUJAN MUSIM HUJAN (250M)",
-    rasterId: "total_hujan_mh",
-  },
-  {
-    id: "raster_amh_250m",
-    kind: "raster",
-    season: "hujan",
-    label: "Awal Musim Hujan (250m)",
-    bannerTitle: "SEBARAN AWAL MUSIM HUJAN RESOLUSI 250M",
-    rasterId: "amh_250m",
-  },
 
   // Musim Kemarau
   {
@@ -313,30 +296,6 @@ const CEWS_LAYERS: UnifiedLayerDef[] = [
       "Jun I", "Jun II", "Jun III",
       "Jul I", "Jul II",
     ],
-  },
-  {
-    id: "raster_total_hujan_mk",
-    kind: "raster",
-    season: "kemarau",
-    label: "Total Hujan Kemarau (250m)",
-    bannerTitle: "SEBARAN TOTAL CURAH HUJAN KEMARAU (250M)",
-    rasterId: "total_hujan_mk",
-  },
-  {
-    id: "raster_amk_250m",
-    kind: "raster",
-    season: "kemarau",
-    label: "Awal Musim Kemarau (250m)",
-    bannerTitle: "SEBARAN AWAL MUSIM KEMARAU RESOLUSI 250M",
-    rasterId: "amk_250m",
-  },
-  {
-    id: "raster_kekeringan_250m",
-    kind: "raster",
-    season: "kemarau",
-    label: "Indeks Kekeringan (250m)",
-    bannerTitle: "SEBARAN POTENSI KEKERINGAN METEOROLOGIS (250M)",
-    rasterId: "kekeringan_250m",
   },
 ];
 
@@ -710,39 +669,6 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
 
   const currentSeason: SeasonId = activeLayer?.season ?? lastSeason;
 
-  const activeRasterOverlay = useMemo(() => {
-    if (!kecDataset?.overlays || activeLayer?.kind !== "raster") {
-      return null;
-    }
-    const targetOverlays = kecDataset.overlays;
-    const matches: RasterOverlayMeta[] = [];
-
-    // 1. Coba pencarian langsung berdasarkan rasterId
-    const rid = activeLayer.rasterId;
-    if (rid) {
-      const found = targetOverlays.filter((o) => o.id === rid || o.id.startsWith(rid));
-      if (found.length > 0) matches.push(...found);
-    }
-
-    // 2. Fallback pencarian untuk arsip tahunan (fallback nama/season)
-    if (matches.length === 0) {
-      if (activeLayer.id === "raster_total_hujan_mh") {
-        matches.push(...targetOverlays.filter((o) => o.season === "hujan" && o.id.includes("total_hujan_mh")));
-      } else if (activeLayer.id === "raster_amh_250m") {
-        matches.push(...targetOverlays.filter((o) => o.season === "hujan" && o.id.includes("amh")));
-      } else if (activeLayer.id === "raster_total_hujan_mk") {
-        matches.push(...targetOverlays.filter((o) => o.season === "kemarau" && o.id.includes("total_hujan_mk")));
-      } else if (activeLayer.id === "raster_amk_250m") {
-        matches.push(...targetOverlays.filter((o) => o.season === "kemarau" && o.id.includes("amk")));
-      } else if (activeLayer.id === "raster_kekeringan_250m") {
-        matches.push(...targetOverlays.filter((o) => o.id.includes("kekeringan")));
-      }
-    }
-
-    if (matches.length === 0) return null;
-    return matches.length === 1 ? matches[0] : matches;
-  }, [kecDataset, activeLayer]);
-
   const currentOpacity = activeLayer ? (opacityByLayer[activeLayer.id] ?? 0.8) : 0.8;
 
   const activeGeojson = adminLevel === "desa" && desaGeojson ? desaGeojson : kecGeojson;
@@ -828,7 +754,6 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
         records={currentRecords}
         adminLevel={adminLevel}
         activeLayer={activeLayer}
-        activeRasterOverlay={activeRasterOverlay}
         basemap={basemap}
         opacity={currentOpacity}
         selectedCode={selectedCode}
@@ -862,7 +787,7 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
               ? `${(selectedKabupaten === "all"
                   ? KABUPATEN_CONFIGS.reduce((s, k) => s + k.totalDesa, 0)
                   : KABUPATEN_CONFIGS.find((k) => k.id === selectedKabupaten)?.totalDesa || 460
-                ).toLocaleString("id-ID")} DESA/KELURAHAN (250M)`
+                ).toLocaleString("id-ID")} DESA/KELURAHAN`
               : `${
                   selectedKabupaten === "all"
                     ? KABUPATEN_CONFIGS.reduce((s, k) => s + k.totalKec, 0)
@@ -1231,7 +1156,7 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
 
             <p className="text-[11px] font-medium text-slate-700 dark:text-slate-300 mt-2.5 pt-2 border-t border-slate-200 dark:border-slate-800">
               {adminLevel === "desa"
-                ? "Curah hujan & indeks mikro diekstrak dari raster downscaling 250m per poligon desa. 1 dasarian = ±10 hari."
+                ? "Curah hujan & indeks mikro diekstrak dari pemodelan topografis per poligon desa. 1 dasarian = ±10 hari."
                 : "1 dasarian = ±10 hari (I: tgl 1–10, II: 11–20, III: 21–akhir bulan)."}
             </p>
           </div>
@@ -1381,7 +1306,7 @@ function KemarauSelectedDetail({
 }) {
   const amkDisplay =
     adminLevel === "desa" && record.amk_label_250m
-      ? `${record.amk_label_250m} (250m)`
+      ? record.amk_label_250m
       : record.prakiraan_amk_label;
   const rainDisplay =
     record.total_hujan_mk_mm != null
