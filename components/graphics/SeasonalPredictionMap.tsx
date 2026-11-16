@@ -364,6 +364,7 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
 
   const [catalog, setCatalog] = useState<SeasonCatalogEntry[]>([]);
   const [selectedSeasonId, setSelectedSeasonId] = useState<string>("2026_2027");
+  const [selectedKabupaten, setSelectedKabupaten] = useState<"kebumen" | "purworejo">("kebumen");
 
   const [adminLevel, setAdminLevel] = useState<AdminLevel>("kecamatan");
   const [activeLayerId, setActiveLayerId] = useState<string | null>("hujan_curah_kelas");
@@ -380,14 +381,26 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
     async function load() {
       setLoading(true);
       setError(null);
+      setSelectedCode(null);
+      setSearchQuery("");
+      setDesaGeojson(null);
+      setDesaDataset(null);
+
+      const kecGeoUrl = selectedKabupaten === "purworejo" 
+        ? "/data/purworejo/purworejo_kecamatan.json" 
+        : "/data/kebumen_kecamatan.json";
+      const desaGeoUrl = selectedKabupaten === "purworejo" 
+        ? "/data/purworejo/purworejo_desa.json" 
+        : "/data/kebumen_desa.json";
+
       try {
         const [geoRes, seasonData, catData] = await Promise.all([
-          fetch("/data/kebumen_kecamatan.json"),
-          getSeasonData("2026_2027"),
-          getSeasonalCatalog().catch(() => null),
+          fetch(kecGeoUrl),
+          getSeasonData("2026_2027", "", selectedKabupaten),
+          getSeasonalCatalog(selectedKabupaten).catch(() => null),
         ]);
         if (!geoRes.ok || !seasonData?.kecDataset) {
-          throw new Error("Gagal mengambil data peta atau prakiraan musim.");
+          throw new Error(`Gagal mengambil data peta atau prakiraan musim (${selectedKabupaten}).`);
         }
         const geoData = await geoRes.json();
         if (cancelled) return;
@@ -406,8 +419,8 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
           setDesaDataset(seasonData.desaDataset as any);
         }
 
-        // Preload geometri batas 460 desa di latar belakang agar perpindahan mode instan
-        fetch("/data/kebumen_desa.json")
+        // Preload geometri batas desa di latar belakang agar perpindahan mode instan
+        fetch(desaGeoUrl)
           .then(async (dGeoRes) => {
             if (!dGeoRes.ok || cancelled) return;
             const dGeo = await dGeoRes.json();
@@ -430,7 +443,7 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [selectedKabupaten]);
 
   const handleSwitchSeason = async (nextSeasonId: string) => {
     if (nextSeasonId === selectedSeasonId) return;
@@ -441,7 +454,7 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
     try {
       const selectedEntry = catalog.find((c) => c.season_id === nextSeasonId);
       // Memuat musim terpilih dari Cloud Firestore (dengan fallback instan ke CDN lokal)
-      const seasonData = await getSeasonData(nextSeasonId, selectedEntry?.folder || "");
+      const seasonData = await getSeasonData(nextSeasonId, selectedEntry?.folder || "", selectedKabupaten);
       setKecDataset(seasonData.kecDataset as any);
       if (seasonData.desaDataset) {
         setDesaDataset(seasonData.desaDataset as any);
@@ -469,10 +482,15 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
       setLoadingDesa(true);
       try {
         const selectedEntry = catalog.find((c) => c.season_id === selectedSeasonId);
-        const basePath = selectedEntry?.folder ? `/data/${selectedEntry.folder}` : "/data";
+        const kabBase = selectedKabupaten === "purworejo" ? "/data/purworejo" : "/data";
+        const basePath = selectedEntry?.folder ? `${kabBase}/${selectedEntry.folder}` : kabBase;
+        const desaGeoUrl = selectedKabupaten === "purworejo" 
+          ? "/data/purworejo/purworejo_desa.json" 
+          : "/data/kebumen_desa.json";
+
         const [dGeoRes, dPredRes] = await Promise.all([
-          fetch("/data/kebumen_desa.json"),
-          fetch(`${basePath}/prediksi_musim_desa.json`),
+          desaGeojson ? Promise.resolve({ ok: true, json: () => Promise.resolve(desaGeojson) } as any) : fetch(desaGeoUrl),
+          desaDataset ? Promise.resolve({ ok: true, json: () => Promise.resolve(desaDataset) } as any) : fetch(`${basePath}/prediksi_musim_desa.json`),
         ]);
         if (!dGeoRes.ok || !dPredRes.ok) {
           throw new Error("Gagal mengambil data batas dan prakiraan per desa.");
@@ -511,8 +529,9 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
       return null;
     }
     // 1. Coba pencarian langsung berdasarkan rasterId
-    if (activeLayer.rasterId) {
-      const match = kecDataset.overlays.find((o) => o.id === activeLayer.rasterId || o.id.startsWith(activeLayer.rasterId));
+    const rid = activeLayer.rasterId;
+    if (rid) {
+      const match = kecDataset.overlays.find((o) => o.id === rid || o.id.startsWith(rid));
       if (match) return match;
     }
     // 2. Pencarian untuk arsip tahunan (fallback nama/season)
@@ -591,7 +610,9 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
     return (
       <div className="flex flex-col items-center justify-center w-full h-full gap-3 bg-slate-100 dark:bg-slate-950">
         <Loader2 className="h-8 w-8 animate-spin text-sky-600" />
-        <p className="text-sm text-muted-foreground">Memuat peta prakiraan musim Kebumen...</p>
+        <p className="text-sm text-muted-foreground">
+          Memuat peta prakiraan musim {selectedKabupaten === "purworejo" ? "Purworejo" : "Kebumen"}...
+        </p>
       </div>
     );
   }
@@ -618,6 +639,7 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
         opacity={currentOpacity}
         selectedCode={selectedCode}
         onSelectCode={setSelectedCode}
+        kabupatenName={selectedKabupaten === "purworejo" ? "Kabupaten Purworejo" : "Kabupaten Kebumen"}
         isDarkMode={isDarkMode}
       />
 
@@ -631,11 +653,13 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
                     ? (activeCatalogEntry?.hujan_title.toUpperCase() ?? "")
                     : (activeCatalogEntry?.kemarau_title.toUpperCase() ?? "")
                 }`
-              : "PETA DASAR WILAYAH KEBUMEN"}
+              : `PETA DASAR WILAYAH ${selectedKabupaten.toUpperCase()}`}
           </p>
           <p className="text-[11px] sm:text-xs font-semibold text-blue-100 uppercase tracking-wide mt-0.5">
-            KABUPATEN KEBUMEN &bull;{" "}
-            {adminLevel === "desa" ? "460 DESA/KELURAHAN (250M)" : "26 KECAMATAN"}
+            {selectedKabupaten === "purworejo" ? "KABUPATEN PURWOREJO" : "KABUPATEN KEBUMEN"} &bull;{" "}
+            {adminLevel === "desa"
+              ? (selectedKabupaten === "purworejo" ? "494 DESA/KELURAHAN (250M)" : "460 DESA/KELURAHAN (250M)")
+              : (selectedKabupaten === "purworejo" ? "16 KECAMATAN" : "26 KECAMATAN")}
             {isArchiveSeason && activeCatalogEntry?.akurasi_amh_pct != null
               ? ` • Akurasi AMH: ${activeCatalogEntry.akurasi_amh_pct}%`
               : ""}
@@ -657,7 +681,27 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
 
         {panelOpen && (
           <div className="pointer-events-auto w-[296px] sm:w-[342px] max-h-[calc(100vh-220px)] overflow-y-auto rounded-lg bg-white/95 dark:bg-slate-900/95 backdrop-blur-md shadow-2xl border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-slate-100">
-            {/* Pemilih Periode Musim (Aktif / Arsip 10 Tahun) */}
+            {/* Pemilih Wilayah Kabupaten */}
+            <div className="px-3 py-2.5 border-b border-slate-200 dark:border-slate-700 bg-sky-50/80 dark:bg-slate-800/95">
+              <div className="flex items-center justify-between mb-1">
+                <label htmlFor="kabupaten-select" className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
+                  <MapPin className="h-3.5 w-3.5 text-blue-600 dark:text-sky-400" />
+                  <span>Wilayah Kabupaten</span>
+                </label>
+                {loading && <Loader2 className="h-3.5 w-3.5 animate-spin text-blue-600 dark:text-sky-400" />}
+              </div>
+              <select
+                id="kabupaten-select"
+                value={selectedKabupaten}
+                onChange={(e) => setSelectedKabupaten(e.target.value as "kebumen" | "purworejo")}
+                className="w-full h-8 px-2 rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 text-xs font-bold text-blue-900 dark:text-sky-300 focus:outline-none focus:ring-2 focus:ring-blue-600 shadow-xs cursor-pointer"
+              >
+                <option value="kebumen">Kabupaten Kebumen (33.05)</option>
+                <option value="purworejo">Kabupaten Purworejo (33.06)</option>
+              </select>
+            </div>
+
+            {/* Pemilih Periode Musim (Aktif / Arsip 26 Tahun) */}
             <div className="px-3 py-2.5 border-b border-slate-200 dark:border-slate-700 bg-blue-50/70 dark:bg-slate-800/90">
               <div className="flex items-center justify-between mb-1.5">
                 <label htmlFor="season-select" className="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
@@ -937,7 +981,13 @@ export default function SeasonalPredictionMap({ isDarkMode = false }: SeasonalPr
             {detailTab === "katam" && (
               <KatamTimeline
                 katam={selectedRecord.katam}
-                sifatHujan={selectedRecord.sifat_hujan_label}
+                sifatHujan={
+                  "prakiraan_sifat_hujan" in selectedRecord
+                    ? selectedRecord.prakiraan_sifat_hujan
+                    : "prakiraan_sifat_hujan_mk" in selectedRecord
+                    ? selectedRecord.prakiraan_sifat_hujan_mk
+                    : undefined
+                }
                 isDarkMode={isDarkMode}
               />
             )}

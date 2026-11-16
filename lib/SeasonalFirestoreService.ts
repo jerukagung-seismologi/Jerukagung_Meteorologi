@@ -8,48 +8,55 @@ export interface SeasonDataset {
   kemarau?: any[];
 }
 
-let catalogCache: any = null;
+const catalogCache = new Map<string, any>();
 const seasonDataCache = new Map<string, any>();
 
 /**
  * Mengambil data master katalog musim dari Cloud Firestore
- * dengan fallback otomatis ke /data/musim_catalog.json jika offline/gagal.
+ * dengan fallback otomatis ke /data/musim_catalog.json (atau /data/purworejo/musim_catalog.json) jika offline/gagal.
  */
-export async function getSeasonalCatalog(): Promise<any> {
-  if (catalogCache) return catalogCache;
+export async function getSeasonalCatalog(kabupaten: string = "kebumen"): Promise<any> {
+  const kab = (kabupaten || "kebumen").toLowerCase();
+  if (catalogCache.has(kab)) return catalogCache.get(kab);
 
+  const collectionName = `musim_${kab}`;
   try {
-    const docRef = doc(firestore, "musim_kebumen", "catalog");
+    const docRef = doc(firestore, collectionName, "catalog");
     const snap = await getDoc(docRef);
     if (snap.exists()) {
-      catalogCache = snap.data();
-      return catalogCache;
+      const data = snap.data();
+      catalogCache.set(kab, data);
+      return data;
     }
   } catch (err) {
-    console.warn("[Firestore] Gagal memuat katalog dari Firestore, menggunakan fallback JSON:", err);
+    console.warn(`[Firestore] Gagal memuat katalog ${kab} dari Firestore, menggunakan fallback JSON:`, err);
   }
 
   // Fallback ke berkas lokal
-  const res = await fetch("/data/musim_catalog.json");
-  if (!res.ok) throw new Error("Gagal mengambil master katalog musim.");
-  catalogCache = await res.json();
-  return catalogCache;
+  const fallbackPath = kab === "purworejo" ? "/data/purworejo/musim_catalog.json" : "/data/musim_catalog.json";
+  const res = await fetch(fallbackPath);
+  if (!res.ok) throw new Error(`Gagal mengambil master katalog musim untuk ${kab}.`);
+  const data = await res.json();
+  catalogCache.set(kab, data);
+  return data;
 }
 
 /**
- * Mengambil data musim (aktif 2026/2027 maupun 11 tahun arsip 2015–2025) langsung dari Cloud Firestore
- * (Chunked Architecture: 27 reads per musim) dengan rekonstruksi otomatis untuk dataset kecamatan dan 460 desa.
+ * Mengambil data musim (aktif 2026/2027 maupun 26 tahun arsip 2000–2025) langsung dari Cloud Firestore
+ * (Chunked Architecture: ~17-27 reads per musim) dengan rekonstruksi otomatis untuk dataset kecamatan dan desa.
  * Dilengkapi graceful fallback ganda ke berkas JSON lokal di CDN.
  */
 export async function getSeasonData(
   seasonId = "2026_2027",
-  folder = ""
+  folder = "",
+  kabupaten: string = "kebumen"
 ): Promise<{
   kecDataset: SeasonDataset;
   desaDataset: SeasonDataset;
   source: "firestore" | "fallback_json";
 }> {
-  const cacheKey = `${seasonId}_${folder}`;
+  const kab = (kabupaten || "kebumen").toLowerCase();
+  const cacheKey = `${kab}_${seasonId}_${folder}`;
   if (seasonDataCache.has(cacheKey)) {
     return seasonDataCache.get(cacheKey);
   }
@@ -60,13 +67,15 @@ export async function getSeasonData(
     source: "firestore" | "fallback_json";
   };
 
+  const collectionName = `musim_${kab}`;
+
   try {
-    const seasonDocRef = doc(firestore, "musim_kebumen", seasonId);
+    const seasonDocRef = doc(firestore, collectionName, seasonId);
     const seasonSnap = await getDoc(seasonDocRef);
 
     if (seasonSnap.exists()) {
       const overview = seasonSnap.data();
-      const kecColRef = collection(firestore, "musim_kebumen", seasonId, "kecamatan");
+      const kecColRef = collection(firestore, collectionName, seasonId, "kecamatan");
       const kecSnaps = await getDocs(kecColRef);
 
       if (!kecSnaps.empty) {
@@ -114,17 +123,18 @@ export async function getSeasonData(
       }
     }
   } catch (err) {
-    console.warn(`[Firestore] Gagal memuat musim ${seasonId} dari Firestore, beralih ke fallback JSON statis:`, err);
+    console.warn(`[Firestore] Gagal memuat musim ${seasonId} (${kab}) dari Firestore, beralih ke fallback JSON statis:`, err);
   }
 
   // Fallback ganda ke JSON statis lokal
-  const basePath = folder ? `/data/${folder}` : "/data";
+  const kabBase = kab === "purworejo" ? "/data/purworejo" : "/data";
+  const basePath = folder ? `${kabBase}/${folder}` : kabBase;
   const [kecRes, desaRes] = await Promise.all([
     fetch(`${basePath}/prediksi_musim.json`),
     fetch(`${basePath}/prediksi_musim_desa.json`).catch(() => null),
   ]);
 
-  if (!kecRes.ok) throw new Error(`Gagal memuat dataset prediksi musim (${seasonId}).`);
+  if (!kecRes.ok) throw new Error(`Gagal memuat dataset prediksi musim (${seasonId}) untuk ${kab}.`);
   const kecDataset = await kecRes.json();
   const desaDataset = desaRes && desaRes.ok ? await desaRes.json() : null;
 

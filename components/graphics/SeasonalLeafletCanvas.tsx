@@ -23,6 +23,7 @@ interface SeasonalLeafletCanvasProps {
   opacity: number;
   selectedCode: string | null;
   onSelectCode: (code: string | null) => void;
+  kabupatenName?: string;
   isDarkMode?: boolean;
 }
 
@@ -61,6 +62,7 @@ export default function SeasonalLeafletCanvas({
   opacity,
   selectedCode,
   onSelectCode,
+  kabupatenName = "Kabupaten Kebumen",
 }: SeasonalLeafletCanvasProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<L.Map | null>(null);
@@ -68,6 +70,7 @@ export default function SeasonalLeafletCanvas({
   const rasterLayerRef = useRef<L.ImageOverlay | null>(null);
   const geoLayerRef = useRef<L.GeoJSON | null>(null);
   const boundsRef = useRef<L.LatLngBounds | null>(null);
+  const prevGeojsonRef = useRef<GeoJSON.FeatureCollection | null>(null);
   const onSelectRef = useRef(onSelectCode);
 
   onSelectRef.current = onSelectCode;
@@ -308,6 +311,14 @@ export default function SeasonalLeafletCanvas({
     }).addTo(map);
 
     geoLayerRef.current = layer;
+    const b = layer.getBounds();
+    if (b.isValid()) {
+      boundsRef.current = b;
+      if (prevGeojsonRef.current !== geojson) {
+        prevGeojsonRef.current = geojson;
+        map.fitBounds(b, { padding: [32, 32] });
+      }
+    }
   }, [geojson, recordMap, adminLevel, activeLayer, activeField, basemap, opacity, selectedCode]);
 
   const handleResetView = () => {
@@ -324,8 +335,8 @@ export default function SeasonalLeafletCanvas({
       <button
         type="button"
         onClick={handleResetView}
-        title="Fokus ke Kabupaten Kebumen"
-        aria-label="Fokus ke Kabupaten Kebumen"
+        title={`Fokus ke ${kabupatenName}`}
+        aria-label={`Fokus ke ${kabupatenName}`}
         className="absolute top-[78px] right-[10px] z-[500] w-[34px] h-[34px] flex items-center justify-center rounded bg-white dark:bg-gray-900 border-2 border-black/20 dark:border-gray-600 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
       >
         <LocateFixed className="h-4 w-4 text-gray-700 dark:text-gray-200" />
