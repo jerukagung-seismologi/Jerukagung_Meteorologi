@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useMemo } from "react"
 import { fetchAstronomicalData, type AstronomicalDataType } from "@/lib/FetchingAstronomical"
 import { fetchCurrentWeather, JERUKAGUNG_LOCATION } from "@/lib/FetchingMeteo"
 import { useWeatherData } from "@/lib/FetchingSensorData"
@@ -46,5 +46,32 @@ export function useWeatherParkData(sensorId = "id-03"): WeatherParkLiveData {
   const rainRate = hasSensor ? sensor.data.rainrate[index] : meteo?.precipitation ?? FALLBACK.rainRate
   const solarRadiation = hasSensor ? sensor.data.sunlight[index] : Math.max(0, 1000 - (meteo?.cloud_cover ?? 35) * 8)
 
-  return { temperature, humidity, pressure, windSpeed, windDirection, rainRate, solarRadiation, astronomical, updatedAt: hasSensor ? new Date() : meteo?.time ? new Date(meteo.time) : null, source: hasSensor ? "sensor" : meteo ? "open-meteo" : "fallback", loading: sensor.loading || (!meteo && !error), error: sensor.error?.message ?? error }
+  return useMemo<WeatherParkLiveData>(() => ({
+    temperature,
+    humidity,
+    pressure,
+    windSpeed,
+    windDirection,
+    rainRate,
+    solarRadiation,
+    astronomical,
+    updatedAt: hasSensor ? new Date() : meteo?.time ? new Date(meteo.time) : null,
+    source: hasSensor ? "sensor" : meteo ? "open-meteo" : "fallback",
+    loading: sensor.loading || (!meteo && !error),
+    error: sensor.error?.message ?? error,
+  }), [
+    temperature,
+    humidity,
+    pressure,
+    windSpeed,
+    windDirection,
+    rainRate,
+    solarRadiation,
+    astronomical,
+    hasSensor,
+    meteo,
+    sensor.loading,
+    sensor.error?.message,
+    error,
+  ])
 }

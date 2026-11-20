@@ -1,0 +1,3926 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Taman Alat Meteorologi 3D — Jerukagung Meteorologi (High-Detail PBR Edition)</title>
+
+  <!-- Font Inter untuk keterbacaan antarmuka & angka presisi -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+
+  <!-- Import Map Three.js v0.169.0 (ES Modules stabil via jsDelivr) -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      font-family: 'Inter', system-ui, sans-serif;
+      background-color: #0b1120;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #canvas-container {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+    }
+
+    /* Panel Glassmorphism Gelap-Elegan */
+    .glass-panel {
+      background: rgba(11, 18, 34, 0.74);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      box-shadow: 0 14px 36px rgba(2, 6, 23, 0.42);
+    }
+
+    /* Slider Modern */
+    input[type="range"].meteo-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(148, 163, 184, 0.28);
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"].meteo-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #38bdf8;
+      border: 2px solid #f8fafc;
+      box-shadow: 0 1px 6px rgba(56, 189, 248, 0.7);
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+    input[type="range"].meteo-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.16);
+      background: #7dd3fc;
+    }
+    input[type="range"].meteo-slider::-moz-range-thumb {
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      background: #38bdf8;
+      border: 2px solid #f8fafc;
+      box-shadow: 0 1px 6px rgba(56, 189, 248, 0.7);
+    }
+
+    /* Scrollbar ramping */
+    .custom-scroll::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.35);
+      border-radius: 999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.55);
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+  </style>
+</head>
+<body class="text-slate-100 antialiased">
+
+  <!-- Kanvas WebGL Full Viewport -->
+  <div id="canvas-container" aria-label="Kanvas Simulasi 3D Taman Alat Meteorologi PBR"></div>
+
+  <!-- Tooltip Hover Instrumen -->
+  <div
+    id="hover-tooltip"
+    class="pointer-events-none fixed z-40 hidden -translate-x-1/2 -translate-y-full rounded-xl border border-sky-400/45 bg-slate-950/90 px-3 py-1.5 text-xs font-semibold text-sky-100 shadow-xl backdrop-blur-md"
+    style="margin-top: -12px;"
+  >
+    <span id="hover-tooltip-text">Instrumen</span>
+  </div>
+
+  <!-- Header & HUD Pemantau Performa Live (Kiri Atas) -->
+  <header class="pointer-events-none fixed left-3 top-3 z-20 flex max-w-[calc(100vw-6.75rem)] flex-col gap-2 sm:left-4 sm:top-4 sm:max-w-md">
+    <!-- Kartu Judul & Status Cuaca -->
+    <div class="glass-panel pointer-events-auto rounded-2xl px-3.5 py-2.5 sm:px-4 sm:py-3">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.95)]"></span>
+        <h1 class="truncate text-xs font-bold tracking-tight text-white sm:text-sm">
+          Jerukagung Meteorologi — Taman Alat 3D
+        </h1>
+        <span class="hidden shrink-0 rounded-md bg-sky-500/20 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-sky-300 ring-1 ring-sky-400/35 sm:inline-block">
+          PBR
+        </span>
+      </div>
+      <p class="mt-0.5 truncate text-[11px] text-slate-300">
+        High-Detail Prosedural • Sky Shader &amp; IBL • Stevenson Screen Parametrik
+      </p>
+
+      <!-- Status Cuaca Singkat -->
+      <div class="mt-2 flex flex-wrap items-center gap-1.5 text-[11px]">
+        <span class="inline-flex items-center gap-1.5 rounded-full border border-sky-400/30 bg-sky-500/15 px-2.5 py-0.5 font-semibold text-sky-100 tabular-nums">
+          <span id="header-weather-dot" class="h-1.5 w-1.5 rounded-full bg-amber-300"></span>
+          <span id="header-status-text">10:30 WIB • Cerah</span>
+        </span>
+        <span id="header-wind-badge" class="inline-flex items-center rounded-full border border-slate-500/30 bg-slate-900/70 px-2 py-0.5 font-medium text-slate-200 tabular-nums">
+          Angin 3.8 m/s (TG)
+        </span>
+        <span id="header-temp-badge" class="hidden items-center rounded-full border border-slate-500/30 bg-slate-900/70 px-2 py-0.5 font-medium text-slate-200 tabular-nums sm:inline-flex">
+          29.5 °C
+        </span>
+      </div>
+    </div>
+
+    <!-- HUD Pemantau Performa Live (FPS, Draw Calls, Triangles, DPR + Pintasan Preset) -->
+    <div class="glass-panel pointer-events-auto flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl px-3 py-1.5 text-[11px] tabular-nums">
+      <div class="flex items-center gap-1.5">
+        <span id="hud-fps-dot" class="h-2 w-2 rounded-full bg-emerald-400"></span>
+        <span class="text-slate-400">FPS</span>
+        <span id="hud-fps" class="font-bold text-emerald-400">60</span>
+      </div>
+      <div class="h-3 w-px bg-slate-700/80"></div>
+      <div class="flex items-center gap-1">
+        <span class="text-slate-400">Calls</span>
+        <span id="hud-calls" class="font-semibold text-slate-100">--</span>
+      </div>
+      <div class="flex items-center gap-1">
+        <span class="text-slate-400">Tris</span>
+        <span id="hud-tris" class="font-semibold text-slate-100">--</span>
+      </div>
+      <div class="hidden items-center gap-1 sm:flex">
+        <span class="text-slate-400">DPR</span>
+        <span id="hud-dpr" class="font-semibold text-sky-300">1.5x</span>
+      </div>
+      <div class="ml-auto flex items-center gap-1">
+        <span id="hud-quality-pill" class="rounded-md bg-sky-500/20 px-1.5 py-0.5 text-[10px] font-semibold text-sky-200 ring-1 ring-sky-400/30">
+          Seimbang
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tombol Toggle Panel Kontrol Kanan -->
+  <button
+    id="toggle-panel-btn"
+    type="button"
+    title="Buka atau Tutup Panel Kontrol"
+    class="glass-panel fixed right-3 top-3 z-30 flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-100 transition hover:border-sky-400/50 hover:bg-slate-800/85 active:scale-95 sm:right-4 sm:top-4"
+  >
+    <svg class="h-4 w-4 text-sky-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+    </svg>
+    <span id="toggle-panel-label">Kontrol</span>
+  </button>
+
+  <!-- Panel Kontrol Samping Kanan (Collapsible, 4 Tab: Sangkar, Cuaca, Fisika, Kualitas) -->
+  <aside
+    id="control-panel"
+    class="glass-panel fixed right-3 top-14 z-20 flex max-h-[calc(100vh-8.75rem)] w-[calc(100vw-1.5rem)] max-w-[356px] flex-col overflow-hidden rounded-2xl transition-all duration-300 sm:right-4 sm:top-16 sm:max-h-[calc(100vh-9.75rem)] sm:w-[356px]"
+  >
+    <!-- Navigasi 4 Tab -->
+    <div class="grid grid-cols-4 gap-1 border-b border-slate-700/60 bg-slate-950/55 p-1.5 text-[11px] font-semibold">
+      <button type="button" data-tab="sangkar" class="tab-btn rounded-xl bg-sky-500/25 px-1.5 py-2 text-sky-200 ring-1 ring-sky-400/40 transition">
+        Sangkar
+      </button>
+      <button type="button" data-tab="cuaca" class="tab-btn rounded-xl px-1.5 py-2 text-slate-300 transition hover:bg-slate-800/70 hover:text-white">
+        Cuaca
+      </button>
+      <button type="button" data-tab="fisika" class="tab-btn rounded-xl px-1.5 py-2 text-slate-300 transition hover:bg-slate-800/70 hover:text-white">
+        Fisika
+      </button>
+      <button type="button" data-tab="kualitas" class="tab-btn rounded-xl px-1.5 py-2 text-slate-300 transition hover:bg-slate-800/70 hover:text-white">
+        Kualitas
+      </button>
+    </div>
+
+    <!-- Konten Scrollable -->
+    <div class="custom-scroll flex-1 overflow-y-auto p-3.5 text-xs">
+
+      <!-- TAB 1: SANGKAR PARAMETRIK -->
+      <div id="tab-sangkar" class="tab-content space-y-3.5">
+        <div>
+          <div class="mb-1.5 flex items-center justify-between">
+            <label class="font-semibold text-slate-200">Preset Volume Shelter (WMO)</label>
+            <span id="lbl-volume-spec" class="text-[10px] font-semibold text-sky-300 tabular-nums">510 dm³</span>
+          </div>
+          <div class="grid grid-cols-3 gap-1.5">
+            <button type="button" data-volume="small" class="vol-btn rounded-xl border border-slate-600/50 bg-slate-800/60 px-2 py-2 text-center text-[11px] font-medium text-slate-300 transition hover:border-sky-400/50 hover:text-white">
+              <div>Kecil</div>
+              <div class="text-[10px] opacity-75">180 dm³</div>
+            </button>
+            <button type="button" data-volume="casella" class="vol-btn rounded-xl border border-sky-400/60 bg-sky-500/20 px-2 py-2 text-center text-[11px] font-semibold text-sky-100 transition">
+              <div>Casella</div>
+              <div class="text-[10px] opacity-80">510 dm³</div>
+            </button>
+            <button type="button" data-volume="large" class="vol-btn rounded-xl border border-slate-600/50 bg-slate-800/60 px-2 py-2 text-center text-[11px] font-medium text-slate-300 transition hover:border-sky-400/50 hover:text-white">
+              <div>Besar</div>
+              <div class="text-[10px] opacity-75">1000 dm³</div>
+            </button>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex items-center justify-between">
+            <label for="slider-leg-height" class="font-medium text-slate-200">Tinggi Kaki WMO</label>
+            <span id="val-leg-height" class="font-semibold text-sky-300 tabular-nums">1.50 m</span>
+          </div>
+          <input id="slider-leg-height" type="range" min="1.25" max="2.00" step="0.05" value="1.50" class="meteo-slider" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>1.25 m</span>
+            <span>Standar WMO</span>
+            <span>2.00 m</span>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex items-center justify-between">
+            <label for="slider-louver-tilt" class="font-medium text-slate-200">Sudut Kisi-Kisi (Louver)</label>
+            <span id="val-louver-tilt" class="font-semibold text-sky-300 tabular-nums">45°</span>
+          </div>
+          <input id="slider-louver-tilt" type="range" min="25" max="60" step="1" value="45" class="meteo-slider" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>25° (Terbuka)</span>
+            <span>45° (Ideal)</span>
+            <span>60° (Curam)</span>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex items-center justify-between">
+            <label for="slider-albedo" class="font-medium text-slate-200">Albedo / Kondisi Cat Kayu</label>
+            <span id="val-albedo" class="font-semibold text-sky-300 tabular-nums">0.82 (Putih Baru)</span>
+          </div>
+          <input id="slider-albedo" type="range" min="0.45" max="0.85" step="0.01" value="0.82" class="meteo-slider" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>0.45 (Kusam/Lapuk)</span>
+            <span>0.85 (Putih Bersih)</span>
+          </div>
+        </div>
+
+        <hr class="border-slate-700/60" />
+
+        <div class="space-y-2">
+          <label class="flex cursor-pointer items-center justify-between rounded-xl border border-slate-700/60 bg-slate-800/45 px-3 py-2 transition hover:border-slate-500/70">
+            <div>
+              <div class="font-medium text-slate-100">Buka Pintu Sangkar</div>
+              <div class="text-[10px] text-slate-400">Animasi engsel &amp; grendel logam</div>
+            </div>
+            <input id="toggle-door" type="checkbox" class="peer sr-only" />
+            <div class="relative h-5 w-9 shrink-0 rounded-full bg-slate-600 transition peer-checked:bg-sky-500 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-4"></div>
+          </label>
+
+          <label class="flex cursor-pointer items-center justify-between rounded-xl border border-slate-700/60 bg-slate-800/45 px-3 py-2 transition hover:border-slate-500/70">
+            <div>
+              <div class="font-medium text-slate-100">Mode X-Ray / Cutaway</div>
+              <div class="text-[10px] text-slate-400">Lihat sensor internal, ESP32 &amp; tipping bucket</div>
+            </div>
+            <input id="toggle-xray" type="checkbox" class="peer sr-only" />
+            <div class="relative h-5 w-9 shrink-0 rounded-full bg-slate-600 transition peer-checked:bg-sky-500 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-4"></div>
+          </label>
+
+          <label class="flex cursor-pointer items-center justify-between rounded-xl border border-slate-700/60 bg-slate-800/45 px-3 py-2 transition hover:border-slate-500/70">
+            <div>
+              <div class="font-medium text-slate-100">Aliran Angin (Streamlines)</div>
+              <div class="text-[10px] text-slate-400">Arus udara menembus kisi-kisi</div>
+            </div>
+            <input id="toggle-airflow" type="checkbox" checked class="peer sr-only" />
+            <div class="relative h-5 w-9 shrink-0 rounded-full bg-slate-600 transition peer-checked:bg-cyan-500 after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition-all peer-checked:after:translate-x-4"></div>
+          </label>
+        </div>
+      </div>
+
+      <!-- TAB 2: CUACA & MATAHARI -->
+      <div id="tab-cuaca" class="tab-content hidden space-y-3.5">
+        <div class="rounded-xl border border-slate-700/60 bg-slate-800/45 p-2.5">
+          <div class="mb-1.5 flex items-center justify-between">
+            <label for="slider-hour" class="font-semibold text-slate-200">Waktu Lokal (WIB)</label>
+            <div class="flex items-center gap-2">
+              <span id="val-hour" class="font-bold text-amber-300 tabular-nums">10:30 WIB</span>
+              <button
+                id="btn-timelapse"
+                type="button"
+                class="inline-flex items-center gap-1 rounded-lg bg-amber-500/20 px-2 py-1 text-[10px] font-semibold text-amber-200 ring-1 ring-amber-400/40 transition hover:bg-amber-500/30"
+              >
+                <span id="timelapse-icon">▶</span>
+                <span id="timelapse-label">Timelapse</span>
+              </button>
+            </div>
+          </div>
+          <input id="slider-hour" type="range" min="5" max="19" step="0.05" value="10.5" class="meteo-slider" />
+          <div class="mt-1 flex justify-between text-[10px] text-slate-400">
+            <span>05:00 Fajar</span>
+            <span>12:00 Siang</span>
+            <span>19:00 Petang</span>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex items-center justify-between">
+            <label for="slider-wind-speed" class="font-medium text-slate-200">Kecepatan Angin (U)</label>
+            <span id="val-wind-speed" class="font-semibold text-cyan-300 tabular-nums">3.8 m/s</span>
+          </div>
+          <input id="slider-wind-speed" type="range" min="0" max="25" step="0.2" value="3.8" class="meteo-slider" />
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex items-center justify-between">
+            <label for="slider-wind-dir" class="font-medium text-slate-200">Arah Datangnya Angin</label>
+            <span id="val-wind-dir" class="font-semibold text-cyan-300 tabular-nums">135° (TG)</span>
+          </div>
+          <input id="slider-wind-dir" type="range" min="0" max="360" step="5" value="135" class="meteo-slider" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>0° U</span>
+            <span>90° T</span>
+            <span>180° S</span>
+            <span>270° B</span>
+            <span>360° U</span>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex items-center justify-between">
+            <label for="slider-rain" class="font-medium text-slate-200">Intensitas Hujan</label>
+            <span id="val-rain" class="font-semibold text-blue-300 tabular-nums">0 mm/jam</span>
+          </div>
+          <input id="slider-rain" type="range" min="0" max="100" step="1" value="0" class="meteo-slider" />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>0 Kering</span>
+            <span>25 Sedang</span>
+            <span>100 Ekstrem</span>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <div class="flex items-center justify-between">
+            <label for="slider-cloud" class="font-medium text-slate-200">Tutupan Awan</label>
+            <span id="val-cloud" class="font-semibold text-slate-200 tabular-nums">18%</span>
+          </div>
+          <input id="slider-cloud" type="range" min="0" max="100" step="1" value="18" class="meteo-slider" />
+        </div>
+
+        <hr class="border-slate-700/60" />
+
+        <div class="grid grid-cols-1 gap-3">
+          <div class="space-y-1">
+            <div class="flex items-center justify-between">
+              <label for="slider-temp" class="font-medium text-slate-200">Suhu Udara Ambien (T)</label>
+              <span id="val-temp" class="font-semibold text-orange-300 tabular-nums">29.5 °C</span>
+            </div>
+            <input id="slider-temp" type="range" min="18" max="40" step="0.5" value="29.5" class="meteo-slider" />
+          </div>
+          <div class="space-y-1">
+            <div class="flex items-center justify-between">
+              <label for="slider-rh" class="font-medium text-slate-200">Kelembapan Relatif (RH)</label>
+              <span id="val-rh" class="font-semibold text-emerald-300 tabular-nums">72%</span>
+            </div>
+            <input id="slider-rh" type="range" min="30" max="100" step="1" value="72" class="meteo-slider" />
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: ANALITIK FISIKA SEMI-EMPIRIS -->
+      <div id="tab-fisika" class="tab-content hidden space-y-3">
+        <div id="shield-status-box" class="rounded-xl border border-emerald-400/40 bg-emerald-500/15 p-2.5">
+          <div class="flex items-center gap-2">
+            <span id="shield-status-dot" class="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400"></span>
+            <span id="shield-status-title" class="font-bold text-emerald-200">Aman — Sinar Langsung Terblokir</span>
+          </div>
+          <p id="shield-status-desc" class="mt-1 text-[11px] leading-relaxed text-emerald-100/85"></p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div class="rounded-xl border border-slate-700/60 bg-slate-800/55 p-2.5">
+            <div class="text-[10px] font-medium text-slate-400">Suhu Ambien (T)</div>
+            <div id="phys-temp-ambient" class="mt-0.5 text-lg font-bold text-white tabular-nums">29.50 °C</div>
+            <div class="text-[10px] text-slate-400">Udara bebas</div>
+          </div>
+          <div class="rounded-xl border border-sky-400/30 bg-sky-500/10 p-2.5">
+            <div class="text-[10px] font-medium text-sky-300">Terukur Sensor (T<sub>sh</sub>)</div>
+            <div id="phys-temp-sensor" class="mt-0.5 text-lg font-bold text-sky-100 tabular-nums">29.66 °C</div>
+            <div class="text-[10px] text-sky-200/75">T + ε<sub>T</sub> internal</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2">
+          <div class="rounded-xl border border-slate-700/60 bg-slate-800/55 p-2.5">
+            <div class="text-[10px] font-medium text-slate-400">Error Radiasi (ε<sub>T</sub>)</div>
+            <div id="phys-error" class="mt-0.5 text-base font-bold text-amber-300 tabular-nums">+0.16 °C</div>
+            <div class="text-[10px] text-slate-400">Bias pemanasan radiasi</div>
+          </div>
+          <div class="rounded-xl border border-slate-700/60 bg-slate-800/55 p-2.5">
+            <div class="text-[10px] font-medium text-slate-400">Response Time (τ<sub>sh</sub>)</div>
+            <div id="phys-tau" class="mt-0.5 text-base font-bold text-cyan-300 tabular-nums">74 dtk</div>
+            <div class="text-[10px] text-slate-400">Inersia termal volume</div>
+          </div>
+          <div class="rounded-xl border border-slate-700/60 bg-slate-800/55 p-2.5">
+            <div class="text-[10px] font-medium text-slate-400">Radiasi Surya Global</div>
+            <div id="phys-rad" class="mt-0.5 text-base font-bold text-yellow-300 tabular-nums">755 W/m²</div>
+            <div id="phys-absorbed" class="text-[10px] text-slate-400">Terserap: 136 W/m²</div>
+          </div>
+          <div class="rounded-xl border border-slate-700/60 bg-slate-800/55 p-2.5">
+            <div class="text-[10px] font-medium text-slate-400">Elevasi / Zenit (Θ)</div>
+            <div id="phys-sun-angle" class="mt-0.5 text-base font-bold text-orange-300 tabular-nums">62.4°</div>
+            <div id="phys-zenith" class="text-[10px] text-slate-400">Zenit Θ: 27.6°</div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-slate-700/60 bg-slate-800/45 p-2.5">
+          <div class="mb-1 flex items-center justify-between text-[10px]">
+            <span class="font-medium text-slate-300">Kualitas Pengukuran (WMO ≤ 0.2 °C)</span>
+            <span id="phys-quality-label" class="font-semibold text-emerald-300">Sangat Baik</span>
+          </div>
+          <div class="h-2 w-full overflow-hidden rounded-full bg-slate-700">
+            <div id="phys-error-bar" class="h-full rounded-full bg-emerald-400 transition-all duration-300" style="width: 14%;"></div>
+          </div>
+        </div>
+
+        <p class="rounded-xl border border-slate-700/50 bg-slate-950/55 p-2.5 text-[10px] leading-relaxed text-slate-400">
+          <strong class="text-slate-300">Model Semi-Empiris Edukatif:</strong> Nilai ε<sub>T</sub> dan τ<sub>sh</sub> dihitung menggunakan model keseimbangan energi pendekatan berbasis volume shelter, rasio luas permukaan, albedo cat, elevasi matahari, serta ventilasi angin—ditujukan untuk eksplorasi desain instrumen dan edukasi, bukan simulasi CFD penuh.
+        </p>
+      </div>
+
+      <!-- TAB 4: PRESET KUALITAS & TELEMETRI RENDER -->
+      <div id="tab-kualitas" class="tab-content hidden space-y-3.5">
+        <div>
+          <label class="mb-1.5 block font-semibold text-slate-200">Preset Kualitas Grafis Real-Time</label>
+          <div class="grid grid-cols-3 gap-1.5">
+            <button type="button" data-quality="low" class="quality-btn rounded-xl border border-slate-600/50 bg-slate-800/60 px-2 py-2.5 text-center transition hover:border-sky-400/50">
+              <div class="text-[11px] font-bold text-slate-200">Ringan</div>
+              <div class="mt-0.5 text-[10px] text-slate-400">Hemat GPU</div>
+            </button>
+            <button type="button" data-quality="balanced" class="quality-btn rounded-xl border border-sky-400/65 bg-sky-500/20 px-2 py-2.5 text-center transition">
+              <div class="text-[11px] font-bold text-sky-100">Seimbang</div>
+              <div class="mt-0.5 text-[10px] text-sky-200/80">Default</div>
+            </button>
+            <button type="button" data-quality="high" class="quality-btn rounded-xl border border-slate-600/50 bg-slate-800/60 px-2 py-2.5 text-center transition hover:border-sky-400/50">
+              <div class="text-[11px] font-bold text-slate-200">Tinggi</div>
+              <div class="mt-0.5 text-[10px] text-slate-400">Ultra PBR</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Ringkasan Konfigurasi Aktif -->
+        <div class="rounded-xl border border-slate-700/60 bg-slate-900/60 p-3 text-[11px]">
+          <div class="mb-2 font-semibold text-sky-300">Konfigurasi Pipeline Aktif</div>
+          <div class="space-y-1.5 tabular-nums">
+            <div class="flex justify-between">
+              <span class="text-slate-400">Pixel Ratio (DPR Max)</span>
+              <span id="qual-dpr" class="font-semibold text-slate-100">1.5x</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Resolusi Shadow Map</span>
+              <span id="qual-shadow" class="font-semibold text-slate-100">1024 × 1024</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Rumput 3D GPU Instanced</span>
+              <span id="qual-grass" class="font-semibold text-emerald-300">4.000 helai</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Refleksi Sky IBL (PMREM)</span>
+              <span id="qual-ibl" class="font-semibold text-sky-200">Aktif (Throttled)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Statistik Live Renderer -->
+        <div class="rounded-xl border border-slate-700/60 bg-slate-900/60 p-3 text-[11px]">
+          <div class="mb-2 font-semibold text-slate-200">Telemetri WebGL Langsung</div>
+          <div class="grid grid-cols-3 gap-2 text-center tabular-nums">
+            <div class="rounded-lg bg-slate-800/75 p-2">
+              <div class="text-[10px] text-slate-400">FPS</div>
+              <div id="qual-live-fps" class="text-sm font-bold text-emerald-400">60</div>
+            </div>
+            <div class="rounded-lg bg-slate-800/75 p-2">
+              <div class="text-[10px] text-slate-400">Draw Calls</div>
+              <div id="qual-live-calls" class="text-sm font-bold text-slate-100">--</div>
+            </div>
+            <div class="rounded-lg bg-slate-800/75 p-2">
+              <div class="text-[10px] text-slate-400">Triangles</div>
+              <div id="qual-live-tris" class="text-sm font-bold text-slate-100">--</div>
+            </div>
+          </div>
+          <p class="mt-2 text-[10px] leading-relaxed text-slate-400">
+            Seluruh tekstur PBR (kayu, galvanis spangle, beton, rumput, tanah, panel surya, PCB) dibuat prosedural 0 KB. Rumput 3D &amp; hujan berjalan via <code class="text-sky-300">InstancedMesh</code> + GPU shader agar Draw Calls tetap rendah.
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </aside>
+
+  <!-- Kartu Detail Instrumen Mengambang (Kiri Bawah) -->
+  <section
+    id="instrument-card"
+    class="glass-panel fixed bottom-16 left-3 z-20 hidden w-[calc(100vw-1.5rem)] max-w-sm rounded-2xl p-3.5 transition-all duration-200 sm:bottom-20 sm:left-4"
+  >
+    <div class="flex items-start justify-between gap-2">
+      <div class="min-w-0">
+        <span id="card-category" class="inline-block rounded-full bg-sky-500/20 px-2 py-0.5 text-[10px] font-semibold text-sky-300 ring-1 ring-sky-400/30">
+          Instrumen Meteorologi
+        </span>
+        <h2 id="card-title" class="mt-1 text-sm font-bold text-white">Sangkar Meteorologi</h2>
+        <p id="card-sensor" class="text-[11px] font-medium text-slate-300"></p>
+      </div>
+      <button
+        id="card-close-btn"
+        type="button"
+        aria-label="Tutup kartu detail"
+        class="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-800/80 text-base text-slate-300 transition hover:bg-slate-700 hover:text-white"
+      >
+        ×
+      </button>
+    </div>
+
+    <p id="card-desc" class="mt-2 text-[11px] leading-relaxed text-slate-300"></p>
+
+    <div class="mt-2 rounded-xl border border-slate-700/60 bg-slate-950/60 px-2.5 py-1.5 text-[10px] text-slate-300">
+      <span class="font-semibold text-sky-300">Standar WMO:</span>
+      <span id="card-wmo"></span>
+    </div>
+
+    <!-- Pembacaan Live Instrumen -->
+    <div id="card-metrics" class="mt-2.5 grid grid-cols-2 gap-1.5"></div>
+  </section>
+
+  <!-- Bar Preset Kamera Mengambang (Bawah Tengah) -->
+  <nav
+    aria-label="Preset Kamera Instrumen"
+    class="fixed bottom-3 left-1/2 z-20 w-[calc(100vw-1.5rem)] max-w-max -translate-x-1/2 sm:bottom-4"
+  >
+    <div class="glass-panel custom-scroll flex items-center gap-1 overflow-x-auto rounded-full p-1.5 text-[11px] font-semibold">
+      <button type="button" data-cam="overview" class="cam-btn shrink-0 rounded-full bg-sky-500 px-3 py-1.5 text-white shadow-sm transition">
+        Overview
+      </button>
+      <button type="button" data-cam="stevenson" class="cam-btn shrink-0 rounded-full px-3 py-1.5 text-slate-200 transition hover:bg-slate-700/70 hover:text-white">
+        Sangkar
+      </button>
+      <button type="button" data-cam="anemometer" class="cam-btn shrink-0 rounded-full px-3 py-1.5 text-slate-200 transition hover:bg-slate-700/70 hover:text-white">
+        AWS &amp; Angin
+      </button>
+      <button type="button" data-cam="raingauge" class="cam-btn shrink-0 rounded-full px-3 py-1.5 text-slate-200 transition hover:bg-slate-700/70 hover:text-white">
+        Penakar Hujan
+      </button>
+      <button type="button" data-cam="pyranometer" class="cam-btn shrink-0 rounded-full px-3 py-1.5 text-slate-200 transition hover:bg-slate-700/70 hover:text-white">
+        Pyranometer
+      </button>
+      <button type="button" data-cam="evappan" class="cam-btn shrink-0 rounded-full px-3 py-1.5 text-slate-200 transition hover:bg-slate-700/70 hover:text-white">
+        Panci Penguapan
+      </button>
+      <button type="button" id="btn-cam-reset" class="shrink-0 rounded-full border border-slate-500/40 bg-slate-800/70 px-3 py-1.5 text-slate-200 transition hover:border-sky-400/50 hover:text-white">
+        Reset
+      </button>
+    </div>
+  </nav>
+
+  <!-- Fallback Pesan Ramah Jika WebGL Tidak Didukung -->
+  <div id="webgl-error" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/92 p-6 text-center">
+    <div class="glass-panel max-w-md rounded-2xl p-6">
+      <h2 class="text-lg font-bold text-rose-400">WebGL Tidak Tersedia</h2>
+      <p class="mt-2 text-sm leading-relaxed text-slate-300">
+        Browser atau GPU perangkat Anda belum mendukung akselerasi WebGL yang diperlukan untuk merender Taman Alat Meteorologi 3D. Silakan aktifkan hardware acceleration atau gunakan peramban modern terbaru.
+      </p>
+    </div>
+  </div>
+
+  <!-- =========================================================================
+       SCRIPT UTAMA THREE.JS HIGH-DETAIL PBR EDITION
+       ========================================================================= -->
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+    import { Sky } from 'three/addons/objects/Sky.js';
+
+    /* =========================================================================
+     * 1. KONFIGURASI PRESET, KATALOG INSTRUMEN & STATE UTAMA
+     * ========================================================================= */
+    const QUALITY_PRESETS = {
+      low: {
+        key: 'low',
+        label: 'Ringan',
+        maxDpr: 1.0,
+        shadowSize: 512,
+        grassCount: 1200,
+        iblMinDeltaDeg: 5.0,
+        iblMinIntervalMs: 700,
+        iblBlur: 0.06,
+        iblDesc: 'Hemat (Interval Lambat)',
+      },
+      balanced: {
+        key: 'balanced',
+        label: 'Seimbang',
+        maxDpr: 1.5,
+        shadowSize: 1024,
+        grassCount: 4000,
+        iblMinDeltaDeg: 2.2,
+        iblMinIntervalMs: 280,
+        iblBlur: 0.03,
+        iblDesc: 'Aktif (Throttled)',
+      },
+      high: {
+        key: 'high',
+        label: 'Tinggi',
+        maxDpr: 2.0,
+        shadowSize: 2048,
+        grassCount: 8500,
+        iblMinDeltaDeg: 1.0,
+        iblMinIntervalMs: 140,
+        iblBlur: 0.012,
+        iblDesc: 'Resolusi Penuh',
+      },
+    };
+
+    const VOLUME_PRESETS = {
+      small:   { label: 'Kecil (LBOM)',          dm3: 180,  vSh: 0.18, aSec: 0.36, aSh: 2.00, width: 0.56, depth: 0.56, height: 0.58 },
+      casella: { label: 'Standar Casella (LCAS)', dm3: 510,  vSh: 0.51, aSec: 0.64, aSh: 3.80, width: 0.78, depth: 0.78, height: 0.84 },
+      large:   { label: 'Besar (LSOC)',           dm3: 1000, vSh: 1.00, aSec: 1.00, aSh: 6.20, width: 0.98, depth: 0.98, height: 1.04 },
+    };
+
+    const INSTRUMENT_CATALOG = {
+      stevenson: {
+        id: 'stevenson',
+        name: 'Sangkar Meteorologi (Stevenson Screen)',
+        category: 'Suhu & Kelembapan Udara',
+        sensor: 'BME280 / SHT31 + ESP32 + Termometer Bola Kering & Basah',
+        desc: 'Pelindung berventilasi alami dengan kisi-kisi kayu ganda dan atap berlapis insulasi di atas pondasi beton berbaut. Melindungi sensor dari radiasi matahari langsung & hujan sambil menjaga sirkulasi udara bebas.',
+        wmo: 'Tinggi sensor 1.25–2.00 m di atas rumput terawat; cat putih beralbedo tinggi; pintu di Belahan Bumi Selatan menghadap Selatan agar tidak tersorot matahari saat pengamatan.',
+      },
+      anemometer: {
+        id: 'anemometer',
+        name: 'Tiang Anemometer, Wind Vane & Unit AWS PV',
+        category: 'Pengamatan Angin & Energi Surya',
+        sensor: '3-Cup Anemometer + Wind Vane + Panel Surya Monokristalin + Logger IP65',
+        desc: 'Anemometer 3 mangkuk mengukur kecepatan angin (m/s), wind vane melacak arah datangnya angin (0°–360°), disuplai panel surya monokristalin menghadap Utara dengan kabel konduit menuju data logger IP65.',
+        wmo: 'Area terbuka bebas penghalang (jarak ≥ 10x tinggi halangan). Standar operasional 10 m atau 2–3 m pada stasiun agrometeorologi/AWS kompak.',
+      },
+      raingauge: {
+        id: 'raingauge',
+        name: 'Penakar Hujan Tipping Bucket & Manual OBS',
+        category: 'Pengamatan Curah Hujan',
+        sensor: 'Tipping Bucket 0.2 mm/tip (Reed Switch) + Penakar Manual OBS',
+        desc: 'Penakar hujan otomatis dengan mekanisme jungkat-jungkit twin-bucket tembaga yang mengirim pulsa tiap 0.2 mm hujan. Disandingkan penakar manual OBS bercorong kuningan sebagai rujukan kalibrasi lapangan.',
+        wmo: 'Bibir corong horizontal pada tinggi 0.5–1.2 m di atas tanah dengan sudut ruang terbuka minimal 45° bebas bayangan bangunan/pohon.',
+      },
+      pyranometer: {
+        id: 'pyranometer',
+        name: 'Pyranometer & Petak Sensor Suhu Tanah',
+        category: 'Radiasi Surya & Profil Suhu Tanah',
+        sensor: 'Pyranometer Kubah Kaca Ganda + 4 Probe Tanah (5, 10, 20, 50 cm)',
+        desc: 'Pyranometer mengukur radiasi surya global horizontal (W/m²) dengan sun shield bertingkat & kubah kaca ganda. Di sampingnya petak tanah gundul berbingkai beton memantau gradien suhu tanah 4 kedalaman.',
+        wmo: 'Pyranometer harus rata sempurna (waterpass) bebas bayangan sepanjang hari; termometer tanah ditanam pada petak tanah gundul terstandar di kedalaman 5, 10, 20, dan 50 cm.',
+      },
+      evappan: {
+        id: 'evappan',
+        name: 'Panci Penguapan Kelas A (Class A Pan)',
+        category: 'Pengamatan Evaporasi',
+        sensor: 'Panci Galvanis Ø 1.21 m + Stilling Well, Hook Gauge & Mini Anemometer',
+        desc: 'Mengukur laju penguapan permukaan air terbuka (mm/hari) akibat radiasi, suhu, defisit uap air, dan angin. Dilengkapi sumur tenang (stilling well), hook gauge mikrometer, serta anemometer mini 0.5 m.',
+        wmo: 'Ditempatkan di atas palet kisi kayu setinggi ~15 cm agar sirkulasi udara merata di bawah panci; tinggi muka air dijaga 5–7.5 cm di bawah bibir panci.',
+      },
+    };
+
+    const CAMERA_PRESETS = {
+      overview:    { pos: new THREE.Vector3(10.2, 6.2, 11.0),  target: new THREE.Vector3(0, 1.1, 0) },
+      stevenson:   { pos: new THREE.Vector3(1.85, 2.05, 2.55), target: new THREE.Vector3(0, 1.85, 0) },
+      anemometer:  { pos: new THREE.Vector3(-1.35, 2.95, -0.55), target: new THREE.Vector3(-3.8, 2.35, -3.2) },
+      raingauge:   { pos: new THREE.Vector3(3.95, 1.32, -0.85), target: new THREE.Vector3(4.25, 0.52, -2.6) },
+      pyranometer: { pos: new THREE.Vector3(2.15, 1.55, 4.45), target: new THREE.Vector3(3.9, 0.65, 2.8) },
+      evappan:     { pos: new THREE.Vector3(-1.85, 1.55, 4.65), target: new THREE.Vector3(-3.6, 0.38, 2.8) },
+    };
+
+    const state = {
+      // Kualitas & Performa
+      qualityKey: 'balanced',
+
+      // Parametrik Stevenson Screen
+      volumeKey: 'casella',
+      legHeight: 1.50,
+      louverTilt: 45,
+      albedo: 0.82,
+      doorOpen: false,
+      xrayMode: false,
+      showAirflow: true,
+
+      // Lingkungan & Cuaca
+      hour: 10.5,
+      timelapse: false,
+      windSpeed: 3.8,
+      windDir: 135,
+      rainIntensity: 0,
+      cloudCover: 18,
+      tempAmbient: 29.5,
+      rh: 72,
+
+      // Telemetri Dinamis
+      selectedInstrument: null,
+      activeCamPreset: 'overview',
+      tipCount: 0,
+      rainAccumMm: 0,
+      bucketFillMm: 0,
+      bucketSide: 1,
+      bucketAngle: 0.36,
+      bucketTargetAngle: 0.36,
+      reedPulseTimer: 0,
+      doorAngle: 0,
+      currentVaneAngle: -THREE.MathUtils.degToRad(135),
+
+      // Hasil Analitik Fisika
+      physics: {
+        elevationDeg: 62,
+        zenithDeg: 28,
+        solarRad: 755,
+        absorbedRad: 136,
+        epsilonT: 0.16,
+        tempMeasured: 29.66,
+        tauSh: 74,
+        shieldStatus: 'safe',
+        shieldTitle: 'Aman — Sinar Langsung Terblokir',
+        shieldDesc: '',
+      },
+    };
+
+    /* =========================================================================
+     * 2. GENERATOR TEKSTUR PBR PROSEDURAL (0 KB EKSTERNAL: ALBEDO, BUMP, ROUGHNESS)
+     * ========================================================================= */
+    function seededNoise(x, y) {
+      const n = Math.sin(x * 127.1 + y * 311.7) * 43758.5453123;
+      return n - Math.floor(n);
+    }
+
+    /** 2.1 Kayu Cat Putih Berpori & Berserat (Albedo + Bump + Roughness) */
+    function createPaintedWoodPBR(repeatX = 2, repeatY = 2) {
+      const size = 512;
+      const cMap = document.createElement('canvas');
+      const cBump = document.createElement('canvas');
+      const cRough = document.createElement('canvas');
+      cMap.width = cBump.width = cRough.width = size;
+      cMap.height = cBump.height = cRough.height = size;
+
+      const ctxM = cMap.getContext('2d');
+      const ctxB = cBump.getContext('2d');
+      const ctxR = cRough.getContext('2d');
+
+      ctxM.fillStyle = '#f6f7f9';
+      ctxM.fillRect(0, 0, size, size);
+      ctxB.fillStyle = '#808080';
+      ctxB.fillRect(0, 0, size, size);
+      ctxR.fillStyle = '#929292';
+      ctxR.fillRect(0, 0, size, size);
+
+      // Serat kayu halus memanjang
+      for (let y = 0; y < size; y += 2) {
+        const wave = Math.sin(y * 0.08) * 6 + Math.sin(y * 0.31) * 3;
+        const delta = Math.round(wave);
+        const shadeM = 240 + Math.max(-10, Math.min(12, delta));
+        const shadeB = 128 + delta * 3;
+        const shadeR = 148 - delta * 2;
+
+        ctxM.fillStyle = `rgb(${shadeM},${shadeM},${shadeM - 1})`;
+        ctxM.fillRect(0, y, size, 2);
+
+        ctxB.fillStyle = `rgb(${shadeB},${shadeB},${shadeB})`;
+        ctxB.fillRect(0, y, size, 2);
+
+        ctxR.fillStyle = `rgb(${shadeR},${shadeR},${shadeR})`;
+        ctxR.fillRect(0, y, size, 2);
+      }
+
+      // Garis pori serat halus & tekstur kuas cat
+      for (let i = 0; i < 3200; i++) {
+        const x = Math.random() * size;
+        const y = Math.random() * size;
+        const len = 18 + Math.random() * 68;
+        const dark = Math.random() > 0.5;
+        ctxM.fillStyle = dark ? 'rgba(205,212,220,0.18)' : 'rgba(255,255,255,0.22)';
+        ctxM.fillRect(x, y, len, 1.3);
+
+        ctxB.fillStyle = dark ? 'rgba(85,85,85,0.35)' : 'rgba(175,175,175,0.25)';
+        ctxB.fillRect(x, y, len, 1.3);
+
+        ctxR.fillStyle = dark ? 'rgba(185,185,185,0.3)' : 'rgba(115,115,115,0.25)';
+        ctxR.fillRect(x, y, len, 1.3);
+      }
+
+      const setupTex = (canvas, isColor) => {
+        const t = new THREE.CanvasTexture(canvas);
+        t.wrapS = t.wrapT = THREE.RepeatWrapping;
+        t.repeat.set(repeatX, repeatY);
+        if (isColor) t.colorSpace = THREE.SRGBColorSpace;
+        return t;
+      };
+      return {
+        map: setupTex(cMap, true),
+        bumpMap: setupTex(cBump, false),
+        roughnessMap: setupTex(cRough, false),
+      };
+    }
+
+    /** 2.2 Logam Galvanis Bercorak Spangle Kristalin (Panci, Tiang, Braket) */
+    function createGalvanizedSpanglePBR(repeatX = 3, repeatY = 2) {
+      const size = 512;
+      const cMap = document.createElement('canvas');
+      const cBump = document.createElement('canvas');
+      const cRough = document.createElement('canvas');
+      cMap.width = cBump.width = cRough.width = size;
+      cMap.height = cBump.height = cRough.height = size;
+
+      const ctxM = cMap.getContext('2d');
+      const ctxB = cBump.getContext('2d');
+      const ctxR = cRough.getContext('2d');
+
+      ctxM.fillStyle = '#cfd6de';
+      ctxM.fillRect(0, 0, size, size);
+      ctxB.fillStyle = '#808080';
+      ctxB.fillRect(0, 0, size, size);
+      ctxR.fillStyle = '#6e6e6e';
+      ctxR.fillRect(0, 0, size, size);
+
+      // Kristal spangle seng poligonal khas lembaran galvanis
+      for (let i = 0; i < 420; i++) {
+        const cx = Math.random() * size;
+        const cy = Math.random() * size;
+        const sides = 5 + Math.floor(Math.random() * 4);
+        const rad = 10 + Math.random() * 24;
+        const tone = 175 + Math.floor(Math.random() * 68);
+        const roughVal = 65 + Math.floor(Math.random() * 110);
+        const bumpVal = 108 + Math.floor(Math.random() * 44);
+
+        const drawPoly = (ctx, fill) => {
+          ctx.beginPath();
+          for (let s = 0; s < sides; s++) {
+            const a = (s / sides) * Math.PI * 2 + (i % 7) * 0.4;
+            const r = rad * (0.72 + seededNoise(i + s, s) * 0.45);
+            const px = cx + Math.cos(a) * r;
+            const py = cy + Math.sin(a) * r;
+            if (s === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.fillStyle = fill;
+          ctx.fill();
+        };
+
+        drawPoly(ctxM, `rgba(${tone},${tone + 4},${tone + 9},0.75)`);
+        drawPoly(ctxB, `rgba(${bumpVal},${bumpVal},${bumpVal},0.65)`);
+        drawPoly(ctxR, `rgba(${roughVal},${roughVal},${roughVal},0.75)`);
+      }
+
+      // Goresan mikro halus
+      for (let i = 0; i < 1200; i++) {
+        const x = Math.random() * size;
+        const y = Math.random() * size;
+        ctxR.fillStyle = 'rgba(210,210,210,0.12)';
+        ctxR.fillRect(x, y, 24, 1);
+      }
+
+      const setup = (c, isColor) => {
+        const t = new THREE.CanvasTexture(c);
+        t.wrapS = t.wrapT = THREE.RepeatWrapping;
+        t.repeat.set(repeatX, repeatY);
+        if (isColor) t.colorSpace = THREE.SRGBColorSpace;
+        return t;
+      };
+      return { map: setup(cMap, true), bumpMap: setup(cBump, false), roughnessMap: setup(cRough, false) };
+    }
+
+    /** 2.3 Brushed Stainless Steel (Penakar Hujan & Sensor) */
+    function createBrushedSteelPBR() {
+      const size = 256;
+      const cMap = document.createElement('canvas');
+      const cRough = document.createElement('canvas');
+      cMap.width = cRough.width = size;
+      cMap.height = cRough.height = size;
+      const ctxM = cMap.getContext('2d');
+      const ctxR = cRough.getContext('2d');
+
+      ctxM.fillStyle = '#dde3ea';
+      ctxM.fillRect(0, 0, size, size);
+      ctxR.fillStyle = '#525252';
+      ctxR.fillRect(0, 0, size, size);
+
+      for (let y = 0; y < size; y++) {
+        const v = 205 + Math.floor(Math.random() * 35);
+        const r = 55 + Math.floor(Math.random() * 55);
+        ctxM.fillStyle = `rgb(${v},${v + 2},${v + 5})`;
+        ctxM.fillRect(0, y, size, 1);
+        ctxR.fillStyle = `rgb(${r},${r},${r})`;
+        ctxR.fillRect(0, y, size, 1);
+      }
+
+      const map = new THREE.CanvasTexture(cMap);
+      const roughnessMap = new THREE.CanvasTexture(cRough);
+      map.wrapS = map.wrapT = roughnessMap.wrapS = roughnessMap.wrapT = THREE.RepeatWrapping;
+      map.colorSpace = THREE.SRGBColorSpace;
+      return { map, roughnessMap };
+    }
+
+    /** 2.4 Beton Cor Beragregat Kasar (Pondasi & Jalan Setapak) */
+    function createConcretePBR(repeatX = 2, repeatY = 2) {
+      const size = 512;
+      const cMap = document.createElement('canvas');
+      const cBump = document.createElement('canvas');
+      const cRough = document.createElement('canvas');
+      cMap.width = cBump.width = cRough.width = size;
+      cMap.height = cBump.height = cRough.height = size;
+
+      const ctxM = cMap.getContext('2d');
+      const ctxB = cBump.getContext('2d');
+      const ctxR = cRough.getContext('2d');
+
+      ctxM.fillStyle = '#b9c0c8';
+      ctxM.fillRect(0, 0, size, size);
+      ctxB.fillStyle = '#808080';
+      ctxB.fillRect(0, 0, size, size);
+      ctxR.fillStyle = '#d8d8d8';
+      ctxR.fillRect(0, 0, size, size);
+
+      // Noda semen alami
+      for (let i = 0; i < 65; i++) {
+        const x = Math.random() * size;
+        const y = Math.random() * size;
+        const r = 20 + Math.random() * 55;
+        const g = ctxM.createRadialGradient(x, y, 2, x, y, r);
+        const dark = Math.random() > 0.5;
+        g.addColorStop(0, dark ? 'rgba(110,118,128,0.18)' : 'rgba(226,232,240,0.2)');
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctxM.fillStyle = g;
+        ctxM.fillRect(x - r, y - r, r * 2, r * 2);
+      }
+
+      // Butiran agregat pasir & kerikil halus
+      for (let i = 0; i < 12000; i++) {
+        const x = Math.random() * size;
+        const y = Math.random() * size;
+        const s = Math.random() * 2.4 + 0.7;
+        const v = 125 + Math.floor(Math.random() * 100);
+        const bv = 70 + Math.floor(Math.random() * 125);
+        ctxM.fillStyle = `rgba(${v},${v},${v - 2},0.55)`;
+        ctxM.fillRect(x, y, s, s);
+        ctxB.fillStyle = `rgb(${bv},${bv},${bv})`;
+        ctxB.fillRect(x, y, s, s);
+        ctxR.fillStyle = `rgb(${180 + (bv % 65)},${180 + (bv % 65)},${180 + (bv % 65)})`;
+        ctxR.fillRect(x, y, s, s);
+      }
+
+      const setup = (c, isColor) => {
+        const t = new THREE.CanvasTexture(c);
+        t.wrapS = t.wrapT = THREE.RepeatWrapping;
+        t.repeat.set(repeatX, repeatY);
+        if (isColor) t.colorSpace = THREE.SRGBColorSpace;
+        return t;
+      };
+      return { map: setup(cMap, true), bumpMap: setup(cBump, false), roughnessMap: setup(cRough, false) };
+    }
+
+    /** 2.5 Rumput Lapangan & Tanah Gundul Bertekstur */
+    function createGrassGroundPBR(isParkPlot = true) {
+      const size = 512;
+      const cMap = document.createElement('canvas');
+      const cBump = document.createElement('canvas');
+      cMap.width = cBump.width = size;
+      cMap.height = cBump.height = size;
+      const ctxM = cMap.getContext('2d');
+      const ctxB = cBump.getContext('2d');
+
+      ctxM.fillStyle = isParkPlot ? '#3c7736' : '#31592d';
+      ctxM.fillRect(0, 0, size, size);
+      ctxB.fillStyle = '#7a7a7a';
+      ctxB.fillRect(0, 0, size, size);
+
+      if (isParkPlot) {
+        // Garis mowing rapi khas taman alat terawat
+        for (let i = 0; i < 8; i++) {
+          ctxM.fillStyle = i % 2 === 0 ? 'rgba(130,205,98,0.09)' : 'rgba(18,52,20,0.08)';
+          ctxM.fillRect((i * size) / 8, 0, size / 8, size);
+        }
+      }
+
+      for (let i = 0; i < 20000; i++) {
+        const x = Math.random() * size;
+        const y = Math.random() * size;
+        const r = Math.random();
+        if (r > 0.65) ctxM.fillStyle = isParkPlot ? 'rgba(112,188,78,0.34)' : 'rgba(84,136,64,0.26)';
+        else if (r > 0.25) ctxM.fillStyle = 'rgba(28,74,28,0.32)';
+        else ctxM.fillStyle = 'rgba(78,64,38,0.22)';
+        ctxM.fillRect(x, y, 2, 3.5);
+
+        const bv = r > 0.5 ? 165 : 92;
+        ctxB.fillStyle = `rgb(${bv},${bv},${bv})`;
+        ctxB.fillRect(x, y, 2, 3);
+      }
+
+      const map = new THREE.CanvasTexture(cMap);
+      const bumpMap = new THREE.CanvasTexture(cBump);
+      map.wrapS = map.wrapT = bumpMap.wrapS = bumpMap.wrapT = THREE.RepeatWrapping;
+      map.repeat.set(isParkPlot ? 3 : 24, isParkPlot ? 3 : 24);
+      bumpMap.repeat.set(isParkPlot ? 3 : 24, isParkPlot ? 3 : 24);
+      map.colorSpace = THREE.SRGBColorSpace;
+      return { map, bumpMap };
+    }
+
+    function createSoilPBR() {
+      const size = 512;
+      const cMap = document.createElement('canvas');
+      const cBump = document.createElement('canvas');
+      cMap.width = cBump.width = size;
+      cMap.height = cBump.height = size;
+      const ctxM = cMap.getContext('2d');
+      const ctxB = cBump.getContext('2d');
+
+      ctxM.fillStyle = '#573c25';
+      ctxM.fillRect(0, 0, size, size);
+      ctxB.fillStyle = '#757575';
+      ctxB.fillRect(0, 0, size, size);
+
+      for (let i = 0; i < 14000; i++) {
+        const x = Math.random() * size;
+        const y = Math.random() * size;
+        const rad = Math.random() * 2.6 + 0.6;
+        const pick = Math.random();
+        if (pick > 0.72) ctxM.fillStyle = 'rgba(122,88,54,0.48)';
+        else if (pick > 0.2) ctxM.fillStyle = 'rgba(46,30,17,0.52)';
+        else ctxM.fillStyle = 'rgba(155,136,112,0.35)'; // kerikil halus
+        ctxM.beginPath();
+        ctxM.arc(x, y, rad, 0, Math.PI * 2);
+        ctxM.fill();
+
+        const b = pick > 0.5 ? 175 : 70;
+        ctxB.fillStyle = `rgb(${b},${b},${b})`;
+        ctxB.beginPath();
+        ctxB.arc(x, y, rad, 0, Math.PI * 2);
+        ctxB.fill();
+      }
+      const map = new THREE.CanvasTexture(cMap);
+      const bumpMap = new THREE.CanvasTexture(cBump);
+      map.colorSpace = THREE.SRGBColorSpace;
+      return { map, bumpMap };
+    }
+
+    /** 2.6 Panel Surya Monokristalin (Sel Biru Tua Chamfered + Busbar Perak + Roughness Kaca) */
+    function createSolarPanelPBR() {
+      const w = 512, h = 512;
+      const cMap = document.createElement('canvas');
+      const cRough = document.createElement('canvas');
+      const cBump = document.createElement('canvas');
+      cMap.width = cRough.width = cBump.width = w;
+      cMap.height = cRough.height = cBump.height = h;
+
+      const ctxM = cMap.getContext('2d');
+      const ctxR = cRough.getContext('2d');
+      const ctxB = cBump.getContext('2d');
+
+      // Backsheet putih-perak terlihat di celah antar sel monokristalin
+      ctxM.fillStyle = '#cbd5e1';
+      ctxM.fillRect(0, 0, w, h);
+      ctxR.fillStyle = '#1e1e1e'; // kaca sangat mengilap
+      ctxR.fillRect(0, 0, w, h);
+      ctxB.fillStyle = '#888888';
+      ctxB.fillRect(0, 0, w, h);
+
+      const cols = 4, rows = 6;
+      const pad = 4;
+      const cellW = w / cols;
+      const cellH = h / rows;
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const x = c * cellW + pad;
+          const y = r * cellH + pad;
+          const cw = cellW - pad * 2;
+          const ch = cellH - pad * 2;
+          const chm = 9; // sudut chamfer khas silikon monokristalin
+
+          const grad = ctxM.createLinearGradient(x, y, x + cw, y + ch);
+          grad.addColorStop(0, '#0a1c47');
+          grad.addColorStop(0.5, '#102d6e');
+          grad.addColorStop(1, '#08173b');
+
+          ctxM.beginPath();
+          ctxM.moveTo(x + chm, y);
+          ctxM.lineTo(x + cw - chm, y);
+          ctxM.lineTo(x + cw, y + chm);
+          ctxM.lineTo(x + cw, y + ch - chm);
+          ctxM.lineTo(x + cw - chm, y + ch);
+          ctxM.lineTo(x + chm, y + ch);
+          ctxM.lineTo(x, y + ch - chm);
+          ctxM.lineTo(x, y + chm);
+          ctxM.closePath();
+          ctxM.fillStyle = grad;
+          ctxM.fill();
+
+          // Garis finger sangat tipis horizontal
+          ctxM.fillStyle = 'rgba(148, 197, 255, 0.18)';
+          for (let fy = y + 6; fy < y + ch - 4; fy += 6) {
+            ctxM.fillRect(x + 2, fy, cw - 4, 1);
+          }
+
+          // 3 Garis Busbar Perak vertikal
+          ctxM.fillStyle = 'rgba(226, 232, 240, 0.85)';
+          [0.22, 0.5, 0.78].forEach((frac) => {
+            ctxM.fillRect(x + cw * frac - 1, y, 2, ch);
+            ctxB.fillStyle = '#b4b4b4';
+            ctxB.fillRect(x + cw * frac - 1, y, 2, ch);
+          });
+        }
+      }
+
+      const map = new THREE.CanvasTexture(cMap);
+      const roughnessMap = new THREE.CanvasTexture(cRough);
+      const bumpMap = new THREE.CanvasTexture(cBump);
+      map.colorSpace = THREE.SRGBColorSpace;
+      return { map, roughnessMap, bumpMap };
+    }
+
+    /** 2.7 Papan PCB Gelap dengan Trace & Pad Solder (ESP32 & BME280) */
+    function createDarkPcbTexture(baseHex = '#0c3b2e') {
+      const size = 256;
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = size;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = baseHex;
+      ctx.fillRect(0, 0, size, size);
+
+      // Jalur trace tembaga halus
+      ctx.strokeStyle = 'rgba(56, 189, 148, 0.38)';
+      ctx.lineWidth = 2.5;
+      for (let i = 0; i < 24; i++) {
+        const x1 = 16 + (i % 6) * 38;
+        const y1 = 16 + Math.floor(i / 6) * 58;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 + 26, y1);
+        ctx.lineTo(x1 + 42, y1 + 18);
+        ctx.stroke();
+      }
+
+      // Deretan pin solder emas di tepi papan
+      ctx.fillStyle = '#eab308';
+      for (let p = 18; p < size - 16; p += 16) {
+        ctx.beginPath(); ctx.arc(p, 14, 4.5, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.arc(p, size - 14, 4.5, 0, Math.PI * 2); ctx.fill();
+      }
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    }
+
+    /** 2.8 Plakat Arah Mata Angin (U, T, S, B) */
+    function createCompassPlaqueTexture(letter, sublabel) {
+      const canvas = document.createElement('canvas');
+      canvas.width = canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(0, 0, 256, 256);
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 14;
+      ctx.strokeRect(12, 12, 232, 232);
+
+      ctx.fillStyle = letter === 'U' ? '#dc2626' : '#0f172a';
+      ctx.font = 'bold 132px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(letter, 128, 112);
+
+      ctx.fillStyle = '#475569';
+      ctx.font = 'bold 30px Inter, sans-serif';
+      ctx.fillText(sublabel, 128, 206);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      tex.colorSpace = THREE.SRGBColorSpace;
+      return tex;
+    }
+
+    /** 2.9 Kayu Palet Alami (Panci Penguapan & Tiang OBS) */
+    function createNaturalWoodPBR() {
+      const size = 256;
+      const cMap = document.createElement('canvas');
+      const cBump = document.createElement('canvas');
+      cMap.width = cBump.width = size;
+      cMap.height = cBump.height = size;
+      const ctxM = cMap.getContext('2d');
+      const ctxB = cBump.getContext('2d');
+
+      ctxM.fillStyle = '#92633b';
+      ctxM.fillRect(0, 0, size, size);
+      ctxB.fillStyle = '#808080';
+      ctxB.fillRect(0, 0, size, size);
+
+      for (let y = 0; y < size; y += 2) {
+        const w = Math.sin(y * 0.14) * 14 + Math.cos(y * 0.42) * 6;
+        ctxM.fillStyle = `rgb(${146 + w},${99 + w * 0.7},${59 + w * 0.45})`;
+        ctxM.fillRect(0, y, size, 2);
+        const b = 128 + w * 2.5;
+        ctxB.fillStyle = `rgb(${b},${b},${b})`;
+        ctxB.fillRect(0, y, size, 2);
+      }
+      const map = new THREE.CanvasTexture(cMap);
+      const bumpMap = new THREE.CanvasTexture(cBump);
+      map.wrapS = map.wrapT = bumpMap.wrapS = bumpMap.wrapT = THREE.RepeatWrapping;
+      map.colorSpace = THREE.SRGBColorSpace;
+      return { map, bumpMap };
+    }
+
+    /* =========================================================================
+     * 3. VARIABEL GLOBAL THREE.JS & MATERIAL PBR BERSAMA
+     * ========================================================================= */
+    let renderer, scene, camera, controls;
+    let sky, envScene, envSky, pmremGenerator, envRenderTarget = null;
+    let hemiLight, sunLight, cloudGroup;
+    let grassInstMesh = null;
+    const grassUniforms = {
+      uTime: { value: 0 },
+      uWindSpeed: { value: 3.8 },
+      uWindDir: { value: new THREE.Vector2(-0.7, -0.7) },
+    };
+
+    // Partikel hujan InstancedMesh & aliran angin
+    let rainInstMesh, rainData = [];
+    const MAX_RAIN_DROPS = 1600;
+    const rainDummy = new THREE.Object3D();
+    let airflowGroup, airflowParticles = [];
+
+    // Tracking Throttling IBL
+    let lastIblElevDeg = -999;
+    let lastIblCloud = -999;
+    let lastIblUpdateMs = 0;
+
+    // Grup interaktif & referensi animasi
+    const interactiveRoots = [];
+    const instrumentGroups = {};
+    let stevensonRoot, stevensonDynamicGroup, stevensonDoorPivot;
+    let stevensonOuterMaterials = [];
+    let espLedMat, awsLedMat;
+    let cupRotorGroup, windVaneGroup;
+    let tippingHousingMat, tippingBucketPivot, tippingLedMat;
+    let evapWaterMesh, evapWaterBaseY, evapMiniRotor;
+
+    // Transisi kamera smooth lerp
+    const camTransition = {
+      active: false,
+      targetPos: new THREE.Vector3(),
+      targetLook: new THREE.Vector3(),
+    };
+
+    // Koleksi Tekstur & Material PBR Shared
+    let pbrTextures = {};
+    let mats = {};
+
+    function initSharedPBRMaterials() {
+      pbrTextures.woodPaint = createPaintedWoodPBR(2, 2);
+      pbrTextures.galvanized = createGalvanizedSpanglePBR(3, 2);
+      pbrTextures.stainless = createBrushedSteelPBR();
+      pbrTextures.concrete = createConcretePBR(2, 2);
+      pbrTextures.concreteWalk = createConcretePBR(1, 6);
+      pbrTextures.parkGrass = createGrassGroundPBR(true);
+      pbrTextures.outerGrass = createGrassGroundPBR(false);
+      pbrTextures.soil = createSoilPBR();
+      pbrTextures.solar = createSolarPanelPBR();
+      pbrTextures.pcbEsp = createDarkPcbTexture('#0c3b2e');
+      pbrTextures.pcbBme = createDarkPcbTexture('#0c274d');
+      pbrTextures.woodNat = createNaturalWoodPBR();
+
+      mats = {
+        concrete: new THREE.MeshStandardMaterial({
+          map: pbrTextures.concrete.map,
+          bumpMap: pbrTextures.concrete.bumpMap,
+          bumpScale: 0.025,
+          roughnessMap: pbrTextures.concrete.roughnessMap,
+          roughness: 0.92,
+          metalness: 0.03,
+        }),
+        walkway: new THREE.MeshStandardMaterial({
+          map: pbrTextures.concreteWalk.map,
+          bumpMap: pbrTextures.concreteWalk.bumpMap,
+          bumpScale: 0.02,
+          roughnessMap: pbrTextures.concreteWalk.roughnessMap,
+          roughness: 0.9,
+          metalness: 0.03,
+        }),
+        whiteWoodFence: new THREE.MeshStandardMaterial({
+          map: pbrTextures.woodPaint.map,
+          bumpMap: pbrTextures.woodPaint.bumpMap,
+          bumpScale: 0.014,
+          roughnessMap: pbrTextures.woodPaint.roughnessMap,
+          roughness: 0.62,
+          metalness: 0.04,
+        }),
+        galvanized: new THREE.MeshStandardMaterial({
+          map: pbrTextures.galvanized.map,
+          bumpMap: pbrTextures.galvanized.bumpMap,
+          bumpScale: 0.012,
+          roughnessMap: pbrTextures.galvanized.roughnessMap,
+          roughness: 0.42,
+          metalness: 0.85,
+        }),
+        stainless: new THREE.MeshStandardMaterial({
+          map: pbrTextures.stainless.map,
+          roughnessMap: pbrTextures.stainless.roughnessMap,
+          roughness: 0.28,
+          metalness: 0.9,
+        }),
+        darkSteel: new THREE.MeshStandardMaterial({
+          color: 0x334155,
+          roughness: 0.42,
+          metalness: 0.78,
+        }),
+        conduitGrey: new THREE.MeshStandardMaterial({
+          color: 0x475569,
+          roughness: 0.55,
+          metalness: 0.18,
+        }),
+        cableBlack: new THREE.MeshStandardMaterial({
+          color: 0x1e293b,
+          roughness: 0.65,
+          metalness: 0.08,
+        }),
+        woodNatural: new THREE.MeshStandardMaterial({
+          map: pbrTextures.woodNat.map,
+          bumpMap: pbrTextures.woodNat.bumpMap,
+          bumpScale: 0.018,
+          roughness: 0.86,
+          metalness: 0.02,
+        }),
+        brass: new THREE.MeshStandardMaterial({
+          color: 0xd9a13b,
+          roughness: 0.26,
+          metalness: 0.9,
+        }),
+        copper: new THREE.MeshStandardMaterial({
+          color: 0xd97236,
+          roughness: 0.3,
+          metalness: 0.86,
+        }),
+        ip65Grey: new THREE.MeshStandardMaterial({
+          color: 0x94a3b8,
+          roughness: 0.48,
+          metalness: 0.15,
+        }),
+        pcbEsp: new THREE.MeshStandardMaterial({
+          map: pbrTextures.pcbEsp,
+          roughness: 0.38,
+          metalness: 0.25,
+        }),
+        pcbBme: new THREE.MeshStandardMaterial({
+          map: pbrTextures.pcbBme,
+          roughness: 0.35,
+          metalness: 0.25,
+        }),
+        solarGlass: new THREE.MeshPhysicalMaterial({
+          map: pbrTextures.solar.map,
+          roughnessMap: pbrTextures.solar.roughnessMap,
+          bumpMap: pbrTextures.solar.bumpMap,
+          bumpScale: 0.005,
+          roughness: 0.12,
+          metalness: 0.22,
+          clearcoat: 1.0,
+          clearcoatRoughness: 0.06,
+        }),
+        glassDome: new THREE.MeshPhysicalMaterial({
+          color: 0xe6f4ff,
+          roughness: 0.04,
+          metalness: 0.04,
+          transmission: 0.86,
+          transparent: true,
+          opacity: 0.55,
+          ior: 1.5,
+          reflectivity: 0.95,
+          clearcoat: 1.0,
+        }),
+      };
+
+      Object.values(mats).forEach((m) => {
+        m.userData.shared = true;
+      });
+    }
+
+    /* =========================================================================
+     * 4. HELPER DETAIL MIKRO: PONDASI BETON BERBAUT ANGKUR & PIPA KONDUIT
+     * ========================================================================= */
+    /** Membuat pondasi beton cor dengan pelat dasar baja & 4 mur-baut angkur heksagonal */
+    function addConcretePlinthWithBolts(parent, width, depth, height, plateSize = 0.26, yBase = 0) {
+      const g = new THREE.Group();
+      g.position.y = yBase;
+      parent.add(g);
+
+      // Badan pondasi beton
+      const plinth = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), mats.concrete);
+      plinth.position.y = height / 2;
+      plinth.castShadow = true;
+      plinth.receiveShadow = true;
+      g.add(plinth);
+
+      // Lis chamfer atas beton tipis
+      const cap = new THREE.Mesh(new THREE.BoxGeometry(width - 0.04, 0.018, depth - 0.04), mats.concrete);
+      cap.position.y = height + 0.009;
+      cap.receiveShadow = true;
+      g.add(cap);
+
+      // Pelat dasar baja (baseplate)
+      const plateY = height + 0.018;
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(plateSize, 0.018, plateSize), mats.darkSteel);
+      plate.position.y = plateY + 0.009;
+      plate.castShadow = true;
+      plate.receiveShadow = true;
+      g.add(plate);
+
+      // 4 Mur-baut angkur heksagonal (washer + mur hex + ujung ulir)
+      const boltOff = plateSize * 0.36;
+      const nutGeo = new THREE.CylinderGeometry(0.015, 0.015, 0.014, 6);
+      const studGeo = new THREE.CylinderGeometry(0.008, 0.008, 0.026, 8);
+      const washGeo = new THREE.CylinderGeometry(0.021, 0.021, 0.004, 12);
+
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => {
+        const bx = sx * boltOff;
+        const bz = sz * boltOff;
+        const wash = new THREE.Mesh(washGeo, mats.stainless);
+        wash.position.set(bx, plateY + 0.02, bz);
+        g.add(wash);
+
+        const nut = new THREE.Mesh(nutGeo, mats.stainless);
+        nut.position.set(bx, plateY + 0.028, bz);
+        g.add(nut);
+
+        const stud = new THREE.Mesh(studGeo, mats.darkSteel);
+        stud.position.set(bx, plateY + 0.032, bz);
+        g.add(stud);
+      });
+
+      return plateY + 0.018;
+    }
+
+    /** Membuat pipa konduit / kabel melengkung halus via TubeGeometry */
+    function addConduitTube(parent, points, radius = 0.012, material = mats.conduitGrey) {
+      const curve = new THREE.CatmullRomCurve3(points);
+      const geo = new THREE.TubeGeometry(curve, 20, radius, 8, false);
+      const mesh = new THREE.Mesh(geo, material);
+      mesh.castShadow = true;
+      parent.add(mesh);
+      return mesh;
+    }
+
+    /** Utility pembersih memori geometri & material lokal */
+    function disposeGroupChildren(group) {
+      while (group.children.length > 0) {
+        const child = group.children[0];
+        group.remove(child);
+        child.traverse((obj) => {
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) {
+            if (Array.isArray(obj.material)) {
+              obj.material.forEach((m) => { if (m && !m.userData?.shared) m.dispose(); });
+            } else if (!obj.material.userData?.shared) {
+              obj.material.dispose();
+            }
+          }
+        });
+      }
+    }
+
+    /* =========================================================================
+     * 5. INISIALISASI THREE.JS, SKY SHADER & PMREM IBL
+     * ========================================================================= */
+    function initThree() {
+      const container = document.getElementById('canvas-container');
+      try {
+        renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+      } catch (err) {
+        document.getElementById('webgl-error').classList.remove('hidden');
+        document.getElementById('webgl-error').classList.add('flex');
+        console.error('WebGL Error:', err);
+        return false;
+      }
+
+      const preset = QUALITY_PRESETS[state.qualityKey];
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, preset.maxDpr));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.0;
+      container.appendChild(renderer.domElement);
+
+      scene = new THREE.Scene();
+      scene.fog = new THREE.FogExp2(0x9bc5e3, 0.008);
+
+      camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.08, 300);
+      camera.position.copy(CAMERA_PRESETS.overview.pos);
+
+      controls = new OrbitControls(camera, renderer.domElement);
+      controls.target.copy(CAMERA_PRESETS.overview.target);
+      controls.enableDamping = true;
+      controls.dampingFactor = 0.065;
+      controls.maxPolarAngle = Math.PI / 2 - 0.025;
+      controls.minDistance = 0.95;
+      controls.maxDistance = 30;
+      controls.update();
+
+      controls.addEventListener('start', () => {
+        camTransition.active = false;
+      });
+
+      initSharedPBRMaterials();
+      setupSkyIBLAndLighting();
+      buildParkEnvironment();
+      buildInstancedGrass(preset.grassCount);
+      buildStevensonScreenContainer();
+      buildAnemometerStation();
+      buildRainGaugeStation();
+      buildPyranometerAndSoil();
+      buildEvaporationPan();
+      buildRainInstancedSystem();
+      buildAirflowSystem();
+
+      updateSunSkyAndIBL(true);
+      updatePhysicsAnalytics();
+      updateUIReadings();
+      syncQualityUI();
+
+      return true;
+    }
+
+    function setupSkyIBLAndLighting() {
+      // Sky Shader Resmi Three.js (Rayleigh & Mie Scattering)
+      sky = new Sky();
+      sky.scale.setScalar(220);
+      scene.add(sky);
+
+      // Mini Environment Scene khusus PMREMGenerator (berisi Sky + cakram rumput bawah untuk refleksi IBL akurat)
+      pmremGenerator = new THREE.PMREMGenerator(renderer);
+      pmremGenerator.compileEquirectangularShader();
+
+      envScene = new THREE.Scene();
+      envSky = new Sky();
+      envSky.scale.setScalar(50);
+      envScene.add(envSky);
+
+      const envGround = new THREE.Mesh(
+        new THREE.CircleGeometry(48, 24),
+        new THREE.MeshBasicMaterial({ color: 0x386130 })
+      );
+      envGround.rotation.x = -Math.PI / 2;
+      envGround.position.y = -0.5;
+      envScene.add(envGround);
+
+      // Cahaya Hemisfer & Matahari (1 DirectionalLight berbayangan agar hemat GPU)
+      hemiLight = new THREE.HemisphereLight(0xdbeafe, 0x3b5924, 0.55);
+      scene.add(hemiLight);
+
+      const shadowSize = QUALITY_PRESETS[state.qualityKey].shadowSize;
+      sunLight = new THREE.DirectionalLight(0xfffbeb, 2.5);
+      sunLight.castShadow = true;
+      sunLight.shadow.mapSize.set(shadowSize, shadowSize);
+      sunLight.shadow.camera.near = 2;
+      sunLight.shadow.camera.far = 65;
+      const d = 8.6;
+      sunLight.shadow.camera.left = -d;
+      sunLight.shadow.camera.right = d;
+      sunLight.shadow.camera.top = d;
+      sunLight.shadow.camera.bottom = -d;
+      sunLight.shadow.bias = -0.00045;
+      sunLight.shadow.normalBias = 0.025;
+      scene.add(sunLight);
+
+      // Awan Prosedural Ringan
+      cloudGroup = new THREE.Group();
+      const cloudMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        roughness: 0.96,
+        metalness: 0.0,
+        transparent: true,
+        opacity: 0.35,
+      });
+      const puffGeo = new THREE.DodecahedronGeometry(1, 1);
+
+      for (let i = 0; i < 16; i++) {
+        const cluster = new THREE.Group();
+        const puffs = 3 + (i % 3);
+        for (let p = 0; p < puffs; p++) {
+          const m = new THREE.Mesh(puffGeo, cloudMat);
+          m.position.set((p - 1) * 1.9, (Math.random() - 0.5) * 0.55, (Math.random() - 0.5) * 1.3);
+          m.scale.set(1.9 + Math.random() * 1.3, 0.78 + Math.random() * 0.45, 1.5 + Math.random() * 1.1);
+          cluster.add(m);
+        }
+        const angle = (i / 16) * Math.PI * 2 + 0.15;
+        const radius = 15 + (i % 4) * 9.5;
+        cluster.position.set(Math.cos(angle) * radius, 16 + (i % 3) * 2.4, Math.sin(angle) * radius);
+        cluster.userData = { speed: 0.25 + (i % 4) * 0.12 };
+        cloudGroup.add(cluster);
+      }
+      cloudGroup.userData.cloudMat = cloudMat;
+      scene.add(cloudGroup);
+    }
+
+    /** Memperbarui Sky Shader + Pencahayaan + PMREM IBL (di-throttle agar tetap 60 FPS) */
+    function updateSunSkyAndIBL(forceIBL = false) {
+      // Geometri Matahari untuk Kebumen (~7.67° LS, deklinasi +8°)
+      const latRad = THREE.MathUtils.degToRad(-7.67);
+      const decRad = THREE.MathUtils.degToRad(8.0);
+      const hourAngleRad = THREE.MathUtils.degToRad((state.hour - 12.0) * 15.0);
+
+      const sinElev = Math.sin(latRad) * Math.sin(decRad) + Math.cos(latRad) * Math.cos(decRad) * Math.cos(hourAngleRad);
+      const elevRad = Math.asin(THREE.MathUtils.clamp(sinElev, -1, 1));
+      const elevDeg = THREE.MathUtils.radToDeg(elevRad);
+
+      const cosElev = Math.max(0.001, Math.cos(elevRad));
+      const sinAz = (-Math.cos(decRad) * Math.sin(hourAngleRad)) / cosElev;
+      const cosAz = (Math.sin(decRad) - Math.sin(latRad) * sinElev) / (Math.cos(latRad) * cosElev);
+
+      const sunDir = new THREE.Vector3(cosElev * sinAz, sinElev, -cosElev * cosAz).normalize();
+      sunLight.position.copy(sunDir).multiplyScalar(28);
+      if (sunLight.position.y < 1.2) sunLight.position.y = 1.2;
+
+      const cloudFrac = state.cloudCover / 100;
+      const rainFrac = Math.min(1, state.rainIntensity / 65);
+      const overcast = Math.min(1, cloudFrac * 0.78 + rainFrac * 0.48);
+      const dayFactor = THREE.MathUtils.clamp((elevDeg + 4) / 26, 0, 1);
+      const sunHigh = THREE.MathUtils.clamp(elevDeg / 45, 0, 1);
+
+      // Parameter fisik atmosfer Sky Shader (Rayleigh & Mie Scattering)
+      const turbidity = 2.0 + overcast * 10.5 + (1 - sunHigh) * 2.5;
+      const rayleigh = Math.max(0.35, (2.6 - overcast * 1.9) * (0.35 + 0.65 * dayFactor));
+      const mieCoeff = 0.0045 + overcast * 0.018;
+      const mieG = 0.82 - overcast * 0.16;
+
+      [sky, envSky].forEach((s) => {
+        const u = s.material.uniforms;
+        u['turbidity'].value = turbidity;
+        u['rayleigh'].value = rayleigh;
+        u['mieCoefficient'].value = mieCoeff;
+        u['mieDirectionalG'].value = mieG;
+        u['sunPosition'].value.copy(sunDir);
+      });
+
+      // Intensitas matahari & exposure adaptif (fajar/siang/mendung/petang)
+      const sunWarm = new THREE.Color(0xff9c54);
+      const sunDay = new THREE.Color(0xfffcf2);
+      sunLight.color.copy(sunWarm).lerp(sunDay, sunHigh);
+      sunLight.intensity = elevDeg > -1
+        ? Math.max(0.22, (2.85 * Math.sin(Math.max(0.05, elevRad)) + 0.35) * (1 - overcast * 0.75))
+        : 0.08;
+
+      hemiLight.intensity = 0.16 + dayFactor * (0.58 - overcast * 0.18);
+      renderer.toneMappingExposure = 0.52 + dayFactor * (0.52 - overcast * 0.16);
+
+      // Warna fog menyatu dengan horison Sky
+      const fogNight = new THREE.Color(0x0f172a);
+      const fogSunset = new THREE.Color(0xd98a5b);
+      const fogClear = new THREE.Color(0x9ecae8);
+      const fogCloudy = new THREE.Color(0x7c8b9c);
+      const fogDay = fogSunset.clone().lerp(fogClear, sunHigh).lerp(fogCloudy, overcast * 0.85);
+      scene.fog.color.copy(fogNight).lerp(fogDay, dayFactor);
+      scene.fog.density = 0.006 + overcast * 0.011 + rainFrac * 0.009;
+
+      // Awan
+      if (cloudGroup?.userData?.cloudMat) {
+        const cm = cloudGroup.userData.cloudMat;
+        cm.opacity = THREE.MathUtils.clamp(0.06 + cloudFrac * 0.8 + rainFrac * 0.16, 0.05, 0.92);
+        const col = new THREE.Color(0xffffff).lerp(new THREE.Color(0x4b5563), rainFrac * 0.6 + cloudFrac * 0.28);
+        col.multiplyScalar(0.22 + 0.78 * dayFactor);
+        cm.color.copy(col);
+        cloudGroup.visible = state.cloudCover > 2 || state.rainIntensity > 0;
+      }
+
+      // Throttled PMREM IBL Regeneration (mencegah lag selama timelapse)
+      const q = QUALITY_PRESETS[state.qualityKey];
+      const now = performance.now();
+      const elevMoved = Math.abs(elevDeg - lastIblElevDeg) >= q.iblMinDeltaDeg;
+      const cloudMoved = Math.abs(state.cloudCover - lastIblCloud) >= 7;
+      const timeReady = now - lastIblUpdateMs >= q.iblMinIntervalMs;
+
+      if (forceIBL || ((elevMoved || cloudMoved) && timeReady)) {
+        const nextRT = pmremGenerator.fromScene(envScene, q.iblBlur, 0.1, 100);
+        if (envRenderTarget) envRenderTarget.dispose();
+        envRenderTarget = nextRT;
+        scene.environment = envRenderTarget.texture;
+        scene.environmentIntensity = 0.35 + dayFactor * (0.65 - overcast * 0.2);
+
+        lastIblElevDeg = elevDeg;
+        lastIblCloud = state.cloudCover;
+        lastIblUpdateMs = now;
+      }
+
+      state.physics.elevationDeg = elevDeg;
+      state.physics.zenithDeg = Math.max(0, 90 - elevDeg);
+    }
+
+    /* =========================================================================
+     * 6. LINGKUNGAN TAMAN ALAT & RUMPUT 3D GPU INSTANCED (ONBEFORECOMPILE)
+     * ========================================================================= */
+    function buildParkEnvironment() {
+      // Lahan rumput luas sekeliling
+      const outerGround = new THREE.Mesh(
+        new THREE.PlaneGeometry(180, 180),
+        new THREE.MeshStandardMaterial({
+          map: pbrTextures.outerGrass.map,
+          bumpMap: pbrTextures.outerGrass.bumpMap,
+          bumpScale: 0.03,
+          roughness: 0.95,
+          metalness: 0.0,
+        })
+      );
+      outerGround.rotation.x = -Math.PI / 2;
+      outerGround.receiveShadow = true;
+      scene.add(outerGround);
+
+      // Petak rumput utama Taman Alat 12.2m x 12.2m
+      const parkGrass = new THREE.Mesh(
+        new THREE.BoxGeometry(12.2, 0.05, 12.2),
+        new THREE.MeshStandardMaterial({
+          map: pbrTextures.parkGrass.map,
+          bumpMap: pbrTextures.parkGrass.bumpMap,
+          bumpScale: 0.025,
+          roughness: 0.92,
+          metalness: 0.0,
+        })
+      );
+      parkGrass.position.y = 0.025;
+      parkGrass.receiveShadow = true;
+      scene.add(parkGrass);
+
+      // Lis beton tepi taman
+      const curbPieces = [
+        [12.38, 0.09, 0.15, 0, 0.045, -6.12],
+        [5.2, 0.09, 0.15, -3.58, 0.045, 6.12],
+        [5.2, 0.09, 0.15, 3.58, 0.045, 6.12],
+        [0.15, 0.09, 12.38, -6.12, 0.045, 0],
+        [0.15, 0.09, 12.38, 6.12, 0.045, 0],
+      ];
+      curbPieces.forEach(([w, h, d, x, y, z]) => {
+        const mesh = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mats.concrete);
+        mesh.position.set(x, y, z);
+        mesh.receiveShadow = true;
+        mesh.castShadow = true;
+        scene.add(mesh);
+      });
+
+      // Jalan setapak beton pijakan (stepping stones bertekstur beton cor)
+      const walkwaySpecs = [
+        [0.92, 0.036, 6.2, 0, 0.056, 3.0],
+        [7.6, 0.036, 0.62, 0, 0.056, 0],
+        [0.62, 0.036, 3.2, -3.8, 0.056, -1.6],
+        [0.62, 0.036, 2.6, 3.8, 0.056, -1.3],
+        [0.62, 0.036, 2.6, 3.6, 0.056, 1.3],
+        [0.62, 0.036, 2.6, -3.6, 0.056, 1.3],
+      ];
+      walkwaySpecs.forEach(([w, h, d, x, y, z]) => {
+        const path = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mats.walkway);
+        path.position.set(x, y, z);
+        path.receiveShadow = true;
+        scene.add(path);
+      });
+
+      // Pagar putih keliling via InstancedMesh bertekstur kayu cat putih
+      buildPerimeterFence();
+
+      // Penanda arah mata angin (U, T, S, B)
+      const compassData = [
+        { l: 'U', sub: 'UTARA', x: 0, z: -5.45 },
+        { l: 'S', sub: 'SELATAN', x: 1.55, z: 5.45 },
+        { l: 'T', sub: 'TIMUR', x: 5.45, z: 0 },
+        { l: 'B', sub: 'BARAT', x: -5.45, z: 0 },
+      ];
+      compassData.forEach((c) => {
+        const plaque = new THREE.Mesh(
+          new THREE.BoxGeometry(0.62, 0.035, 0.62),
+          new THREE.MeshStandardMaterial({
+            map: createCompassPlaqueTexture(c.l, c.sub),
+            roughness: 0.65,
+          })
+        );
+        plaque.position.set(c.x, 0.068, c.z);
+        plaque.receiveShadow = true;
+        scene.add(plaque);
+      });
+    }
+
+    function buildPerimeterFence() {
+      const fenceHeight = 1.15;
+      const half = 6.08;
+      const postPositions = [];
+      const picketMatrices = [];
+      const railConfigs = [];
+
+      const addSeg = (x1, z1, x2, z2) => {
+        const dx = x2 - x1;
+        const dz = z2 - z1;
+        const len = Math.hypot(dx, dz);
+        const angle = Math.atan2(dx, dz);
+
+        const postCount = Math.max(2, Math.round(len / 2.0) + 1);
+        for (let i = 0; i < postCount; i++) {
+          const t = i / (postCount - 1);
+          postPositions.push([x1 + dx * t, z1 + dz * t]);
+        }
+
+        const picketCount = Math.floor(len / 0.22);
+        const dummy = new THREE.Object3D();
+        for (let i = 1; i < picketCount; i++) {
+          const t = i / picketCount;
+          dummy.position.set(x1 + dx * t, fenceHeight * 0.48 + 0.05, z1 + dz * t);
+          dummy.rotation.set(0, angle, 0);
+          dummy.updateMatrix();
+          picketMatrices.push(dummy.matrix.clone());
+        }
+        railConfigs.push({ cx: (x1 + x2) / 2, cz: (z1 + z2) / 2, len, angle });
+      };
+
+      addSeg(-half, -half, half, -half);
+      addSeg(-half, -half, -half, half);
+      addSeg(half, -half, half, half);
+      addSeg(-half, half, -0.95, half);
+      addSeg(0.95, half, half, half);
+
+      const postGeo = new THREE.BoxGeometry(0.095, fenceHeight + 0.1, 0.095);
+      const postInst = new THREE.InstancedMesh(postGeo, mats.whiteWoodFence, postPositions.length);
+      const dummy = new THREE.Object3D();
+      postPositions.forEach(([x, z], idx) => {
+        dummy.position.set(x, (fenceHeight + 0.1) / 2 + 0.03, z);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        postInst.setMatrixAt(idx, dummy.matrix);
+      });
+      postInst.castShadow = true;
+      postInst.receiveShadow = true;
+      scene.add(postInst);
+
+      const picketGeo = new THREE.BoxGeometry(0.026, fenceHeight - 0.14, 0.048);
+      const picketInst = new THREE.InstancedMesh(picketGeo, mats.whiteWoodFence, picketMatrices.length);
+      picketMatrices.forEach((m, idx) => picketInst.setMatrixAt(idx, m));
+      picketInst.castShadow = true;
+      picketInst.receiveShadow = true;
+      scene.add(picketInst);
+
+      railConfigs.forEach(({ cx, cz, len, angle }) => {
+        [0.32, 0.96].forEach((ry) => {
+          const rail = new THREE.Mesh(new THREE.BoxGeometry(0.042, 0.06, len), mats.whiteWoodFence);
+          rail.position.set(cx, ry, cz);
+          rail.rotation.y = angle;
+          rail.castShadow = true;
+          rail.receiveShadow = true;
+          scene.add(rail);
+        });
+      });
+
+      // Pintu Gerbang Kecil di sisi Selatan
+      const gatePivot = new THREE.Group();
+      gatePivot.position.set(-0.95, 0.05, half);
+      gatePivot.rotation.y = -0.38;
+      [0.28, 0.92].forEach((gy) => {
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.05, 0.042), mats.whiteWoodFence);
+        rail.position.set(0.45, gy, 0);
+        rail.castShadow = true;
+        gatePivot.add(rail);
+      });
+      for (let i = 1; i <= 4; i++) {
+        const bar = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.94, 0.026), mats.whiteWoodFence);
+        bar.position.set(i * 0.18, 0.56, 0);
+        bar.castShadow = true;
+        gatePivot.add(bar);
+      }
+      // Engsel logam gerbang
+      [0.3, 0.9].forEach((hy) => {
+        const hinge = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, 0.06, 8), mats.darkSteel);
+        hinge.position.set(0, hy, 0.025);
+        gatePivot.add(hinge);
+      });
+      scene.add(gatePivot);
+    }
+
+    /** Cek apakah koordinat (x, z) berada di atas jalan setapak beton, petak tanah, atau pondasi alat */
+    function isGrassExcluded(x, z) {
+      // Jalan setapak beton
+      if (Math.abs(x) < 0.58 && z > -0.2 && z < 6.2) return true;
+      if (Math.abs(z) < 0.44 && Math.abs(x) < 3.95) return true;
+      if (Math.abs(x + 3.8) < 0.44 && z > -3.3 && z < 0.2) return true;
+      if (Math.abs(x - 3.8) < 0.44 && z > -2.8 && z < 0.2) return true;
+      if (Math.abs(x - 3.6) < 0.44 && z > -0.2 && z < 2.8) return true;
+      if (Math.abs(x + 3.6) < 0.44 && z > -0.2 && z < 2.8) return true;
+
+      // Pondasi instrumen & petak tanah gundul
+      if (Math.abs(x) < 0.92 && Math.abs(z) < 0.92) return true; // Stevenson Screen
+      if (Math.abs(x + 3.8) < 0.52 && Math.abs(z + 3.2) < 0.52) return true; // Anemometer
+      if (x > 3.2 && x < 5.4 && z > -3.15 && z < -2.05) return true; // Penakar Hujan + OBS
+      if (x > 2.8 && x < 5.2 && z > 2.05 && z < 3.55) return true; // Pyranometer + Petak Tanah Gundul
+      if (Math.abs(x + 3.6) < 0.85 && Math.abs(z - 2.8) < 0.85) return true; // Panci Penguapan
+      // Plakat kompas
+      if (Math.hypot(x, z + 5.45) < 0.48 || Math.hypot(x - 1.55, z - 5.45) < 0.48) return true;
+      if (Math.hypot(x - 5.45, z) < 0.48 || Math.hypot(x + 5.45, z) < 0.48) return true;
+      return false;
+    }
+
+    /** Membangun ribuan bilah rumput 3D GPU InstancedMesh dengan animasi angin di Vertex Shader */
+    function buildInstancedGrass(count) {
+      if (grassInstMesh) {
+        scene.remove(grassInstMesh);
+        grassInstMesh.geometry.dispose();
+        grassInstMesh.material.dispose();
+        grassInstMesh = null;
+      }
+
+      // Geometri helai rumput meruncing & sedikit melengkung (6 segitiga per helai)
+      const bladeGeo = new THREE.PlaneGeometry(0.032, 0.16, 1, 3);
+      bladeGeo.translate(0, 0.08, 0); // akar tepat di y = 0
+      const pos = bladeGeo.attributes.position;
+      for (let i = 0; i < pos.count; i++) {
+        const y = pos.getY(i);
+        const t = y / 0.16; // 0 di akar -> 1 di ujung
+        pos.setX(i, pos.getX(i) * (1.0 - t * 0.88)); // meruncing ke atas
+        pos.setZ(i, t * t * 0.035); // lengkung organik
+      }
+      bladeGeo.computeVertexNormals();
+
+      // Material rumput dengan onBeforeCompile GPU Wind Sway
+      const grassMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        roughness: 0.78,
+        metalness: 0.0,
+        side: THREE.DoubleSide,
+      });
+
+      grassMat.onBeforeCompile = (shader) => {
+        shader.uniforms.uTime = grassUniforms.uTime;
+        shader.uniforms.uWindSpeed = grassUniforms.uWindSpeed;
+        shader.uniforms.uWindDir = grassUniforms.uWindDir;
+
+        shader.vertexShader = shader.vertexShader.replace(
+          '#include <common>',
+          `#include <common>
+           uniform float uTime;
+           uniform float uWindSpeed;
+           uniform vec2 uWindDir;`
+        );
+
+        shader.vertexShader = shader.vertexShader.replace(
+          '#include <begin_vertex>',
+          `#include <begin_vertex>
+           float tipFactor = pow(clamp(position.y / 0.16, 0.0, 1.0), 1.65);
+           vec2 worldXZ = vec2(0.0);
+           #ifdef USE_INSTANCING
+             worldXZ = vec2(instanceMatrix[3][0], instanceMatrix[3][2]);
+           #endif
+           float wavePhase = dot(worldXZ, uWindDir) * 0.65 - uTime * (1.7 + uWindSpeed * 0.24);
+           float flutter = sin(wavePhase) * 0.65 + sin(wavePhase * 2.3 + worldXZ.x * 1.4) * 0.35;
+           float bendAmt = (0.012 + min(uWindSpeed, 20.0) * 0.0052) * (0.55 + 0.45 * flutter);
+           // Proyeksi goyangan angin ke ruang lokal instance
+           vec2 worldDisp = uWindDir * bendAmt * tipFactor;
+           transformed.x += worldDisp.x;
+           transformed.z += worldDisp.y;
+           transformed.y -= abs(bendAmt) * 0.22 * tipFactor;`
+        );
+      };
+
+      grassInstMesh = new THREE.InstancedMesh(bladeGeo, grassMat, count);
+      const dummy = new THREE.Object3D();
+      const color = new THREE.Color();
+
+      let placed = 0;
+      let attempts = 0;
+      while (placed < count && attempts < count * 5) {
+        attempts++;
+        // 82% di dalam taman alat (11.8m x 11.8m), 18% di luar dekat pagar
+        const inside = placed < count * 0.82;
+        let gx, gz;
+        if (inside) {
+          gx = (Math.random() - 0.5) * 11.7;
+          gz = (Math.random() - 0.5) * 11.7;
+          if (isGrassExcluded(gx, gz)) continue;
+        } else {
+          const side = Math.floor(Math.random() * 4);
+          const span = (Math.random() - 0.5) * 18.0;
+          const dist = 6.35 + Math.random() * 3.5;
+          if (side === 0) { gx = span; gz = -dist; }
+          else if (side === 1) { gx = span; gz = dist; }
+          else if (side === 2) { gx = -dist; gz = span; }
+          else { gx = dist; gz = span; }
+        }
+
+        const baseY = inside ? 0.048 : 0.0;
+        const scaleH = 0.65 + Math.random() * 0.85;
+        const scaleW = 0.8 + Math.random() * 0.55;
+
+        dummy.position.set(gx, baseY, gz);
+        dummy.rotation.set((Math.random() - 0.5) * 0.16, Math.random() * Math.PI * 2, (Math.random() - 0.5) * 0.16);
+        dummy.scale.set(scaleW, scaleH, 1.0);
+        dummy.updateMatrix();
+        grassInstMesh.setMatrixAt(placed, dummy.matrix);
+
+        // Variasi hijau organik alami
+        color.setHSL(0.28 + (Math.random() - 0.5) * 0.045, 0.44 + Math.random() * 0.16, 0.26 + Math.random() * 0.14);
+        grassInstMesh.setColorAt(placed, color);
+        placed++;
+      }
+
+      grassInstMesh.count = placed;
+      grassInstMesh.receiveShadow = true;
+      grassInstMesh.castShadow = false; // mematikan castShadow rumput menjaga 60 FPS!
+      grassInstMesh.instanceMatrix.needsUpdate = true;
+      if (grassInstMesh.instanceColor) grassInstMesh.instanceColor.needsUpdate = true;
+      scene.add(grassInstMesh);
+    }
+
+    /* =========================================================================
+     * 7. HERO ASSET: SANGKAR METEOROLOGI (STEVENSON SCREEN PARAMETRIK HIGH-DETAIL)
+     * ========================================================================= */
+    function buildStevensonScreenContainer() {
+      stevensonRoot = new THREE.Group();
+      stevensonRoot.position.set(0, 0.05, 0);
+      stevensonRoot.userData.instrumentId = 'stevenson';
+      scene.add(stevensonRoot);
+
+      // Lantai beton dasar luas sangkar
+      const basePad = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.06, 1.62), mats.concrete);
+      basePad.position.y = 0.03;
+      basePad.receiveShadow = true;
+      basePad.castShadow = true;
+      stevensonRoot.add(basePad);
+
+      stevensonDynamicGroup = new THREE.Group();
+      stevensonRoot.add(stevensonDynamicGroup);
+
+      instrumentGroups.stevenson = stevensonRoot;
+      interactiveRoots.push(stevensonRoot);
+
+      rebuildStevensonScreen();
+    }
+
+    function rebuildStevensonScreen() {
+      disposeGroupChildren(stevensonDynamicGroup);
+      stevensonOuterMaterials = [];
+
+      const preset = VOLUME_PRESETS[state.volumeKey];
+      const W = preset.width;
+      const D = preset.depth;
+      const H = preset.height;
+      const legH = state.legHeight;
+      const tiltRad = THREE.MathUtils.degToRad(state.louverTilt);
+
+      // Material kayu cat putih PBR bereaksi terhadap Albedo (0.45 kusam -> 0.85 putih baru)
+      const albedoNorm = (state.albedo - 0.45) / 0.40;
+      const paintColor = new THREE.Color().setHSL(
+        0.10 * (1 - albedoNorm),
+        0.16 * (1 - albedoNorm),
+        0.60 + albedoNorm * 0.38
+      );
+      const paintRoughness = 0.92 - albedoNorm * 0.42;
+
+      const shelterMat = new THREE.MeshStandardMaterial({
+        color: paintColor,
+        map: pbrTextures.woodPaint.map,
+        bumpMap: pbrTextures.woodPaint.bumpMap,
+        bumpScale: 0.015,
+        roughnessMap: pbrTextures.woodPaint.roughnessMap,
+        roughness: paintRoughness,
+        metalness: 0.03,
+        transparent: state.xrayMode,
+        opacity: state.xrayMode ? 0.22 : 1.0,
+        depthWrite: !state.xrayMode,
+      });
+      stevensonOuterMaterials.push(shelterMat);
+
+      const frameMat = new THREE.MeshStandardMaterial({
+        color: paintColor.clone().multiplyScalar(0.96),
+        map: pbrTextures.woodPaint.map,
+        bumpMap: pbrTextures.woodPaint.bumpMap,
+        bumpScale: 0.014,
+        roughnessMap: pbrTextures.woodPaint.roughnessMap,
+        roughness: paintRoughness,
+        metalness: 0.04,
+        transparent: state.xrayMode,
+        opacity: state.xrayMode ? 0.40 : 1.0,
+        depthWrite: !state.xrayMode,
+      });
+      stevensonOuterMaterials.push(frameMat);
+
+      const legMat = new THREE.MeshStandardMaterial({
+        color: paintColor.clone().multiplyScalar(0.94),
+        map: pbrTextures.woodPaint.map,
+        bumpMap: pbrTextures.woodPaint.bumpMap,
+        bumpScale: 0.012,
+        roughness: 0.62,
+        metalness: 0.08,
+      });
+
+      // 1. EMPAT KAKI PENYANGGA DI ATAS 4 MINI PLINTH BETON BERBAUT ANGKUR
+      const legThick = 0.062;
+      const legOffsetX = W / 2 - 0.04;
+      const legOffsetZ = D / 2 - 0.04;
+      const splay = 0.10;
+
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => {
+        const bx = sx * (legOffsetX + splay);
+        const bz = sz * (legOffsetZ + splay);
+
+        // Mini pondasi beton & 4 baut angkur di setiap kaki sangkar
+        const footAnchorGroup = new THREE.Group();
+        footAnchorGroup.position.set(bx, 0.06, bz);
+        stevensonDynamicGroup.add(footAnchorGroup);
+        const plateTopY = addConcretePlinthWithBolts(footAnchorGroup, 0.22, 0.22, 0.05, 0.14, 0);
+
+        const topP = new THREE.Vector3(sx * legOffsetX, legH, sz * legOffsetZ);
+        const botP = new THREE.Vector3(bx, 0.06 + plateTopY, bz);
+        const dir = new THREE.Vector3().subVectors(topP, botP);
+
+        const leg = new THREE.Mesh(new THREE.BoxGeometry(legThick, dir.length(), legThick), legMat);
+        leg.position.copy(botP).addScaledVector(dir, 0.5);
+        leg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+        leg.castShadow = true;
+        leg.receiveShadow = true;
+        stevensonDynamicGroup.add(leg);
+      });
+
+      // Palang penguat kaki (tengah & atas)
+      [0.36, 0.96].forEach((ratio) => {
+        const y = 0.12 + (legH - 0.12) * ratio;
+        const curW = (legOffsetX + splay * (1 - ratio)) * 2;
+        const curD = (legOffsetZ + splay * (1 - ratio)) * 2;
+        [-1, 1].forEach((sz) => {
+          const brace = new THREE.Mesh(new THREE.BoxGeometry(curW, 0.045, 0.045), legMat);
+          brace.position.set(0, y, sz * (curD / 2));
+          brace.castShadow = true;
+          stevensonDynamicGroup.add(brace);
+        });
+        [-1, 1].forEach((sx) => {
+          const brace = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.045, curD), legMat);
+          brace.position.set(sx * (curW / 2), y, 0);
+          brace.castShadow = true;
+          stevensonDynamicGroup.add(brace);
+        });
+      });
+
+      // Tangga pijakan pengamat di sisi Selatan (+Z)
+      const stepCount = legH > 1.65 ? 3 : 2;
+      for (let s = 0; s < stepCount; s++) {
+        const sy = 0.24 + s * 0.24;
+        const sz = D / 2 + 0.54 - s * 0.14;
+        const tread = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.036, 0.16), legMat);
+        tread.position.set(0, sy, sz);
+        tread.castShadow = true;
+        tread.receiveShadow = true;
+        stevensonDynamicGroup.add(tread);
+      }
+      [-0.21, 0.21].forEach((sx) => {
+        const pTop = new THREE.Vector3(sx, 0.24 + (stepCount - 1) * 0.24 + 0.05, D / 2 + 0.54 - (stepCount - 1) * 0.14 - 0.05);
+        const pBot = new THREE.Vector3(sx, 0.06, D / 2 + 0.64);
+        const dir = new THREE.Vector3().subVectors(pTop, pBot);
+        const rail = new THREE.Mesh(new THREE.BoxGeometry(0.036, dir.length(), 0.05), legMat);
+        rail.position.copy(pBot).addScaledVector(dir, 0.5);
+        rail.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize());
+        rail.castShadow = true;
+        stevensonDynamicGroup.add(rail);
+      });
+
+      // Pipa konduit kabel naik dari pondasi beton ke kotak IP65 internal sangkar
+      addConduitTube(
+        stevensonDynamicGroup,
+        [
+          new THREE.Vector3(-W * 0.24, 0.06, -D * 0.22),
+          new THREE.Vector3(-W * 0.24, legH * 0.5, -D * 0.20),
+          new THREE.Vector3(-W * 0.21, legH + 0.04, -D * 0.12),
+          new THREE.Vector3(-W * 0.20, legH + H * 0.36, -D * 0.10),
+        ],
+        0.013,
+        mats.conduitGrey
+      );
+
+      // 2. LANTAI BERONGGA GANDA
+      const baseY = legH;
+      const slatCountFloor = 5;
+      const slatW = (W - 0.12) / slatCountFloor;
+      for (let i = 0; i < slatCountFloor; i++) {
+        const x = -W / 2 + 0.06 + (i + 0.5) * slatW;
+        const board = new THREE.Mesh(new THREE.BoxGeometry(slatW * 0.72, 0.024, D - 0.08), frameMat);
+        board.position.set(x, baseY + (i % 2 === 0 ? 0.015 : 0.045), 0);
+        board.castShadow = true;
+        board.receiveShadow = true;
+        stevensonDynamicGroup.add(board);
+      }
+
+      // 3. TIANG SUDUT & DINDING KISI-KISI GANDA (INSTANCEDMESH)
+      const postSize = 0.056;
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => {
+        const cornerPost = new THREE.Mesh(new THREE.BoxGeometry(postSize, H, postSize), frameMat);
+        cornerPost.position.set(sx * (W / 2 - postSize / 2), baseY + H / 2, sz * (D / 2 - postSize / 2));
+        cornerPost.castShadow = true;
+        cornerPost.receiveShadow = true;
+        stevensonDynamicGroup.add(cornerPost);
+      });
+
+      const createDoubleLouverWall = (panelW, panelH, parentGroup, offset, rotY) => {
+        const wallGroup = new THREE.Group();
+        wallGroup.position.copy(offset);
+        wallGroup.rotation.y = rotY;
+        parentGroup.add(wallGroup);
+
+        const topRail = new THREE.Mesh(new THREE.BoxGeometry(panelW, 0.045, 0.056), frameMat);
+        topRail.position.y = panelH / 2 - 0.022;
+        topRail.castShadow = true;
+        wallGroup.add(topRail);
+
+        const botRail = new THREE.Mesh(new THREE.BoxGeometry(panelW, 0.045, 0.056), frameMat);
+        botRail.position.y = -panelH / 2 + 0.022;
+        botRail.castShadow = true;
+        wallGroup.add(botRail);
+
+        const innerH = panelH - 0.10;
+        const louverCount = Math.max(7, Math.round(innerH / 0.052));
+        const spacing = innerH / louverCount;
+        const slatGeo = new THREE.BoxGeometry(panelW - 0.02, 0.011, 0.048);
+
+        const inst = new THREE.InstancedMesh(slatGeo, shelterMat, louverCount * 2);
+        const dummy = new THREE.Object3D();
+        let idx = 0;
+        for (let i = 0; i < louverCount; i++) {
+          const y = -innerH / 2 + (i + 0.5) * spacing;
+          dummy.position.set(0, y, 0.018);
+          dummy.rotation.set(tiltRad, 0, 0);
+          dummy.updateMatrix();
+          inst.setMatrixAt(idx++, dummy.matrix);
+
+          dummy.position.set(0, y + spacing * 0.25, -0.018);
+          dummy.rotation.set(-tiltRad, 0, 0);
+          dummy.updateMatrix();
+          inst.setMatrixAt(idx++, dummy.matrix);
+        }
+        inst.castShadow = true;
+        inst.receiveShadow = true;
+        wallGroup.add(inst);
+      };
+
+      const innerW = W - postSize * 2;
+      const innerD = D - postSize * 2;
+      const midY = baseY + H / 2;
+
+      createDoubleLouverWall(innerW, H, stevensonDynamicGroup, new THREE.Vector3(0, midY, -(D / 2 - 0.028)), Math.PI);
+      createDoubleLouverWall(innerD, H, stevensonDynamicGroup, new THREE.Vector3(-(W / 2 - 0.028), midY, 0), -Math.PI / 2);
+      createDoubleLouverWall(innerD, H, stevensonDynamicGroup, new THREE.Vector3(W / 2 - 0.028), midY, 0, Math.PI / 2);
+
+      // Perbaiki argumen dinding kanan (+X)
+      // (hapus panggilan salah jika ada dan buat yang benar di bawah)
+      stevensonDynamicGroup.remove(stevensonDynamicGroup.children[stevensonDynamicGroup.children.length - 1]);
+      createDoubleLouverWall(innerD, H, stevensonDynamicGroup, new THREE.Vector3(W / 2 - 0.028, midY, 0), Math.PI / 2);
+
+      // 4. PINTU DEPAN BERENGSEL + GRENDEL LOGAM
+      stevensonDoorPivot = new THREE.Group();
+      stevensonDoorPivot.position.set(-(W / 2 - postSize), midY, D / 2 - 0.028);
+      stevensonDoorPivot.rotation.y = state.doorAngle;
+      stevensonDynamicGroup.add(stevensonDoorPivot);
+
+      [-innerW / 2 + 0.018, innerW / 2 - 0.018].forEach((lx) => {
+        const stile = new THREE.Mesh(new THREE.BoxGeometry(0.036, H - 0.02, 0.052), frameMat);
+        stile.position.set(lx + innerW / 2, 0, 0);
+        stile.castShadow = true;
+        stevensonDoorPivot.add(stile);
+      });
+      createDoubleLouverWall(innerW - 0.06, H - 0.02, stevensonDoorPivot, new THREE.Vector3(innerW / 2, 0, 0), 0);
+
+      // Engsel logam kuningan/baja di kiri pintu
+      [-H * 0.3, H * 0.3].forEach((hy) => {
+        const barrel = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.072, 10), mats.brass);
+        barrel.position.set(0, hy, 0.03);
+        stevensonDoorPivot.add(barrel);
+        const leaf = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.048, 0.006), mats.brass);
+        leaf.position.set(0.022, hy, 0.03);
+        stevensonDoorPivot.add(leaf);
+      });
+
+      // Grendel & gagang pengait logam di kanan pintu
+      const latchPlate = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.085, 0.01), mats.stainless);
+      latchPlate.position.set(innerW - 0.024, -0.01, 0.032);
+      stevensonDoorPivot.add(latchPlate);
+      const latchKnob = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.032, 10), mats.brass);
+      latchKnob.rotation.x = Math.PI / 2;
+      latchKnob.position.set(innerW - 0.024, -0.01, 0.05);
+      stevensonDoorPivot.add(latchKnob);
+
+      // 5. ATAP GANDA BERVENTILASI
+      const roofOverhang = 0.14;
+      const innerRoof = new THREE.Mesh(new THREE.BoxGeometry(W + 0.04, 0.032, D + 0.04), frameMat);
+      innerRoof.position.set(0, baseY + H + 0.016, 0);
+      innerRoof.castShadow = true;
+      innerRoof.receiveShadow = true;
+      stevensonDynamicGroup.add(innerRoof);
+
+      [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => {
+        const spacer = new THREE.Mesh(new THREE.BoxGeometry(0.052, 0.085, 0.052), frameMat);
+        spacer.position.set(sx * (W / 2 - 0.06), baseY + H + 0.068, sz * (D / 2 - 0.06));
+        spacer.castShadow = true;
+        stevensonDynamicGroup.add(spacer);
+      });
+
+      const outerRoof = new THREE.Mesh(new THREE.BoxGeometry(W + roofOverhang * 2, 0.038, D + roofOverhang * 2), shelterMat);
+      outerRoof.position.set(0, baseY + H + 0.12, 0);
+      outerRoof.rotation.x = -0.095;
+      outerRoof.castShadow = true;
+      outerRoof.receiveShadow = true;
+      stevensonDynamicGroup.add(outerRoof);
+
+      // 6. KOMPONEN INTERNAL HIGH-DETAIL (Termometer Kering/Basah + Kain Muslin, BME280, IP65, ESP32)
+      const internal = new THREE.Group();
+      internal.position.set(0, baseY + H * 0.48, 0);
+      stevensonDynamicGroup.add(internal);
+
+      const shelf = new THREE.Mesh(new THREE.BoxGeometry(W * 0.68, 0.02, D * 0.44), mats.whiteWoodFence);
+      shelf.position.set(0, -H * 0.12, -D * 0.05);
+      shelf.castShadow = true;
+      internal.add(shelf);
+
+      // Kotak IP65 + kabel data internal melengkung ke ESP32 & BME280
+      const ip65Box = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.18, 0.09), mats.ip65Grey);
+      ip65Box.position.set(-W * 0.2, 0.01, -D * 0.1);
+      ip65Box.castShadow = true;
+      internal.add(ip65Box);
+
+      addConduitTube(
+        internal,
+        [
+          new THREE.Vector3(-W * 0.13, -0.05, -D * 0.09),
+          new THREE.Vector3(-W * 0.07, -0.09, -D * 0.06),
+          new THREE.Vector3(-W * 0.02, -H * 0.10, -D * 0.04),
+        ],
+        0.006,
+        mats.cableBlack
+      );
+
+      // Modul Mikrokontroler ESP32 bertekstur PCB gelap
+      const espBoard = new THREE.Mesh(new THREE.BoxGeometry(0.095, 0.012, 0.052), mats.pcbEsp);
+      espBoard.position.set(-W * 0.01, -H * 0.10, -D * 0.04);
+      internal.add(espBoard);
+
+      const espShield = new THREE.Mesh(new THREE.BoxGeometry(0.036, 0.012, 0.032), mats.stainless);
+      espShield.position.set(-W * 0.026, -H * 0.09, -D * 0.04);
+      internal.add(espShield);
+
+      espLedMat = new THREE.MeshBasicMaterial({ color: 0x22c55e });
+      const espLed = new THREE.Mesh(new THREE.SphereGeometry(0.0085, 10, 10), espLedMat);
+      espLed.position.set(W * 0.024, -H * 0.089, -D * 0.032);
+      internal.add(espLed);
+
+      // Sensor Digital BME280 / SHT31 pada PCB Biru Gelap + kabel dari ESP32
+      const sensorStand = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.11, 8), mats.darkSteel);
+      sensorStand.position.set(W * 0.13, -H * 0.055, 0.02);
+      internal.add(sensorStand);
+
+      const bmeBoard = new THREE.Mesh(new THREE.BoxGeometry(0.058, 0.058, 0.011), mats.pcbBme);
+      bmeBoard.position.set(W * 0.13, 0.0, 0.02);
+      internal.add(bmeBoard);
+
+      const bmeCap = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.018, 0.014), mats.stainless);
+      bmeCap.position.set(W * 0.13, 0.0, 0.026);
+      internal.add(bmeCap);
+
+      addConduitTube(
+        internal,
+        [
+          new THREE.Vector3(W * 0.03, -H * 0.10, -D * 0.03),
+          new THREE.Vector3(W * 0.08, -H * 0.08, 0.00),
+          new THREE.Vector3(W * 0.12, -0.02, 0.02),
+        ],
+        0.0045,
+        mats.cableBlack
+      );
+
+      // Termometer Bola Kering & Bola Basah (lengkap botol air + sumbu kain muslin)
+      const thermoBar = new THREE.Mesh(new THREE.BoxGeometry(W * 0.44, 0.018, 0.022), mats.woodNatural);
+      thermoBar.position.set(W * 0.04, H * 0.22, 0.045);
+      internal.add(thermoBar);
+
+      // Bola Kering
+      const dryStem = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.22, 10), mats.whiteWoodFence);
+      dryStem.position.set(-0.025, H * 0.10, 0.045);
+      internal.add(dryStem);
+      const dryBulb = new THREE.Mesh(
+        new THREE.SphereGeometry(0.016, 12, 12),
+        new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.18, metalness: 0.6 })
+      );
+      dryBulb.position.set(-0.025, H * 0.10 - 0.116, 0.045);
+      internal.add(dryBulb);
+
+      // Bola Basah + kain muslin + botol air kaca
+      const wetStem = dryStem.clone();
+      wetStem.position.set(0.075, H * 0.10, 0.045);
+      internal.add(wetStem);
+
+      const muslinMat = new THREE.MeshStandardMaterial({ color: 0xf8fafc, roughness: 0.95 });
+      const wetBulbMuslin = new THREE.Mesh(new THREE.SphereGeometry(0.019, 12, 12), muslinMat);
+      wetBulbMuslin.position.set(0.075, H * 0.10 - 0.116, 0.045);
+      internal.add(wetBulbMuslin);
+
+      // Sumbu kain muslin melengkung masuk ke botol air
+      addConduitTube(
+        internal,
+        [
+          new THREE.Vector3(0.075, H * 0.10 - 0.125, 0.045),
+          new THREE.Vector3(0.078, H * 0.10 - 0.155, 0.048),
+          new THREE.Vector3(0.075, H * 0.10 - 0.188, 0.045),
+        ],
+        0.0055,
+        muslinMat
+      );
+
+      const waterBottle = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.024, 0.06, 16), mats.glassDome);
+      waterBottle.position.set(0.075, H * 0.10 - 0.185, 0.045);
+      internal.add(waterBottle);
+      const bottleLiquid = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.022, 0.021, 0.036, 14),
+        new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.65, roughness: 0.1 })
+      );
+      bottleLiquid.position.set(0.075, H * 0.10 - 0.195, 0.045);
+      internal.add(bottleLiquid);
+    }
+
+    function applyXRayVisuals() {
+      stevensonOuterMaterials.forEach((mat, idx) => {
+        mat.transparent = state.xrayMode;
+        mat.opacity = state.xrayMode ? (idx === 0 ? 0.22 : 0.40) : 1.0;
+        mat.depthWrite = !state.xrayMode;
+        mat.needsUpdate = true;
+      });
+      updateTippingHousingTransparency();
+    }
+
+    function updateTippingHousingTransparency() {
+      if (!tippingHousingMat) return;
+      const cutaway =
+        state.xrayMode ||
+        state.rainIntensity > 0 ||
+        state.selectedInstrument === 'raingauge' ||
+        state.activeCamPreset === 'raingauge';
+      tippingHousingMat.transparent = cutaway;
+      tippingHousingMat.opacity = cutaway ? 0.24 : 1.0;
+      tippingHousingMat.depthWrite = !cutaway;
+      tippingHousingMat.needsUpdate = true;
+    }
+
+    /* =========================================================================
+     * 8. INSTRUMEN 2: TIANG ANEMOMETER, WIND VANE & UNIT AWS PANEL SURYA
+     * ========================================================================= */
+    function buildAnemometerStation() {
+      const group = new THREE.Group();
+      group.position.set(-3.8, 0.05, -3.2);
+      group.userData.instrumentId = 'anemometer';
+
+      // Pondasi beton berbaut angkur 4 titik
+      const baseTopY = addConcretePlinthWithBolts(group, 0.78, 0.78, 0.12, 0.34, 0);
+
+      // Tiang galvanis spangle setinggi 3.2m
+      const mastH = 3.2;
+      const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.036, 0.05, mastH, 20), mats.galvanized);
+      mast.position.y = baseTopY + mastH / 2;
+      mast.castShadow = true;
+      mast.receiveShadow = true;
+      group.add(mast);
+
+      // Kotak Data Logger IP65 dengan klem & LED status
+      const loggerBox = new THREE.Mesh(new THREE.BoxGeometry(0.30, 0.38, 0.19), mats.ip65Grey);
+      loggerBox.position.set(0, 1.38, 0.14);
+      loggerBox.castShadow = true;
+      group.add(loggerBox);
+
+      // Tutup depan & 2 klip pengunci logger
+      const doorRim = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.36, 0.015), mats.stainless);
+      doorRim.position.set(0, 1.38, 0.238);
+      group.add(doorRim);
+
+      awsLedMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8 });
+      const awsLed = new THREE.Mesh(new THREE.SphereGeometry(0.01, 10, 10), awsLedMat);
+      awsLed.position.set(0.09, 1.50, 0.248);
+      group.add(awsLed);
+
+      // Panel Surya Monokristalin (menghadap Utara -Z untuk lintang selatan Kebumen)
+      const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.05, 0.05, 0.28), mats.darkSteel);
+      bracket.position.set(0, 1.88, -0.14);
+      group.add(bracket);
+
+      const pvFrame = new THREE.Mesh(new THREE.BoxGeometry(0.56, 0.028, 0.42), mats.stainless);
+      pvFrame.position.set(0, 1.96, -0.26);
+      pvFrame.rotation.x = 0.28; // miring optimal ke Utara
+      pvFrame.castShadow = true;
+      group.add(pvFrame);
+
+      const pvFace = new THREE.Mesh(new THREE.PlaneGeometry(0.52, 0.38), mats.solarGlass);
+      pvFace.position.set(0, 0.0155, 0);
+      pvFace.rotation.x = -Math.PI / 2;
+      pvFrame.add(pvFace);
+
+      // Pipa konduit melengkung (PV -> Logger, Sensor Atas -> Logger, Logger -> Tanah)
+      addConduitTube(
+        group,
+        [
+          new THREE.Vector3(0.05, 1.90, -0.24),
+          new THREE.Vector3(0.08, 1.72, -0.08),
+          new THREE.Vector3(0.08, 1.54, 0.12),
+        ],
+        0.011,
+        mats.conduitGrey
+      );
+      addConduitTube(
+        group,
+        [
+          new THREE.Vector3(-0.04, 3.15, 0.03),
+          new THREE.Vector3(-0.06, 2.35, 0.055),
+          new THREE.Vector3(-0.06, 1.57, 0.11),
+        ],
+        0.010,
+        mats.conduitGrey
+      );
+      addConduitTube(
+        group,
+        [
+          new THREE.Vector3(0.0, 1.19, 0.13),
+          new THREE.Vector3(0.04, 0.65, 0.12),
+          new THREE.Vector3(0.09, baseTopY + 0.02, 0.14),
+        ],
+        0.012,
+        mats.conduitGrey
+      );
+
+      // Palang T Atas
+      const topY = baseTopY + mastH;
+      const crossBar = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 1.22, 14), mats.galvanized);
+      crossBar.rotation.z = Math.PI / 2;
+      crossBar.position.y = topY - 0.04;
+      crossBar.castShadow = true;
+      group.add(crossBar);
+
+      // --- A. CUP ANEMOMETER CEKUNG (Kiri, x = -0.55) ---
+      const anemoHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.038, 0.15, 14), mats.darkSteel);
+      anemoHousing.position.set(-0.55, topY + 0.03, 0);
+      group.add(anemoHousing);
+
+      cupRotorGroup = new THREE.Group();
+      cupRotorGroup.position.set(-0.55, topY + 0.15, 0);
+      group.add(cupRotorGroup);
+
+      cupRotorGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.045, 14), mats.stainless));
+
+      const cupGeo = new THREE.SphereGeometry(0.056, 18, 12, 0, Math.PI * 2, 0, Math.PI / 2);
+      const cupMat = new THREE.MeshStandardMaterial({
+        color: 0xf8fafc,
+        roughness: 0.25,
+        metalness: 0.35,
+        side: THREE.DoubleSide,
+      });
+
+      for (let i = 0; i < 3; i++) {
+        const armG = new THREE.Group();
+        armG.rotation.y = (i * Math.PI * 2) / 3;
+        const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.23, 8), mats.stainless);
+        arm.rotation.z = Math.PI / 2;
+        arm.position.x = 0.115;
+        armG.add(arm);
+
+        const cup = new THREE.Mesh(cupGeo, cupMat);
+        cup.position.x = 0.23;
+        cup.rotation.x = Math.PI / 2;
+        cup.castShadow = true;
+        armG.add(cup);
+        cupRotorGroup.add(armG);
+      }
+
+      // --- B. WIND VANE (Kanan, x = +0.55) ---
+      const vaneHousing = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.038, 0.15, 14), mats.darkSteel);
+      vaneHousing.position.set(0.55, topY + 0.03, 0);
+      group.add(vaneHousing);
+
+      windVaneGroup = new THREE.Group();
+      windVaneGroup.position.set(0.55, topY + 0.17, 0);
+      group.add(windVaneGroup);
+
+      const vaneRod = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.58, 10), mats.stainless);
+      vaneRod.rotation.x = Math.PI / 2;
+      vaneRod.castShadow = true;
+      windVaneGroup.add(vaneRod);
+
+      // Ujung panah counterweight merah (-Z = 0° Utara)
+      const cone = new THREE.Mesh(
+        new THREE.ConeGeometry(0.034, 0.115, 12),
+        new THREE.MeshStandardMaterial({ color: 0xdc2626, roughness: 0.32, metalness: 0.25 })
+      );
+      cone.rotation.x = -Math.PI / 2;
+      cone.position.z = -0.31;
+      cone.castShadow = true;
+      windVaneGroup.add(cone);
+
+      const tailShape = new THREE.Shape();
+      tailShape.moveTo(0, -0.052);
+      tailShape.lineTo(0.22, -0.105);
+      tailShape.lineTo(0.22, 0.105);
+      tailShape.lineTo(0, 0.052);
+      tailShape.closePath();
+      const tailFin = new THREE.Mesh(
+        new THREE.ExtrudeGeometry(tailShape, { depth: 0.01, bevelEnabled: false }),
+        mats.stainless
+      );
+      tailFin.rotation.y = -Math.PI / 2;
+      tailFin.position.set(0.005, 0, 0.10);
+      tailFin.castShadow = true;
+      windVaneGroup.add(tailFin);
+
+      scene.add(group);
+      instrumentGroups.anemometer = group;
+      interactiveRoots.push(group);
+    }
+
+    /* =========================================================================
+     * 9. INSTRUMEN 3: PENAKAR HUJAN TIPPING BUCKET + PENAKAR MANUAL OBS
+     * ========================================================================= */
+    function buildRainGaugeStation() {
+      const group = new THREE.Group();
+      group.position.set(3.8, 0.05, -2.6);
+      group.userData.instrumentId = 'raingauge';
+
+      // --- A. TIPPING BUCKET RAIN GAUGE (0.2 mm) ---
+      const tbTopY = addConcretePlinthWithBolts(group, 0.68, 0.68, 0.10, 0.34, 0);
+
+      // Dasar silinder & kaki pelat
+      const tbBase = new THREE.Mesh(new THREE.CylinderGeometry(0.145, 0.155, 0.04, 28), mats.darkSteel);
+      tbBase.position.y = tbTopY + 0.02;
+      group.add(tbBase);
+
+      // Dinding luar stainless brushed (otomatis cutaway saat hujan/klik/X-Ray)
+      tippingHousingMat = new THREE.MeshStandardMaterial({
+        map: pbrTextures.stainless.map,
+        roughnessMap: pbrTextures.stainless.roughnessMap,
+        roughness: 0.28,
+        metalness: 0.88,
+        side: THREE.DoubleSide,
+      });
+      const tbCyl = new THREE.Mesh(new THREE.CylinderGeometry(0.142, 0.142, 0.56, 32, 1, true), tippingHousingMat);
+      tbCyl.position.y = tbTopY + 0.32;
+      tbCyl.castShadow = true;
+      tbCyl.receiveShadow = true;
+      group.add(tbCyl);
+
+      // Bibir corong kuningan presisi
+      const rim = new THREE.Mesh(new THREE.TorusGeometry(0.142, 0.011, 12, 32), mats.brass);
+      rim.rotation.x = Math.PI / 2;
+      rim.position.y = tbTopY + 0.60;
+      group.add(rim);
+
+      // Corong penangkap hujan internal
+      const funnel = new THREE.Mesh(
+        new THREE.ConeGeometry(0.138, 0.17, 28, 1, true),
+        new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.25, metalness: 0.85, side: THREE.DoubleSide })
+      );
+      funnel.rotation.x = Math.PI;
+      funnel.position.y = tbTopY + 0.515;
+      group.add(funnel);
+
+      // Jungkat-Jungkit Twin Bucket Tembaga + Reed Switch LED
+      [-0.055, 0.055].forEach((fz) => {
+        const fulcrum = new THREE.Mesh(new THREE.BoxGeometry(0.012, 0.13, 0.028), mats.darkSteel);
+        fulcrum.position.set(0, tbTopY + 0.11, fz);
+        group.add(fulcrum);
+      });
+
+      tippingBucketPivot = new THREE.Group();
+      tippingBucketPivot.position.set(0, tbTopY + 0.165, 0);
+      group.add(tippingBucketPivot);
+
+      tippingBucketPivot.add(new THREE.Mesh(new THREE.BoxGeometry(0.185, 0.008, 0.085), mats.copper));
+      const div = new THREE.Mesh(new THREE.BoxGeometry(0.008, 0.072, 0.085), mats.copper);
+      div.position.y = 0.036;
+      tippingBucketPivot.add(div);
+      [-0.042, 0.042].forEach((bz) => {
+        const wall = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.055, 0.006), mats.copper);
+        wall.position.set(0, 0.028, bz);
+        tippingBucketPivot.add(wall);
+      });
+
+      const magnet = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.022, 10), mats.darkSteel);
+      magnet.position.y = -0.016;
+      tippingBucketPivot.add(magnet);
+
+      const reedPcb = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.012, 0.055), mats.pcbBme);
+      reedPcb.position.y = tbTopY + 0.055;
+      group.add(reedPcb);
+
+      tippingLedMat = new THREE.MeshBasicMaterial({ color: 0x064e3b });
+      const reedLed = new THREE.Mesh(new THREE.SphereGeometry(0.013, 10, 10), tippingLedMat);
+      reedLed.position.set(0.016, tbTopY + 0.07, 0.016);
+      group.add(reedLed);
+
+      // Pipa konduit sinyal keluar dari dasar Tipping Bucket
+      addConduitTube(
+        group,
+        [
+          new THREE.Vector3(-0.14, tbTopY + 0.05, 0.04),
+          new THREE.Vector3(-0.24, tbTopY + 0.03, 0.08),
+          new THREE.Vector3(-0.28, 0.05, 0.14),
+        ],
+        0.01,
+        mats.conduitGrey
+      );
+
+      // --- B. PENAKAR HUJAN MANUAL OBS KLASIK (x = +1.12) ---
+      const obs = new THREE.Group();
+      obs.position.set(1.12, 0, 0);
+      group.add(obs);
+
+      const obsTopY = addConcretePlinthWithBolts(obs, 0.56, 0.56, 0.09, 0.24, 0);
+      const obsStand = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.62, 0.13), mats.woodNatural);
+      obsStand.position.y = obsTopY + 0.31;
+      obsStand.castShadow = true;
+      obs.add(obsStand);
+
+      const obsCyl = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.082, 0.082, 0.44, 24),
+        new THREE.MeshStandardMaterial({
+          map: pbrTextures.galvanized.map,
+          roughnessMap: pbrTextures.galvanized.roughnessMap,
+          color: 0x94a3b8,
+          roughness: 0.45,
+          metalness: 0.65,
+        })
+      );
+      obsCyl.position.y = obsTopY + 0.80;
+      obsCyl.castShadow = true;
+      obs.add(obsCyl);
+
+      // Corong kuningan & kran penguras kuningan OBS
+      const obsFunnel = new THREE.Mesh(new THREE.CylinderGeometry(0.086, 0.082, 0.075, 24), mats.brass);
+      obsFunnel.position.y = obsTopY + 1.055;
+      obsFunnel.castShadow = true;
+      obs.add(obsFunnel);
+
+      const tapBody = new THREE.Mesh(new THREE.CylinderGeometry(0.01, 0.01, 0.08, 10), mats.brass);
+      tapBody.rotation.x = Math.PI / 2;
+      tapBody.position.set(0, obsTopY + 0.63, 0.105);
+      obs.add(tapBody);
+      const tapHandle = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.01, 0.01), mats.brass);
+      tapHandle.position.set(0, obsTopY + 0.65, 0.125);
+      obs.add(tapHandle);
+
+      scene.add(group);
+      instrumentGroups.raingauge = group;
+      interactiveRoots.push(group);
+    }
+
+    /* =========================================================================
+     * 10. INSTRUMEN 4: PYRANOMETER & PETAK 4 PROBE SUHU TANAH (5, 10, 20, 50 CM)
+     * ========================================================================= */
+    function buildPyranometerAndSoil() {
+      const group = new THREE.Group();
+      group.position.set(3.7, 0.05, 2.8);
+      group.userData.instrumentId = 'pyranometer';
+
+      // --- A. PYRANOMETER HIGH-DETAIL (x = -0.5) ---
+      const pyr = new THREE.Group();
+      pyr.position.set(-0.5, 0, 0);
+      group.add(pyr);
+
+      const pyrBaseY = addConcretePlinthWithBolts(pyr, 0.50, 0.50, 0.09, 0.22, 0);
+      const post = new THREE.Mesh(new THREE.CylinderGeometry(0.032, 0.038, 1.15, 18), mats.galvanized);
+      post.position.y = pyrBaseY + 0.575;
+      post.castShadow = true;
+      pyr.add(post);
+
+      const mountY = pyrBaseY + 1.16;
+      const plate = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.022, 24), mats.stainless);
+      plate.position.y = mountY;
+      plate.castShadow = true;
+      pyr.add(plate);
+
+      // Sun Shield Putih Bertingkat (2 lapis piringan peneduh radiasi)
+      const shieldLow = new THREE.Mesh(new THREE.CylinderGeometry(0.125, 0.132, 0.022, 28), mats.whiteWoodFence);
+      shieldLow.position.y = mountY + 0.024;
+      shieldLow.castShadow = true;
+      pyr.add(shieldLow);
+
+      const shieldTop = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.12, 0.024, 28), mats.whiteWoodFence);
+      shieldTop.position.y = mountY + 0.052;
+      shieldTop.castShadow = true;
+      pyr.add(shieldTop);
+
+      // Waterpass mini (cincin logam + gelembung hijau)
+      const levelMetal = new THREE.Mesh(new THREE.CylinderGeometry(0.017, 0.017, 0.012, 14), mats.darkSteel);
+      levelMetal.position.set(0.082, mountY + 0.068, 0.042);
+      pyr.add(levelMetal);
+      const levelBubble = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.013, 0.013, 0.014, 14),
+        new THREE.MeshStandardMaterial({ color: 0x22c55e, roughness: 0.12, metalness: 0.1 })
+      );
+      levelBubble.position.set(0.082, mountY + 0.069, 0.042);
+      pyr.add(levelBubble);
+
+      // Sensor Thermopile Hitam + Kubah Kaca Ganda Reflektif IBL
+      const core = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.028, 0.028, 0.012, 18),
+        new THREE.MeshStandardMaterial({ color: 0x0b1120, roughness: 0.92 })
+      );
+      core.position.y = mountY + 0.068;
+      pyr.add(core);
+
+      const innerDome = new THREE.Mesh(
+        new THREE.SphereGeometry(0.042, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
+        mats.glassDome
+      );
+      innerDome.position.y = mountY + 0.064;
+      pyr.add(innerDome);
+
+      const outerDome = new THREE.Mesh(
+        new THREE.SphereGeometry(0.060, 28, 18, 0, Math.PI * 2, 0, Math.PI / 2),
+        mats.glassDome
+      );
+      outerDome.position.y = mountY + 0.062;
+      pyr.add(outerDome);
+
+      // Kabel konduit melengkung dari body pyranometer turun sepanjang tiang
+      addConduitTube(
+        pyr,
+        [
+          new THREE.Vector3(0.09, mountY + 0.03, -0.05),
+          new THREE.Vector3(0.11, mountY - 0.18, -0.04),
+          new THREE.Vector3(0.05, mountY * 0.5, -0.035),
+          new THREE.Vector3(0.06, pyrBaseY + 0.02, -0.04),
+        ],
+        0.008,
+        mats.conduitGrey
+      );
+
+      // --- B. PETAK TANAH GUNDUL & 4 PROBE SUHU TANAH (5, 10, 20, 50 cm) ---
+      const soilG = new THREE.Group();
+      soilG.position.set(0.68, 0, 0);
+      group.add(soilG);
+
+      const curb = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.08, 1.12), mats.concrete);
+      curb.position.y = 0.04;
+      curb.receiveShadow = true;
+      curb.castShadow = true;
+      soilG.add(curb);
+
+      const soilBed = new THREE.Mesh(
+        new THREE.BoxGeometry(1.42, 0.09, 0.98),
+        new THREE.MeshStandardMaterial({
+          map: pbrTextures.soil.map,
+          bumpMap: pbrTextures.soil.bumpMap,
+          bumpScale: 0.03,
+          roughness: 0.96,
+        })
+      );
+      soilBed.position.y = 0.046;
+      soilBed.receiveShadow = true;
+      soilG.add(soilBed);
+
+      // Kotak sambungan (junction box) IP65 kecil di tepi belakang petak
+      const jBoxPost = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.36, 10), mats.galvanized);
+      jBoxPost.position.set(0.0, 0.22, -0.44);
+      soilG.add(jBoxPost);
+      const jBox = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.13, 0.09), mats.ip65Grey);
+      jBox.position.set(0.0, 0.42, -0.44);
+      jBox.castShadow = true;
+      soilG.add(jBox);
+
+      // 4 Probe Termometer Tanah (5, 10, 20, 50 cm) dengan batang bengkok & kabel ke junction box
+      const probes = [
+        { x: -0.48, z: 0.14, h: 0.22, color: 0x06b6d4 }, // 5 cm
+        { x: -0.16, z: 0.16, h: 0.27, color: 0x22c55e }, // 10 cm
+        { x: 0.16,  z: 0.16, h: 0.32, color: 0xf59e0b }, // 20 cm
+        { x: 0.48,  z: 0.14, h: 0.38, color: 0xef4444 }, // 50 cm
+      ];
+      probes.forEach((p) => {
+        // Batang sensor miring/bengkok khas termometer tanah
+        addConduitTube(
+          soilG,
+          [
+            new THREE.Vector3(p.x, 0.07, p.z),
+            new THREE.Vector3(p.x, 0.09 + p.h * 0.65, p.z),
+            new THREE.Vector3(p.x, 0.09 + p.h, p.z + 0.05),
+          ],
+          0.011,
+          mats.stainless
+        );
+        const head = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.024, 0.020, 0.044, 14),
+          new THREE.MeshStandardMaterial({ color: p.color, roughness: 0.35, metalness: 0.2 })
+        );
+        head.position.set(p.x, 0.09 + p.h + 0.015, p.z + 0.058);
+        head.rotation.x = 0.42;
+        head.castShadow = true;
+        soilG.add(head);
+
+        // Kabel sinyal menuju junction box
+        addConduitTube(
+          soilG,
+          [
+            new THREE.Vector3(p.x, 0.12, p.z - 0.01),
+            new THREE.Vector3(p.x * 0.6, 0.10, -0.18),
+            new THREE.Vector3(p.x * 0.12, 0.36, -0.42),
+          ],
+          0.0045,
+          mats.cableBlack
+        );
+      });
+
+      scene.add(group);
+      instrumentGroups.pyranometer = group;
+      interactiveRoots.push(group);
+    }
+
+    /* =========================================================================
+     * 11. INSTRUMEN 5: PANCI PENGUAPAN KELAS A (GALVANIS SPANGLE + AIR IBL)
+     * ========================================================================= */
+    function buildEvaporationPan() {
+      const group = new THREE.Group();
+      group.position.set(-3.6, 0.05, 2.8);
+      group.userData.instrumentId = 'evappan';
+
+      // Landasan beton/kerikil tipis di bawah palet
+      const pad = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.05, 1.56), mats.concrete);
+      pad.position.y = 0.025;
+      pad.receiveShadow = true;
+      group.add(pad);
+
+      // Palet kisi kayu bertekstur alami
+      for (let i = -2; i <= 2; i++) {
+        const runner = new THREE.Mesh(new THREE.BoxGeometry(0.08, 0.08, 1.36), mats.woodNatural);
+        runner.position.set(i * 0.28, 0.09, 0);
+        runner.castShadow = true;
+        runner.receiveShadow = true;
+        group.add(runner);
+      }
+      for (let j = -4; j <= 4; j++) {
+        const slat = new THREE.Mesh(new THREE.BoxGeometry(1.36, 0.04, 0.115), mats.woodNatural);
+        slat.position.set(0, 0.15, j * 0.145);
+        slat.castShadow = true;
+        slat.receiveShadow = true;
+        group.add(slat);
+      }
+
+      // Silinder Panci Logam Galvanis Spangle (Ø 1.21 m, tinggi 0.255 m)
+      const panR = 0.605;
+      const panH = 0.255;
+      const panBaseY = 0.17;
+
+      const panMat = mats.galvanized.clone();
+      panMat.side = THREE.DoubleSide;
+      const panWall = new THREE.Mesh(new THREE.CylinderGeometry(panR, panR, panH, 40, 1, true), panMat);
+      panWall.position.y = panBaseY + panH / 2;
+      panWall.castShadow = true;
+      panWall.receiveShadow = true;
+      group.add(panWall);
+
+      const panFloor = new THREE.Mesh(new THREE.CircleGeometry(panR, 40), mats.galvanized);
+      panFloor.rotation.x = -Math.PI / 2;
+      panFloor.position.y = panBaseY + 0.01;
+      panFloor.receiveShadow = true;
+      group.add(panFloor);
+
+      const panRim = new THREE.Mesh(new THREE.TorusGeometry(panR, 0.013, 12, 40), mats.stainless);
+      panRim.rotation.x = Math.PI / 2;
+      panRim.position.y = panBaseY + panH;
+      group.add(panRim);
+
+      // Permukaan Air Reflektif IBL dengan Animasi Riak Halus
+      const rippleGeo = new THREE.RingGeometry(0.001, panR - 0.01, 36, 10);
+      rippleGeo.rotateX(-Math.PI / 2);
+      const posAttr = rippleGeo.attributes.position;
+      evapWaterBaseY = new Float32Array(posAttr.count);
+      for (let i = 0; i < posAttr.count; i++) evapWaterBaseY[i] = posAttr.getY(i);
+
+      const waterMat = new THREE.MeshPhysicalMaterial({
+        color: 0x0b6fa4,
+        roughness: 0.06,
+        metalness: 0.12,
+        transmission: 0.45,
+        transparent: true,
+        opacity: 0.86,
+        ior: 1.333,
+        reflectivity: 0.92,
+        clearcoat: 1.0,
+        clearcoatRoughness: 0.05,
+      });
+      evapWaterMesh = new THREE.Mesh(rippleGeo, waterMat);
+      evapWaterMesh.position.y = panBaseY + 0.195;
+      evapWaterMesh.receiveShadow = true;
+      group.add(evapWaterMesh);
+
+      // Stilling Well Kuningan + Hook Gauge Mikrometer
+      const well = new THREE.Mesh(new THREE.CylinderGeometry(0.056, 0.056, 0.22, 20, 1, true), mats.brass);
+      well.position.set(0.36, panBaseY + 0.12, 0.22);
+      well.castShadow = true;
+      group.add(well);
+
+      const bridge = new THREE.Mesh(new THREE.BoxGeometry(0.13, 0.016, 0.025), mats.brass);
+      bridge.position.set(0.36, panBaseY + 0.235, 0.22);
+      group.add(bridge);
+
+      const hookRod = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.16, 10), mats.stainless);
+      hookRod.position.set(0.36, panBaseY + 0.29, 0.22);
+      group.add(hookRod);
+
+      const micrometer = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.032, 16), mats.brass);
+      micrometer.position.set(0.36, panBaseY + 0.37, 0.22);
+      group.add(micrometer);
+
+      // Mini Anemometer tepi panci (0.5 m)
+      const miniMast = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.02, 0.52, 12), mats.galvanized);
+      miniMast.position.set(-0.58, 0.17 + 0.26, -0.58);
+      miniMast.castShadow = true;
+      group.add(miniMast);
+
+      evapMiniRotor = new THREE.Group();
+      evapMiniRotor.position.set(-0.58, 0.17 + 0.54, -0.58);
+      group.add(evapMiniRotor);
+      for (let i = 0; i < 3; i++) {
+        const g = new THREE.Group();
+        g.rotation.y = (i * Math.PI * 2) / 3;
+        const arm = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.006, 0.006), mats.stainless);
+        arm.position.x = 0.055;
+        g.add(arm);
+        const cup = new THREE.Mesh(new THREE.SphereGeometry(0.022, 10, 8), mats.whiteWoodFence);
+        cup.position.x = 0.11;
+        g.add(cup);
+        evapMiniRotor.add(g);
+      }
+
+      scene.add(group);
+      instrumentGroups.evappan = group;
+      interactiveRoots.push(group);
+    }
+
+    /* =========================================================================
+     * 12. PARTIKEL HUJAN 3D INSTANCEDMESH & STREAMLINES ALIRAN ANGIN
+     * ========================================================================= */
+    function buildRainInstancedSystem() {
+      const dropGeo = new THREE.CylinderGeometry(0.0038, 0.0038, 0.44, 4);
+      const dropMat = new THREE.MeshBasicMaterial({
+        color: 0xcbeafe,
+        transparent: true,
+        opacity: 0.56,
+        depthWrite: false,
+      });
+
+      rainInstMesh = new THREE.InstancedMesh(dropGeo, dropMat, MAX_RAIN_DROPS);
+      rainInstMesh.count = 0;
+      rainInstMesh.frustumCulled = false;
+
+      for (let i = 0; i < MAX_RAIN_DROPS; i++) {
+        rainData.push({
+          x: (Math.random() - 0.5) * 18,
+          y: Math.random() * 11,
+          z: (Math.random() - 0.5) * 18,
+          speed: 9.8 + Math.random() * 4.2,
+        });
+      }
+      scene.add(rainInstMesh);
+    }
+
+    function updateRainInstanced(dt) {
+      if (state.rainIntensity <= 0.1) {
+        rainInstMesh.count = 0;
+        return;
+      }
+
+      const active = Math.min(MAX_RAIN_DROPS, Math.floor((state.rainIntensity / 100) * MAX_RAIN_DROPS) + 100);
+      rainInstMesh.count = active;
+
+      const dirRad = THREE.MathUtils.degToRad(state.windDir);
+      const flowVx = -Math.sin(dirRad) * (state.windSpeed * 0.28);
+      const flowVz = Math.cos(dirRad) * (state.windSpeed * 0.28);
+
+      // Kemiringan tetesan hujan mengikuti vektor kecepatan angin + jatuh vertikal
+      const fallVec = new THREE.Vector3(flowVx, -11.5, flowVz).normalize();
+      const upVec = new THREE.Vector3(0, 1, 0);
+      const tiltQuat = new THREE.Quaternion().setFromUnitVectors(upVec, fallVec.clone().negate());
+
+      for (let i = 0; i < active; i++) {
+        const d = rainData[i];
+        d.y -= d.speed * dt;
+        d.x += flowVx * dt;
+        d.z += flowVz * dt;
+
+        if (d.y < 0.08) {
+          d.y = 9.5 + Math.random() * 2.5;
+          d.x = (Math.random() - 0.5) * 17.5;
+          d.z = (Math.random() - 0.5) * 17.5;
+        }
+        if (d.x > 9) d.x -= 18;
+        if (d.x < -9) d.x += 18;
+        if (d.z > 9) d.z -= 18;
+        if (d.z < -9) d.z += 18;
+
+        rainDummy.position.set(d.x, d.y, d.z);
+        rainDummy.quaternion.copy(tiltQuat);
+        rainDummy.scale.set(1, 0.85 + (state.rainIntensity / 100) * 0.45, 1);
+        rainDummy.updateMatrix();
+        rainInstMesh.setMatrixAt(i, rainDummy.matrix);
+      }
+      rainInstMesh.instanceMatrix.needsUpdate = true;
+    }
+
+    function buildAirflowSystem() {
+      airflowGroup = new THREE.Group();
+      scene.add(airflowGroup);
+
+      const arrowMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.7 });
+      const shaftGeo = new THREE.CylinderGeometry(0.008, 0.008, 0.34, 6);
+      shaftGeo.rotateX(Math.PI / 2);
+      const headGeo = new THREE.ConeGeometry(0.025, 0.08, 6);
+      headGeo.rotateX(Math.PI / 2);
+
+      for (let i = 0; i < 24; i++) {
+        const g = new THREE.Group();
+        g.add(new THREE.Mesh(shaftGeo, arrowMat));
+        const head = new THREE.Mesh(headGeo, arrowMat);
+        head.position.z = 0.21;
+        g.add(head);
+
+        airflowParticles.push({
+          mesh: g,
+          progress: Math.random(),
+          lateral: (Math.random() - 0.5) * 1.15,
+          vertOffset: (Math.random() - 0.5) * 0.72,
+          speedScale: 0.8 + Math.random() * 0.4,
+        });
+        airflowGroup.add(g);
+      }
+    }
+
+    function updateAirflowParticles(dt) {
+      airflowGroup.visible = state.showAirflow && state.windSpeed > 0.1;
+      if (!airflowGroup.visible) return;
+
+      const preset = VOLUME_PRESETS[state.volumeKey];
+      const centerY = 0.05 + state.legHeight + preset.height * 0.5;
+
+      const dirRad = THREE.MathUtils.degToRad(state.windDir);
+      const flowX = -Math.sin(dirRad);
+      const flowZ = Math.cos(dirRad);
+      const perpX = flowZ;
+      const perpZ = -flowX;
+      const yaw = Math.atan2(flowX, flowZ);
+      const speed = Math.min(3.6, 0.35 + state.windSpeed * 0.14);
+
+      for (let i = 0; i < airflowParticles.length; i++) {
+        const p = airflowParticles[i];
+        p.progress += (speed * p.speedScale * dt) / 3.4;
+        if (p.progress > 1) p.progress -= 1;
+
+        const along = (p.progress - 0.5) * 3.4;
+        const inside = Math.exp(-(along * along) / 0.45);
+        const yWave = Math.sin(p.progress * Math.PI * 2) * 0.04 * inside;
+
+        p.mesh.position.set(flowX * along + perpX * p.lateral, centerY + p.vertOffset + yWave, flowZ * along + perpZ * p.lateral);
+        p.mesh.rotation.y = yaw;
+        p.mesh.scale.setScalar(0.45 + 0.65 * Math.sin(p.progress * Math.PI));
+      }
+    }
+
+    /* =========================================================================
+     * 13. MODEL ANALITIK FISIKA SEMI-EMPIRIS STEVENSON SCREEN
+     * ========================================================================= */
+    function updatePhysicsAnalytics() {
+      const preset = VOLUME_PRESETS[state.volumeKey];
+      const elevDeg = state.physics.elevationDeg;
+      const zenithDeg = state.physics.zenithDeg;
+      const elevRad = THREE.MathUtils.degToRad(Math.max(0, elevDeg));
+
+      const cloudFrac = state.cloudCover / 100;
+      const rainAtten = 1 - Math.min(0.45, state.rainIntensity * 0.006);
+      let solarRad = 0;
+      if (elevDeg > 0) {
+        const clearSky = 1080 * Math.pow(Math.sin(elevRad), 1.15);
+        solarRad = Math.max(0, clearSky * (1 - 0.74 * Math.pow(cloudFrac, 1.35)) * rainAtten);
+      }
+
+      const absorbedRad = (1 - state.albedo) * solarRad;
+      const Cv = 1200;
+      const uEff = Math.max(0.16, 0.26 * state.windSpeed + 0.14);
+      const zeta1 = (preset.aSec * Cv) / (45 + preset.vSh * Cv);
+      const tauSh = Math.round((1 / (zeta1 * uEff)) * 42);
+
+      let leakRad = 0;
+      let shieldStatus = 'safe';
+      let shieldTitle = 'Aman — Sinar Langsung Terblokir';
+      let shieldDesc = `Sudut kisi-kisi ${state.louverTilt}° memblokir radiasi langsung secara efektif pada elevasi ${elevDeg.toFixed(1)}°.`;
+
+      if (elevDeg <= 2) {
+        shieldTitle = 'Petang / Fajar — Radiasi Langsung Minimal';
+        shieldDesc = 'Elevasi matahari sangat rendah; paparan radiasi surya langsung mendekati nol.';
+      } else if (state.doorOpen) {
+        shieldStatus = 'danger';
+        shieldTitle = 'Terpapar — Pintu Sangkar Terbuka';
+        shieldDesc = 'Pintu terbuka memicu masuknya radiasi difus & pantulan permukaan ke inti sensor.';
+        leakRad = 0.24 * solarRad;
+      } else if (state.louverTilt < 34 && elevDeg < 62) {
+        shieldStatus = 'danger';
+        shieldTitle = 'Terpapar — Perbesar Sudut Kisi-Kisi';
+        shieldDesc = `Sudut ${state.louverTilt}° terlalu terbuka terhadap elevasi ${elevDeg.toFixed(1)}°; sinar miring menembus celah.`;
+        leakRad = 0.18 * solarRad * ((36 - state.louverTilt) / 11);
+      } else if (state.louverTilt < 42 && elevDeg < 58) {
+        shieldStatus = 'warn';
+        shieldTitle = 'Waspada — Proteksi Parsial';
+        shieldDesc = `Sebagian refleksi radiasi dapat masuk pada sudut ${state.louverTilt}°. Idealnya ≥ 45°.`;
+        leakRad = 0.065 * solarRad * ((43 - state.louverTilt) / 10);
+      }
+
+      const geomRatio = preset.aSh / preset.aSec;
+      const zenithFactor = 0.65 + 0.35 * Math.cos(THREE.MathUtils.degToRad(Math.min(85, zenithDeg)));
+      const windCooling = Math.pow(state.windSpeed + 0.55, 0.72);
+      const rainCooling = 1 - Math.min(0.45, state.rainIntensity * 0.012);
+
+      const epsilonT = Math.max(0, (((absorbedRad * 0.00145 * (geomRatio / 5.9) * zenithFactor) + (leakRad * 0.0042)) / windCooling) * rainCooling);
+
+      state.physics.solarRad = solarRad;
+      state.physics.absorbedRad = absorbedRad;
+      state.physics.epsilonT = epsilonT;
+      state.physics.tempMeasured = state.tempAmbient + epsilonT;
+      state.physics.tauSh = tauSh;
+      state.physics.shieldStatus = shieldStatus;
+      state.physics.shieldTitle = shieldTitle;
+      state.physics.shieldDesc = shieldDesc;
+    }
+
+    /* =========================================================================
+     * 14. PRESET KUALITAS REAL-TIME & PEMANTAU PERFORMA LIVE (HUD)
+     * ========================================================================= */
+    function applyQualityPreset(key) {
+      const q = QUALITY_PRESETS[key];
+      if (!q) return;
+      state.qualityKey = key;
+
+      // 1. Update DPR tanpa reload
+      const actualDpr = Math.min(window.devicePixelRatio, q.maxDpr);
+      renderer.setPixelRatio(actualDpr);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      // 2. Realokasi Shadow Map dengan dispose bersih
+      sunLight.shadow.mapSize.set(q.shadowSize, q.shadowSize);
+      if (sunLight.shadow.map) {
+        sunLight.shadow.map.dispose();
+        sunLight.shadow.map = null;
+      }
+      sunLight.shadow.needsUpdate = true;
+
+      // 3. Rebuild Rumput 3D InstancedMesh sesuai target jumlah helai
+      buildInstancedGrass(q.grassCount);
+
+      // 4. Refresh Sky IBL
+      updateSunSkyAndIBL(true);
+      syncQualityUI();
+    }
+
+    function syncQualityUI() {
+      const q = QUALITY_PRESETS[state.qualityKey];
+      const activeDpr = Math.min(window.devicePixelRatio, q.maxDpr).toFixed(2).replace(/\.00$/, '.0');
+
+      document.getElementById('hud-dpr').textContent = `${activeDpr}x`;
+      document.getElementById('hud-quality-pill').textContent = q.label;
+      document.getElementById('qual-dpr').textContent = `${activeDpr}x (Max ${q.maxDpr}x)`;
+      document.getElementById('qual-shadow').textContent = `${q.shadowSize} × ${q.shadowSize}`;
+      document.getElementById('qual-grass').textContent = `${q.grassCount.toLocaleString('id-ID')} helai`;
+      document.getElementById('qual-ibl').textContent = q.iblDesc;
+
+      document.querySelectorAll('.quality-btn').forEach((btn) => {
+        const active = btn.dataset.quality === state.qualityKey;
+        btn.className = active
+          ? 'quality-btn rounded-xl border border-sky-400/65 bg-sky-500/20 px-2 py-2.5 text-center transition'
+          : 'quality-btn rounded-xl border border-slate-600/50 bg-slate-800/60 px-2 py-2.5 text-center transition hover:border-sky-400/50';
+      });
+    }
+
+    /* =========================================================================
+     * 15. HELPER FORMAT, UPDATE UI & KARTU DETAIL INSTRUMEN
+     * ========================================================================= */
+    function getCompassLabel(deg) {
+      const dirs = ['U', 'TL', 'T', 'TG', 'S', 'BD', 'B', 'BL'];
+      return dirs[Math.round(((deg % 360) / 45)) % 8];
+    }
+
+    function formatHourWIB(h) {
+      const hrs = Math.floor(h);
+      const mins = Math.round((h - hrs) * 60);
+      return `${String(mins === 60 ? hrs + 1 : hrs).padStart(2, '0')}:${String(mins === 60 ? 0 : mins).padStart(2, '0')} WIB`;
+    }
+
+    function getWeatherConditionText() {
+      if (state.hour < 5.7 || state.hour > 18.2) return state.rainIntensity > 0 ? 'Hujan Petang' : 'Fajar / Petang';
+      if (state.rainIntensity >= 50) return 'Hujan Lebat';
+      if (state.rainIntensity >= 15) return 'Hujan Sedang';
+      if (state.rainIntensity > 0) return 'Hujan Ringan';
+      if (state.cloudCover >= 75) return 'Mendung';
+      if (state.cloudCover >= 35) return 'Berawan';
+      return 'Cerah';
+    }
+
+    function updateUIReadings() {
+      const p = state.physics;
+      const dirLabel = getCompassLabel(state.windDir);
+
+      document.getElementById('header-status-text').textContent = `${formatHourWIB(state.hour)} • ${getWeatherConditionText()}`;
+      document.getElementById('header-wind-badge').textContent = `Angin ${state.windSpeed.toFixed(1)} m/s (${dirLabel})`;
+      document.getElementById('header-temp-badge').textContent = `${state.tempAmbient.toFixed(1)} °C`;
+
+      const dot = document.getElementById('header-weather-dot');
+      if (state.rainIntensity > 0) dot.className = 'h-1.5 w-1.5 rounded-full bg-blue-400';
+      else if (state.cloudCover > 60) dot.className = 'h-1.5 w-1.5 rounded-full bg-slate-300';
+      else if (state.hour < 6 || state.hour > 18) dot.className = 'h-1.5 w-1.5 rounded-full bg-indigo-400';
+      else dot.className = 'h-1.5 w-1.5 rounded-full bg-amber-300';
+
+      document.getElementById('phys-temp-ambient').textContent = `${state.tempAmbient.toFixed(2)} °C`;
+      document.getElementById('phys-temp-sensor').textContent = `${p.tempMeasured.toFixed(2)} °C`;
+      document.getElementById('phys-error').textContent = `+${p.epsilonT.toFixed(2)} °C`;
+      document.getElementById('phys-tau').textContent = `${p.tauSh} dtk`;
+      document.getElementById('phys-rad').textContent = `${Math.round(p.solarRad)} W/m²`;
+      document.getElementById('phys-absorbed').textContent = `Terserap: ${Math.round(p.absorbedRad)} W/m²`;
+      document.getElementById('phys-sun-angle').textContent = `${Math.max(0, p.elevationDeg).toFixed(1)}°`;
+      document.getElementById('phys-zenith').textContent = `Zenit Θ: ${Math.min(90, p.zenithDeg).toFixed(1)}°`;
+
+      const box = document.getElementById('shield-status-box');
+      const sDot = document.getElementById('shield-status-dot');
+      const sTitle = document.getElementById('shield-status-title');
+      const sDesc = document.getElementById('shield-status-desc');
+      sTitle.textContent = p.shieldTitle;
+      sDesc.textContent = p.shieldDesc;
+
+      if (p.shieldStatus === 'safe') {
+        box.className = 'rounded-xl border border-emerald-400/40 bg-emerald-500/15 p-2.5';
+        sDot.className = 'h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-400';
+        sTitle.className = 'font-bold text-emerald-200';
+        sDesc.className = 'mt-1 text-[11px] leading-relaxed text-emerald-100/85';
+      } else if (p.shieldStatus === 'warn') {
+        box.className = 'rounded-xl border border-amber-400/45 bg-amber-500/15 p-2.5';
+        sDot.className = 'h-2.5 w-2.5 shrink-0 rounded-full bg-amber-400';
+        sTitle.className = 'font-bold text-amber-200';
+        sDesc.className = 'mt-1 text-[11px] leading-relaxed text-amber-100/85';
+      } else {
+        box.className = 'rounded-xl border border-rose-400/50 bg-rose-500/20 p-2.5';
+        sDot.className = 'h-2.5 w-2.5 shrink-0 rounded-full bg-rose-400';
+        sTitle.className = 'font-bold text-rose-200';
+        sDesc.className = 'mt-1 text-[11px] leading-relaxed text-rose-100/85';
+      }
+
+      const errBar = document.getElementById('phys-error-bar');
+      const errLabel = document.getElementById('phys-quality-label');
+      errBar.style.width = `${Math.max(4, Math.min(100, (p.epsilonT / 1.5) * 100))}%`;
+      if (p.epsilonT <= 0.2) {
+        errBar.className = 'h-full rounded-full bg-emerald-400 transition-all duration-300';
+        errLabel.className = 'font-semibold text-emerald-300';
+        errLabel.textContent = 'Sangat Baik (≤ 0.2 °C)';
+      } else if (p.epsilonT <= 0.5) {
+        errBar.className = 'h-full rounded-full bg-amber-400 transition-all duration-300';
+        errLabel.className = 'font-semibold text-amber-300';
+        errLabel.textContent = 'Bias Sedang';
+      } else {
+        errBar.className = 'h-full rounded-full bg-rose-400 transition-all duration-300';
+        errLabel.className = 'font-semibold text-rose-300';
+        errLabel.textContent = 'Bias Radiasi Tinggi';
+      }
+
+      if (state.selectedInstrument) renderInstrumentCardMetrics(state.selectedInstrument);
+    }
+
+    function openInstrumentCard(id) {
+      const info = INSTRUMENT_CATALOG[id];
+      if (!info) return;
+      state.selectedInstrument = id;
+      document.getElementById('card-category').textContent = info.category;
+      document.getElementById('card-title').textContent = info.name;
+      document.getElementById('card-sensor').textContent = info.sensor;
+      document.getElementById('card-desc').textContent = info.desc;
+      document.getElementById('card-wmo').textContent = info.wmo;
+      renderInstrumentCardMetrics(id);
+      document.getElementById('instrument-card').classList.remove('hidden');
+      updateTippingHousingTransparency();
+    }
+
+    function closeInstrumentCard() {
+      state.selectedInstrument = null;
+      document.getElementById('instrument-card').classList.add('hidden');
+      updateTippingHousingTransparency();
+    }
+
+    function renderInstrumentCardMetrics(id) {
+      const el = document.getElementById('card-metrics');
+      let items = [];
+
+      if (id === 'stevenson') {
+        const preset = VOLUME_PRESETS[state.volumeKey];
+        items = [
+          { k: 'Suhu Terukur (T_sh)', v: `${state.physics.tempMeasured.toFixed(2)} °C` },
+          { k: 'Kelembapan (RH)', v: `${state.rh}%` },
+          { k: 'Error Radiasi (ε_T)', v: `+${state.physics.epsilonT.toFixed(2)} °C` },
+          { k: 'Volume / Louver', v: `${preset.dm3} dm³ / ${state.louverTilt}°` },
+        ];
+      } else if (id === 'anemometer') {
+        const pvPower = Math.max(0, (state.physics.solarRad * 0.032)).toFixed(1);
+        items = [
+          { k: 'Kecepatan Angin', v: `${state.windSpeed.toFixed(1)} m/s (${(state.windSpeed * 1.944).toFixed(1)} kt)` },
+          { k: 'Arah Datang', v: `${state.windDir}° (${getCompassLabel(state.windDir)})` },
+          { k: 'Daya Panel Surya', v: `${pvPower} W (13.6 V)` },
+          { k: 'Putaran Mangkuk', v: `${Math.round(state.windSpeed * 28.5)} RPM` },
+        ];
+      } else if (id === 'raingauge') {
+        items = [
+          { k: 'Intensitas Hujan', v: `${state.rainIntensity} mm/jam` },
+          { k: 'Pulsa Reed Switch', v: `${state.tipCount} tip (0.2 mm)` },
+          { k: 'Akumulasi Simulasi', v: `${state.rainAccumMm.toFixed(1)} mm` },
+          { k: 'Mode Cutaway', v: state.rainIntensity > 0 ? 'Aktif Berayun' : 'Inspeksi Siaga' },
+        ];
+      } else if (id === 'pyranometer') {
+        const rad = Math.round(state.physics.solarRad);
+        const t5 = (state.tempAmbient + (rad / 420) * 1.6 - 0.7).toFixed(1);
+        const t10 = (state.tempAmbient + (rad / 550) * 0.8 - 1.3).toFixed(1);
+        const t20 = (state.tempAmbient - 2.0).toFixed(1);
+        const t50 = (state.tempAmbient - 3.1).toFixed(1);
+        items = [
+          { k: 'Radiasi Global', v: `${rad} W/m²` },
+          { k: 'Elevasi Matahari', v: `${Math.max(0, state.physics.elevationDeg).toFixed(1)}°` },
+          { k: 'Tanah 5 / 10 cm', v: `${t5}° / ${t10} °C` },
+          { k: 'Tanah 20 / 50 cm', v: `${t20}° / ${t50} °C` },
+        ];
+      } else if (id === 'evappan') {
+        const vpd = (100 - state.rh) / 100;
+        const evap = Math.max(0.4, (state.physics.solarRad * 0.0052) + vpd * (1.6 + state.windSpeed * 0.35));
+        const tAir = (state.tempAmbient - 1.1 + state.physics.solarRad * 0.0022).toFixed(1);
+        items = [
+          { k: 'Laju Evaporasi', v: `${evap.toFixed(1)} mm/hari` },
+          { k: 'Suhu Air Panci', v: `${tAir} °C` },
+          { k: 'Wind-Run 0.5 m', v: `${(state.windSpeed * 0.65).toFixed(1)} m/s` },
+          { k: 'Diameter Panci', v: '1.21 m (Kelas A)' },
+        ];
+      }
+
+      el.innerHTML = items
+        .map(
+          (m) => `
+          <div class="rounded-xl border border-slate-700/50 bg-slate-900/65 px-2.5 py-1.5">
+            <div class="text-[10px] text-slate-400">${m.k}</div>
+            <div class="text-xs font-bold text-sky-100 tabular-nums">${m.v}</div>
+          </div>`
+        )
+        .join('');
+    }
+
+    /* =========================================================================
+     * 16. KAMERA INTERAKTIF, RAYCASTING & BINDING EVENT UI
+     * ========================================================================= */
+    function focusCamera(presetKey, shouldOpenCard = true) {
+      const preset = CAMERA_PRESETS[presetKey];
+      if (!preset) return;
+      state.activeCamPreset = presetKey;
+      camTransition.targetPos.copy(preset.pos);
+      camTransition.targetLook.copy(preset.target);
+      camTransition.active = true;
+
+      document.querySelectorAll('.cam-btn').forEach((btn) => {
+        const active = btn.dataset.cam === presetKey;
+        btn.className = active
+          ? 'cam-btn shrink-0 rounded-full bg-sky-500 px-3 py-1.5 text-white shadow-sm transition'
+          : 'cam-btn shrink-0 rounded-full px-3 py-1.5 text-slate-200 transition hover:bg-slate-700/70 hover:text-white';
+      });
+
+      if (presetKey === 'overview') closeInstrumentCard();
+      else if (shouldOpenCard) openInstrumentCard(presetKey);
+      updateTippingHousingTransparency();
+    }
+
+    function setupRaycasting() {
+      const raycaster = new THREE.Raycaster();
+      const pointer = new THREE.Vector2();
+      const tooltip = document.getElementById('hover-tooltip');
+      const tooltipText = document.getElementById('hover-tooltip-text');
+      const domEl = renderer.domElement;
+      let downPos = { x: 0, y: 0 };
+
+      const findInstId = (obj) => {
+        let cur = obj;
+        while (cur) {
+          if (cur.userData?.instrumentId) return cur.userData.instrumentId;
+          cur = cur.parent;
+        }
+        return null;
+      };
+
+      domEl.addEventListener('pointerdown', (e) => { downPos = { x: e.clientX, y: e.clientY }; });
+
+      domEl.addEventListener('pointermove', (e) => {
+        const rect = domEl.getBoundingClientRect();
+        pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+        raycaster.setFromCamera(pointer, camera);
+        const hits = raycaster.intersectObjects(interactiveRoots, true);
+        if (hits.length > 0) {
+          const id = findInstId(hits[0].object);
+          if (id && INSTRUMENT_CATALOG[id]) {
+            domEl.style.cursor = 'pointer';
+            tooltipText.textContent = INSTRUMENT_CATALOG[id].name;
+            tooltip.style.left = `${e.clientX}px`;
+            tooltip.style.top = `${e.clientY}px`;
+            tooltip.classList.remove('hidden');
+            return;
+          }
+        }
+        domEl.style.cursor = 'grab';
+        tooltip.classList.add('hidden');
+      });
+
+      domEl.addEventListener('pointerleave', () => tooltip.classList.add('hidden'));
+
+      domEl.addEventListener('pointerup', (e) => {
+        if (Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y) > 6) return;
+        const rect = domEl.getBoundingClientRect();
+        pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+        raycaster.setFromCamera(pointer, camera);
+        const hits = raycaster.intersectObjects(interactiveRoots, true);
+        if (hits.length > 0) {
+          const id = findInstId(hits[0].object);
+          if (id) focusCamera(id, true);
+        }
+      });
+    }
+
+    function setupUIEvents() {
+      // Toggle Panel Kanan
+      const panel = document.getElementById('control-panel');
+      const toggleBtn = document.getElementById('toggle-panel-btn');
+      const toggleLabel = document.getElementById('toggle-panel-label');
+      let isOpen = window.innerWidth >= 768;
+
+      const syncPanel = () => {
+        if (isOpen) {
+          panel.classList.remove('translate-x-[120%]', 'opacity-0', 'pointer-events-none');
+          toggleLabel.textContent = 'Tutup';
+        } else {
+          panel.classList.add('translate-x-[120%]', 'opacity-0', 'pointer-events-none');
+          toggleLabel.textContent = 'Kontrol';
+        }
+      };
+      syncPanel();
+      toggleBtn.addEventListener('click', () => { isOpen = !isOpen; syncPanel(); });
+
+      // Navigasi 4 Tab
+      document.querySelectorAll('.tab-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const target = btn.dataset.tab;
+          document.querySelectorAll('.tab-btn').forEach((b) => {
+            const active = b.dataset.tab === target;
+            b.className = active
+              ? 'tab-btn rounded-xl bg-sky-500/25 px-1.5 py-2 text-sky-200 ring-1 ring-sky-400/40 transition'
+              : 'tab-btn rounded-xl px-1.5 py-2 text-slate-300 transition hover:bg-slate-800/70 hover:text-white';
+          });
+          document.querySelectorAll('.tab-content').forEach((c) => c.classList.toggle('hidden', c.id !== `tab-${target}`));
+        });
+      });
+
+      // Kamera Preset & Reset
+      document.querySelectorAll('.cam-btn').forEach((btn) => btn.addEventListener('click', () => focusCamera(btn.dataset.cam, true)));
+      document.getElementById('btn-cam-reset').addEventListener('click', () => focusCamera('overview', false));
+      document.getElementById('card-close-btn').addEventListener('click', closeInstrumentCard);
+
+      // Tab 1: Sangkar
+      document.querySelectorAll('.vol-btn').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          state.volumeKey = btn.dataset.volume;
+          document.getElementById('lbl-volume-spec').textContent = `${VOLUME_PRESETS[state.volumeKey].dm3} dm³`;
+          document.querySelectorAll('.vol-btn').forEach((b) => {
+            const active = b.dataset.volume === state.volumeKey;
+            b.className = active
+              ? 'vol-btn rounded-xl border border-sky-400/60 bg-sky-500/20 px-2 py-2 text-center text-[11px] font-semibold text-sky-100 transition'
+              : 'vol-btn rounded-xl border border-slate-600/50 bg-slate-800/60 px-2 py-2 text-center text-[11px] font-medium text-slate-300 transition hover:border-sky-400/50 hover:text-white';
+          });
+          rebuildStevensonScreen();
+          updatePhysicsAnalytics();
+          updateUIReadings();
+        });
+      });
+
+      document.getElementById('slider-leg-height').addEventListener('input', (e) => {
+        state.legHeight = parseFloat(e.target.value);
+        document.getElementById('val-leg-height').textContent = `${state.legHeight.toFixed(2)} m`;
+        rebuildStevensonScreen();
+      });
+
+      document.getElementById('slider-louver-tilt').addEventListener('input', (e) => {
+        state.louverTilt = parseInt(e.target.value, 10);
+        document.getElementById('val-louver-tilt').textContent = `${state.louverTilt}°`;
+        rebuildStevensonScreen();
+        updatePhysicsAnalytics();
+        updateUIReadings();
+      });
+
+      document.getElementById('slider-albedo').addEventListener('input', (e) => {
+        state.albedo = parseFloat(e.target.value);
+        const desc = state.albedo >= 0.78 ? 'Putih Baru' : state.albedo >= 0.62 ? 'Agak Kusam' : 'Kusam/Lapuk';
+        document.getElementById('val-albedo').textContent = `${state.albedo.toFixed(2)} (${desc})`;
+        rebuildStevensonScreen();
+        updatePhysicsAnalytics();
+        updateUIReadings();
+      });
+
+      document.getElementById('toggle-door').addEventListener('change', (e) => {
+        state.doorOpen = e.target.checked;
+        updatePhysicsAnalytics();
+        updateUIReadings();
+      });
+      document.getElementById('toggle-xray').addEventListener('change', (e) => {
+        state.xrayMode = e.target.checked;
+        applyXRayVisuals();
+      });
+      document.getElementById('toggle-airflow').addEventListener('change', (e) => {
+        state.showAirflow = e.target.checked;
+      });
+
+      // Tab 2: Cuaca
+      document.getElementById('slider-hour').addEventListener('input', (e) => {
+        state.hour = parseFloat(e.target.value);
+        document.getElementById('val-hour').textContent = formatHourWIB(state.hour);
+        updateSunSkyAndIBL(false);
+        updatePhysicsAnalytics();
+        updateUIReadings();
+      });
+
+      document.getElementById('btn-timelapse').addEventListener('click', () => {
+        state.timelapse = !state.timelapse;
+        document.getElementById('timelapse-icon').textContent = state.timelapse ? '⏸' : '▶';
+        document.getElementById('timelapse-label').textContent = state.timelapse ? 'Jeda' : 'Timelapse';
+      });
+
+      document.getElementById('slider-wind-speed').addEventListener('input', (e) => {
+        state.windSpeed = parseFloat(e.target.value);
+        document.getElementById('val-wind-speed').textContent = `${state.windSpeed.toFixed(1)} m/s`;
+        updatePhysicsAnalytics();
+        updateUIReadings();
+      });
+
+      document.getElementById('slider-wind-dir').addEventListener('input', (e) => {
+        state.windDir = parseInt(e.target.value, 10);
+        document.getElementById('val-wind-dir').textContent = `${state.windDir}° (${getCompassLabel(state.windDir)})`;
+        updateUIReadings();
+      });
+
+      document.getElementById('slider-rain').addEventListener('input', (e) => {
+        state.rainIntensity = parseInt(e.target.value, 10);
+        document.getElementById('val-rain').textContent = `${state.rainIntensity} mm/jam`;
+        updateTippingHousingTransparency();
+        updateSunSkyAndIBL(false);
+        updatePhysicsAnalytics();
+        updateUIReadings();
+      });
+
+      document.getElementById('slider-cloud').addEventListener('input', (e) => {
+        state.cloudCover = parseInt(e.target.value, 10);
+        document.getElementById('val-cloud').textContent = `${state.cloudCover}%`;
+        updateSunSkyAndIBL(false);
+        updatePhysicsAnalytics();
+        updateUIReadings();
+      });
+
+      document.getElementById('slider-temp').addEventListener('input', (e) => {
+        state.tempAmbient = parseFloat(e.target.value);
+        document.getElementById('val-temp').textContent = `${state.tempAmbient.toFixed(1)} °C`;
+        updatePhysicsAnalytics();
+        updateUIReadings();
+      });
+
+      document.getElementById('slider-rh').addEventListener('input', (e) => {
+        state.rh = parseInt(e.target.value, 10);
+        document.getElementById('val-rh').textContent = `${state.rh}%`;
+        updateUIReadings();
+      });
+
+      // Tab 4: Preset Kualitas Real-Time
+      document.querySelectorAll('.quality-btn').forEach((btn) => {
+        btn.addEventListener('click', () => applyQualityPreset(btn.dataset.quality));
+      });
+
+      // Resize Handler
+      window.addEventListener('resize', () => {
+        if (!renderer || !camera) return;
+        const q = QUALITY_PRESETS[state.qualityKey];
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, q.maxDpr));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        syncQualityUI();
+      });
+    }
+
+    /* =========================================================================
+     * 17. LOOP ANIMASI UTAMA & PEMANTAU PERFORMA LIVE (HUD ~250ms)
+     * ========================================================================= */
+    const clock = new THREE.Clock();
+    let perfFrames = 0;
+    let perfLastTime = performance.now();
+    let uiThrottle = 0;
+
+    function updatePerfHUD() {
+      const now = performance.now();
+      perfFrames++;
+      const elapsedMs = now - perfLastTime;
+      if (elapsedMs >= 250) {
+        const fps = Math.round((perfFrames * 1000) / elapsedMs);
+        const calls = renderer.info.render.calls;
+        const tris = renderer.info.render.triangles;
+        const trisLabel = tris >= 1000 ? `${(tris / 1000).toFixed(1)}k` : `${tris}`;
+
+        const fpsEl = document.getElementById('hud-fps');
+        const fpsDot = document.getElementById('hud-fps-dot');
+        const qualFpsEl = document.getElementById('qual-live-fps');
+
+        fpsEl.textContent = fps;
+        qualFpsEl.textContent = fps;
+        document.getElementById('hud-calls').textContent = calls;
+        document.getElementById('qual-live-calls').textContent = calls;
+        document.getElementById('hud-tris').textContent = trisLabel;
+        document.getElementById('qual-live-tris').textContent = trisLabel;
+
+        if (fps >= 50) {
+          fpsEl.className = 'font-bold text-emerald-400';
+          qualFpsEl.className = 'text-sm font-bold text-emerald-400';
+          fpsDot.className = 'h-2 w-2 rounded-full bg-emerald-400';
+        } else if (fps >= 30) {
+          fpsEl.className = 'font-bold text-amber-400';
+          qualFpsEl.className = 'text-sm font-bold text-amber-400';
+          fpsDot.className = 'h-2 w-2 rounded-full bg-amber-400';
+        } else {
+          fpsEl.className = 'font-bold text-rose-400';
+          qualFpsEl.className = 'text-sm font-bold text-rose-400';
+          fpsDot.className = 'h-2 w-2 rounded-full bg-rose-400';
+        }
+
+        perfFrames = 0;
+        perfLastTime = now;
+      }
+    }
+
+    function animate() {
+      requestAnimationFrame(animate);
+      const dt = Math.min(clock.getDelta(), 0.05);
+      const elapsed = clock.getElapsedTime();
+
+      // 1. Update Uniform GPU Shader Rumput 3D (tanpa loop CPU per helai!)
+      const dirRad = THREE.MathUtils.degToRad(state.windDir);
+      grassUniforms.uTime.value = elapsed;
+      grassUniforms.uWindSpeed.value = state.windSpeed;
+      grassUniforms.uWindDir.value.set(-Math.sin(dirRad), Math.cos(dirRad));
+
+      // 2. Timelapse Matahari
+      if (state.timelapse) {
+        state.hour += dt * 0.55;
+        if (state.hour > 19.0) state.hour = 5.0;
+        document.getElementById('slider-hour').value = state.hour.toFixed(2);
+        document.getElementById('val-hour').textContent = formatHourWIB(state.hour);
+        updateSunSkyAndIBL(false);
+        updatePhysicsAnalytics();
+        uiThrottle += dt;
+        if (uiThrottle > 0.14) {
+          updateUIReadings();
+          uiThrottle = 0;
+        }
+      }
+
+      // 3. Transisi Kamera Smooth Lerp
+      if (camTransition.active) {
+        const alpha = 1 - Math.exp(-5.5 * dt);
+        camera.position.lerp(camTransition.targetPos, alpha);
+        controls.target.lerp(camTransition.targetLook, alpha);
+        if (
+          camera.position.distanceTo(camTransition.targetPos) < 0.02 &&
+          controls.target.distanceTo(camTransition.targetLook) < 0.02
+        ) {
+          camTransition.active = false;
+        }
+      }
+
+      // 4. Engsel Pintu Sangkar & LED Status ESP32 / AWS
+      const targetDoor = state.doorOpen ? -THREE.MathUtils.degToRad(106) : 0;
+      state.doorAngle += (targetDoor - state.doorAngle) * Math.min(1, dt * 6.5);
+      if (stevensonDoorPivot) stevensonDoorPivot.rotation.y = state.doorAngle;
+
+      if (espLedMat) {
+        const p = (Math.sin(elapsed * 4.4) + 1) * 0.5;
+        espLedMat.color.setRGB(0.08, 0.42 + p * 0.58, 0.22);
+      }
+      if (awsLedMat) {
+        const p = (Math.sin(elapsed * 2.8 + 1.2) + 1) * 0.5;
+        awsLedMat.color.setRGB(0.12, 0.45 + p * 0.45, 0.65 + p * 0.35);
+      }
+
+      // 5. Rotasi Anemometer & Wind Vane (Shortest Angle Lerp)
+      if (cupRotorGroup) cupRotorGroup.rotation.y -= state.windSpeed * 2.15 * dt;
+      if (evapMiniRotor) evapMiniRotor.rotation.y -= state.windSpeed * 1.45 * dt;
+      if (windVaneGroup) {
+        const targetRad = -THREE.MathUtils.degToRad(state.windDir);
+        const gust = state.windSpeed > 0.4 ? Math.sin(elapsed * 2.5) * 0.045 * Math.min(1, state.windSpeed / 10) : 0;
+        let diff = ((targetRad + gust - state.currentVaneAngle + Math.PI) % (Math.PI * 2)) - Math.PI;
+        if (diff < -Math.PI) diff += Math.PI * 2;
+        state.currentVaneAngle += diff * Math.min(1, dt * 4.5);
+        windVaneGroup.rotation.y = state.currentVaneAngle;
+      }
+
+      // 6. Tipping Bucket (0.2 mm/tip, percepatan visual 60x agar mekanisme terlihat hidup)
+      if (state.rainIntensity > 0) {
+        state.bucketFillMm += ((state.rainIntensity / 3600) * 60) * dt;
+        if (state.bucketFillMm >= 0.2) {
+          state.bucketFillMm -= 0.2;
+          state.tipCount += 1;
+          state.rainAccumMm += 0.2;
+          state.bucketSide *= -1;
+          state.bucketTargetAngle = state.bucketSide * 0.38;
+          state.reedPulseTimer = 0.25;
+          if (state.selectedInstrument === 'raingauge') renderInstrumentCardMetrics('raingauge');
+        }
+      }
+      if (tippingBucketPivot) {
+        state.bucketAngle += (state.bucketTargetAngle - state.bucketAngle) * Math.min(1, dt * 16);
+        tippingBucketPivot.rotation.z = state.bucketAngle;
+      }
+      if (tippingLedMat) {
+        if (state.reedPulseTimer > 0) {
+          state.reedPulseTimer -= dt;
+          tippingLedMat.color.setHex(0x4ade80);
+        } else {
+          tippingLedMat.color.setHex(0x064e3b);
+        }
+      }
+
+      // 7. Riak Halus Permukaan Air Panci Penguapan
+      if (evapWaterMesh && evapWaterBaseY) {
+        const pos = evapWaterMesh.geometry.attributes.position;
+        const amp = 0.0022 + state.windSpeed * 0.0005 + state.rainIntensity * 0.00009;
+        const freq = 2.6 + state.windSpeed * 0.22;
+        for (let i = 0; i < pos.count; i++) {
+          const x = pos.getX(i);
+          const z = pos.getZ(i);
+          const r = Math.hypot(x, z);
+          pos.setY(i, evapWaterBaseY[i] + Math.sin(r * 19 - elapsed * freq) * Math.cos((x - z) * 9 + elapsed * 1.8) * amp);
+        }
+        pos.needsUpdate = true;
+      }
+
+      // 8. Awan, Hujan InstancedMesh & Aliran Angin
+      if (cloudGroup && cloudGroup.visible) {
+        const cVx = -Math.sin(dirRad) * Math.max(0.25, state.windSpeed * 0.14);
+        const cVz = Math.cos(dirRad) * Math.max(0.25, state.windSpeed * 0.14);
+        cloudGroup.children.forEach((c) => {
+          c.position.x += cVx * c.userData.speed * dt;
+          c.position.z += cVz * c.userData.speed * dt;
+          if (c.position.x > 46) c.position.x = -46;
+          if (c.position.x < -46) c.position.x = 46;
+          if (c.position.z > 46) c.position.z = -46;
+          if (c.position.z < -46) c.position.z = 46;
+        });
+      }
+
+      updateRainInstanced(dt);
+      updateAirflowParticles(dt);
+
+      controls.update();
+      renderer.render(scene, camera);
+      updatePerfHUD();
+    }
+
+    /* =========================================================================
+     * 18. STARTUP ON WINDOW LOAD
+     * ========================================================================= */
+    window.addEventListener('load', () => {
+      const ok = initThree();
+      if (!ok) return;
+      setupUIEvents();
+      setupRaycasting();
+      animate();
+    });
+  </script>
+</body>
+</html>
