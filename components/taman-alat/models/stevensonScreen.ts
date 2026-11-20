@@ -1,6 +1,7 @@
 import * as THREE from 'three'
 import { VOLUME_PRESETS } from '@/lib/tamanAlatPhysics'
-import { SharedMaterials } from './sharedMaterials'
+import { SharedPBRMaterials } from './sharedMaterials'
+import { addConcretePlinthWithBolts, addConduitTube, disposeGroupChildren } from './mechanicalDetails'
 
 export interface StevensonScreenControls {
   root: THREE.Group
@@ -22,7 +23,7 @@ export interface StevensonScreenControls {
 
 export function buildStevensonScreen(
   scene: THREE.Scene,
-  sharedMats: SharedMaterials,
+  sharedMats: SharedPBRMaterials,
   initialParams = {
     volumeKey: 'casella',
     legHeight: 1.5,
@@ -37,9 +38,9 @@ export function buildStevensonScreen(
   root.userData.instrumentId = 'stevenson'
   scene.add(root)
 
-  // Pondasi beton dasar
-  const pad = new THREE.Mesh(new THREE.BoxGeometry(1.55, 0.05, 1.55), sharedMats.concrete)
-  pad.position.y = 0.025
+  // Pondasi pelat beton dasar
+  const pad = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.06, 1.65), sharedMats.concrete)
+  pad.position.y = 0.03
   pad.receiveShadow = true
   root.add(pad)
 
@@ -50,19 +51,6 @@ export function buildStevensonScreen(
   let espLedMat: THREE.MeshBasicMaterial | null = null
   let outerMaterials: THREE.MeshStandardMaterial[] = []
 
-  const disposeGroup = (group: THREE.Group) => {
-    while (group.children.length > 0) {
-      const child = group.children[0]
-      group.remove(child)
-      if ('geometry' in child && (child as THREE.Mesh).geometry) {
-        ;((child as THREE.Mesh).geometry as THREE.BufferGeometry).dispose()
-      }
-      if (child instanceof THREE.Group) {
-        disposeGroup(child)
-      }
-    }
-  }
-
   const rebuild = (params: {
     volumeKey: string
     legHeight: number
@@ -71,7 +59,7 @@ export function buildStevensonScreen(
     xrayMode: boolean
     doorAngle: number
   }) => {
-    disposeGroup(dynamicGroup)
+    disposeGroupChildren(dynamicGroup)
     outerMaterials = []
 
     const preset = VOLUME_PRESETS[params.volumeKey] || VOLUME_PRESETS.casella
@@ -81,7 +69,7 @@ export function buildStevensonScreen(
     const legH = params.legHeight
     const tiltRad = (params.louverTilt * Math.PI) / 180
 
-    // Material cat sangkar bereaksi terhadap slider Albedo
+    // Material cat sangkar bereaksi terhadap albedo
     const albedoNorm = (params.albedo - 0.45) / 0.4
     const paintColor = new THREE.Color().setHSL(
       0.11 * (1 - albedoNorm),
@@ -92,39 +80,53 @@ export function buildStevensonScreen(
 
     const shelterMat = new THREE.MeshStandardMaterial({
       color: paintColor,
+      map: sharedMats.textures.woodPaint.map,
+      bumpMap: sharedMats.textures.woodPaint.bumpMap,
+      bumpScale: 0.012,
+      roughnessMap: sharedMats.textures.woodPaint.roughnessMap,
       roughness: paintRoughness,
       metalness: 0.04,
       transparent: params.xrayMode,
-      opacity: params.xrayMode ? 0.24 : 1.0,
+      opacity: params.xrayMode ? 0.22 : 1.0,
       depthWrite: !params.xrayMode,
     })
     outerMaterials.push(shelterMat)
 
     const frameMat = new THREE.MeshStandardMaterial({
       color: paintColor.clone().multiplyScalar(0.96),
+      map: sharedMats.textures.woodPaint.map,
+      bumpMap: sharedMats.textures.woodPaint.bumpMap,
+      bumpScale: 0.015,
       roughness: paintRoughness,
       metalness: 0.05,
       transparent: params.xrayMode,
-      opacity: params.xrayMode ? 0.42 : 1.0,
+      opacity: params.xrayMode ? 0.40 : 1.0,
       depthWrite: !params.xrayMode,
     })
     outerMaterials.push(frameMat)
 
     const legMat = new THREE.MeshStandardMaterial({
       color: paintColor.clone().multiplyScalar(0.95),
-      roughness: 0.55,
+      map: sharedMats.textures.woodPaint.map,
+      roughness: 0.58,
       metalness: 0.08,
     })
 
-    // 1. EMPAT KAKI PENYANGGA & PALANG PENGUAT BAWAH
+    // 1. EMPAT KAKI PENYANGGA DENGAN PONDASI BETON BERBAUT ANGKUR
     const legThick = 0.06
     const legOffsetX = W / 2 - 0.04
     const legOffsetZ = D / 2 - 0.04
     const splay = 0.09
+    const footAnchorGroup = new THREE.Group()
+    dynamicGroup.add(footAnchorGroup)
 
     ;[[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => {
+      const bx = sx * (legOffsetX + splay)
+      const bz = sz * (legOffsetZ + splay)
+      const plinthTop = addConcretePlinthWithBolts(footAnchorGroup, 0.22, 0.22, 0.05, 0.14, 0.06, sharedMats)
+
       const topP = new THREE.Vector3(sx * legOffsetX, legH, sz * legOffsetZ)
-      const botP = new THREE.Vector3(sx * (legOffsetX + splay), 0.05, sz * (legOffsetZ + splay))
+      const botP = new THREE.Vector3(bx, 0.06 + plinthTop, bz)
       const dir = new THREE.Vector3().subVectors(topP, botP)
       const len = dir.length()
 
@@ -136,20 +138,18 @@ export function buildStevensonScreen(
       dynamicGroup.add(leg)
     })
 
-    // Palang penguat horizontal antar kaki (35% dan 96% tinggi kaki)
+    // Palang horizontal
     ;[0.35, 0.96].forEach((ratio) => {
-      const y = 0.05 + (legH - 0.05) * ratio
+      const y = 0.08 + (legH - 0.08) * ratio
       const curW = (legOffsetX + splay * (1 - ratio)) * 2
       const curD = (legOffsetZ + splay * (1 - ratio)) * 2
 
-      // Depan & belakang
       ;[-1, 1].forEach((sz) => {
         const brace = new THREE.Mesh(new THREE.BoxGeometry(curW, 0.045, 0.045), legMat)
         brace.position.set(0, y, sz * (curD / 2))
         brace.castShadow = true
         dynamicGroup.add(brace)
       })
-      // Kiri & kanan
       ;[-1, 1].forEach((sx) => {
         const brace = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.045, curD), legMat)
         brace.position.set(sx * (curW / 2), y, 0)
@@ -158,7 +158,19 @@ export function buildStevensonScreen(
       })
     })
 
-    // Tangga pijakan pengamat di sisi Selatan (+Z)
+    // Pipa konduit bawah dari plinth ke rak dalam sangkar
+    addConduitTube(
+      dynamicGroup,
+      [
+        new THREE.Vector3(-W * 0.24, 0.06, -D * 0.22),
+        new THREE.Vector3(-W * 0.24, legH * 0.5, -D * 0.20),
+        new THREE.Vector3(-W * 0.20, legH - 0.02, -D * 0.14),
+      ],
+      0.011,
+      sharedMats.conduitGrey
+    )
+
+    // Tangga observasi pengamat di sisi Selatan (+Z)
     const stepCount = legH > 1.65 ? 3 : 2
     for (let s = 0; s < stepCount; s++) {
       const sy = 0.22 + s * 0.24
@@ -169,7 +181,6 @@ export function buildStevensonScreen(
       tread.receiveShadow = true
       dynamicGroup.add(tread)
     }
-    // 2 tiang tangga miring
     ;[-0.21, 0.21].forEach((sx) => {
       const pTop = new THREE.Vector3(sx, 0.22 + (stepCount - 1) * 0.24 + 0.05, D / 2 + 0.52 - (stepCount - 1) * 0.14 - 0.05)
       const pBot = new THREE.Vector3(sx, 0.05, D / 2 + 0.62)
@@ -181,7 +192,7 @@ export function buildStevensonScreen(
       dynamicGroup.add(rail)
     })
 
-    // 2. LANTAI BERONGGA (Papan berselang-seling ganda)
+    // 2. LANTAI BERONGGA
     const baseY = legH
     const slatCountFloor = 5
     const slatW = (W - 0.12) / slatCountFloor
@@ -194,7 +205,7 @@ export function buildStevensonScreen(
       dynamicGroup.add(board)
     }
 
-    // 3. RANGKA SUDUT KOTAK SANGKAR
+    // 3. TIANG SUDUT SANGKAR
     const postSize = 0.055
     ;[[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => {
       const cornerPost = new THREE.Mesh(new THREE.BoxGeometry(postSize, H, postSize), frameMat)
@@ -204,7 +215,7 @@ export function buildStevensonScreen(
       dynamicGroup.add(cornerPost)
     })
 
-    // Helper membuat panel dinding berkisi-kisi ganda (Double Louvers)
+    // Double Louver Wall Helper
     const createDoubleLouverWall = (panelWidth: number, panelHeight: number, parentGroup: THREE.Group, localOffset: THREE.Vector3, rotY: number) => {
       const wallGroup = new THREE.Group()
       wallGroup.position.copy(localOffset)
@@ -233,13 +244,11 @@ export function buildStevensonScreen(
 
       for (let i = 0; i < louverCount; i++) {
         const y = -innerH / 2 + (i + 0.5) * spacing
-        // Lapisan luar
         dummy.position.set(0, y, 0.018)
         dummy.rotation.set(tiltRad, 0, 0)
         dummy.updateMatrix()
         inst.setMatrixAt(idx++, dummy.matrix)
 
-        // Lapisan dalam
         dummy.position.set(0, y + spacing * 0.25, -0.018)
         dummy.rotation.set(-tiltRad, 0, 0)
         dummy.updateMatrix()
@@ -251,7 +260,6 @@ export function buildStevensonScreen(
       wallGroup.add(inst)
     }
 
-    // 3 Dinding Tetap: Belakang (-Z), Kiri (-X), Kanan (+X)
     const innerW = W - postSize * 2
     const innerD = D - postSize * 2
     const midY = baseY + H / 2
@@ -260,13 +268,12 @@ export function buildStevensonScreen(
     createDoubleLouverWall(innerD, H, dynamicGroup, new THREE.Vector3(-(W / 2 - 0.028), midY, 0), -Math.PI / 2)
     createDoubleLouverWall(innerD, H, dynamicGroup, new THREE.Vector3(W / 2 - 0.028, midY, 0), Math.PI / 2)
 
-    // 4. PINTU DEPAN BERENGSEL (Menghadap Selatan +Z, engsel di sisi kiri -X)
+    // 4. PINTU BERENGSEL (Selatan +Z)
     doorPivot = new THREE.Group()
     doorPivot.position.set(-(W / 2 - postSize), midY, D / 2 - 0.028)
     doorPivot.rotation.y = params.doorAngle
     dynamicGroup.add(doorPivot)
 
-    // Bingkai vertikal kiri/kanan pintu
     ;[-innerW / 2 + 0.018, innerW / 2 - 0.018].forEach((lx) => {
       const stile = new THREE.Mesh(new THREE.BoxGeometry(0.036, H - 0.02, 0.052), frameMat)
       stile.position.set(lx + innerW / 2, 0, 0)
@@ -274,22 +281,19 @@ export function buildStevensonScreen(
       doorPivot!.add(stile)
     })
 
-    // Isi kisi-kisi pintu
     createDoubleLouverWall(innerW - 0.06, H - 0.02, doorPivot, new THREE.Vector3(innerW / 2, 0, 0), 0)
 
-    // Gagang pintu di sisi kanan
-    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.11, 0.035), sharedMats.darkMetal)
+    const handle = new THREE.Mesh(new THREE.BoxGeometry(0.02, 0.11, 0.035), sharedMats.brass)
     handle.position.set(innerW - 0.03, -0.02, 0.04)
     doorPivot.add(handle)
 
-    // 2 Engsel logam di sisi kiri
     ;[-H * 0.3, H * 0.3].forEach((hy) => {
-      const hinge = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.065, 8), sharedMats.darkMetal)
+      const hinge = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.065, 8), sharedMats.brass)
       hinge.position.set(0, hy, 0.03)
       doorPivot!.add(hinge)
     })
 
-    // 5. ATAP GANDA BERVENTILASI (Double-Layered Insulated Roof)
+    // 5. ATAP GANDA BERVENTILASI
     const roofOverhang = 0.14
     const innerRoof = new THREE.Mesh(new THREE.BoxGeometry(W + 0.04, 0.032, D + 0.04), frameMat)
     innerRoof.position.set(0, baseY + H + 0.016, 0)
@@ -314,10 +318,10 @@ export function buildStevensonScreen(
     outerRoof.receiveShadow = true
     dynamicGroup.add(outerRoof)
 
-    // 6. KOMPONEN INTERNAL (Sensor SHT31/BME280, ESP32, IP65, Termometer)
-    const internalGroup = new THREE.Group()
-    internalGroup.position.set(0, baseY + H * 0.48, 0)
-    dynamicGroup.add(internalGroup)
+    // 6. KOMPONEN INTERNAL DETAIL
+    const internal = new THREE.Group()
+    internal.position.set(0, baseY + H * 0.48, 0)
+    dynamicGroup.add(internal)
 
     const shelf = new THREE.Mesh(
       new THREE.BoxGeometry(W * 0.68, 0.02, D * 0.42),
@@ -325,68 +329,81 @@ export function buildStevensonScreen(
     )
     shelf.position.set(0, -H * 0.12, -D * 0.06)
     shelf.castShadow = true
-    internalGroup.add(shelf)
+    internal.add(shelf)
 
     const ip65Box = new THREE.Mesh(new THREE.BoxGeometry(0.14, 0.18, 0.09), sharedMats.ip65Grey)
     ip65Box.position.set(-W * 0.2, 0.01, -D * 0.1)
     ip65Box.castShadow = true
-    internalGroup.add(ip65Box)
+    internal.add(ip65Box)
 
-    const espBoard = new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.012, 0.048), sharedMats.pcbGreen)
+    const espBoard = new THREE.Mesh(new THREE.BoxGeometry(0.085, 0.012, 0.048), sharedMats.pcbEsp)
     espBoard.position.set(-W * 0.01, -H * 0.102, -D * 0.04)
-    internalGroup.add(espBoard)
+    internal.add(espBoard)
 
-    const espChip = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.014, 0.028), sharedMats.galvanized)
+    const espChip = new THREE.Mesh(new THREE.BoxGeometry(0.032, 0.014, 0.028), sharedMats.stainless)
     espChip.position.set(-W * 0.025, -H * 0.092, -D * 0.04)
-    internalGroup.add(espChip)
+    internal.add(espChip)
 
     espLedMat = new THREE.MeshBasicMaterial({ color: 0x22c55e })
     const espLed = new THREE.Mesh(new THREE.SphereGeometry(0.009, 10, 10), espLedMat)
     espLed.position.set(W * 0.022, -H * 0.09, -D * 0.035)
-    internalGroup.add(espLed)
+    internal.add(espLed)
 
-    const sensorStand = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.11, 8), sharedMats.darkMetal)
+    // Modul sensor SHT31
+    const sensorStand = new THREE.Mesh(new THREE.CylinderGeometry(0.006, 0.006, 0.11, 8), sharedMats.stainless)
     sensorStand.position.set(W * 0.12, -H * 0.06, 0.02)
-    internalGroup.add(sensorStand)
+    internal.add(sensorStand)
 
-    const bmeBoard = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.055, 0.012), sharedMats.pcbBlue)
+    const bmeBoard = new THREE.Mesh(new THREE.BoxGeometry(0.055, 0.055, 0.012), sharedMats.pcbBme)
     bmeBoard.position.set(W * 0.12, -H * 0.005, 0.02)
-    internalGroup.add(bmeBoard)
+    internal.add(bmeBoard)
 
-    const bmeCap = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.018, 0.014), sharedMats.galvanized)
+    const bmeCap = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.018, 0.014), sharedMats.stainless)
     bmeCap.position.set(W * 0.12, -H * 0.005, 0.027)
-    internalGroup.add(bmeCap)
+    internal.add(bmeCap)
+
+    // Kabel konduit fleksibel dari IP65 ke sensor
+    addConduitTube(
+      internal,
+      [
+        new THREE.Vector3(-W * 0.13, -0.05, -D * 0.09),
+        new THREE.Vector3(-W * 0.07, -0.09, -D * 0.06),
+        new THREE.Vector3(W * 0.08, -H * 0.06, 0.01),
+      ],
+      0.004,
+      sharedMats.cableBlack
+    )
 
     // Termometer Bola Kering & Basah
-    const thermoFrame = new THREE.Mesh(new THREE.BoxGeometry(W * 0.42, 0.018, 0.02), sharedMats.woodPallet)
+    const thermoFrame = new THREE.Mesh(new THREE.BoxGeometry(W * 0.42, 0.018, 0.02), sharedMats.woodNatural)
     thermoFrame.position.set(W * 0.04, H * 0.22, 0.04)
-    internalGroup.add(thermoFrame)
+    internal.add(thermoFrame)
 
-    const dryStem = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.22, 8), sharedMats.whiteFence)
+    const dryStem = new THREE.Mesh(new THREE.CylinderGeometry(0.007, 0.007, 0.22, 8), sharedMats.whiteWoodFence)
     dryStem.position.set(-0.02, H * 0.1, 0.04)
-    internalGroup.add(dryStem)
+    internal.add(dryStem)
     const dryBulb = new THREE.Mesh(
       new THREE.SphereGeometry(0.016, 12, 12),
       new THREE.MeshStandardMaterial({ color: 0xef4444, roughness: 0.2, metalness: 0.5 })
     )
     dryBulb.position.set(-0.02, H * 0.1 - 0.115, 0.04)
-    internalGroup.add(dryBulb)
+    internal.add(dryBulb)
 
     const wetStem = dryStem.clone()
     wetStem.position.set(0.07, H * 0.1, 0.04)
-    internalGroup.add(wetStem)
+    internal.add(wetStem)
     const wetBulb = new THREE.Mesh(
       new THREE.SphereGeometry(0.017, 12, 12),
       new THREE.MeshStandardMaterial({ color: 0x38bdf8, roughness: 0.6 })
     )
     wetBulb.position.set(0.07, H * 0.1 - 0.115, 0.04)
-    internalGroup.add(wetBulb)
+    internal.add(wetBulb)
     const waterCup = new THREE.Mesh(
       new THREE.CylinderGeometry(0.025, 0.02, 0.045, 12),
       new THREE.MeshStandardMaterial({ color: 0xbae6fd, transparent: true, opacity: 0.7 })
     )
     waterCup.position.set(0.07, H * 0.1 - 0.17, 0.04)
-    internalGroup.add(waterCup)
+    internal.add(waterCup)
   }
 
   rebuild(initialParams)
@@ -394,7 +411,7 @@ export function buildStevensonScreen(
   const applyXRay = (xray: boolean) => {
     outerMaterials.forEach((mat, idx) => {
       mat.transparent = xray
-      mat.opacity = xray ? (idx === 0 ? 0.24 : 0.42) : 1.0
+      mat.opacity = xray ? (idx === 0 ? 0.22 : 0.40) : 1.0
       mat.depthWrite = !xray
       mat.needsUpdate = true
     })
@@ -414,7 +431,7 @@ export function buildStevensonScreen(
   }
 
   const dispose = () => {
-    disposeGroup(dynamicGroup)
+    disposeGroupChildren(dynamicGroup)
     if (root.parent) {
       root.parent.remove(root)
     }

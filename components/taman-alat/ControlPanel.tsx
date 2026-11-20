@@ -16,6 +16,7 @@ import {
   Moon,
   ChevronDown,
   ChevronUp,
+  Sparkles,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -51,7 +52,7 @@ export default function ControlPanel({
   liveSource = 'sensor',
 }: ControlPanelProps) {
   const [collapsed, setCollapsed] = useState(false)
-  const [activeTab, setActiveTab] = useState<'sangkar' | 'cuaca' | 'fisika'>('sangkar')
+  const [activeTab, setActiveTab] = useState<'sangkar' | 'cuaca' | 'fisika' | 'kualitas'>('sangkar')
 
   const cardinals = [
     { label: 'U', deg: 0 },
@@ -133,18 +134,22 @@ export default function ControlPanel({
 
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={(val) => setActiveTab(val as any)} className="w-full">
-            <TabsList className="grid grid-cols-3 bg-slate-950/60 p-1 rounded-xl border border-slate-800 text-xs">
-              <TabsTrigger value="sangkar" className="data-[state=active]:bg-sky-500 data-[state=active]:text-white">
+            <TabsList className="grid grid-cols-4 bg-slate-950/60 p-1 rounded-xl border border-slate-800 text-[11px]">
+              <TabsTrigger value="sangkar" className="data-[state=active]:bg-sky-500 data-[state=active]:text-white px-1">
                 <Layers className="h-3 w-3 mr-1" />
                 Sangkar
               </TabsTrigger>
-              <TabsTrigger value="cuaca" className="data-[state=active]:bg-sky-500 data-[state=active]:text-white">
+              <TabsTrigger value="cuaca" className="data-[state=active]:bg-sky-500 data-[state=active]:text-white px-1">
                 <Sun className="h-3 w-3 mr-1" />
                 Cuaca
               </TabsTrigger>
-              <TabsTrigger value="fisika" className="data-[state=active]:bg-sky-500 data-[state=active]:text-white">
+              <TabsTrigger value="fisika" className="data-[state=active]:bg-sky-500 data-[state=active]:text-white px-1">
                 <Activity className="h-3 w-3 mr-1" />
                 Fisika
+              </TabsTrigger>
+              <TabsTrigger value="kualitas" className="data-[state=active]:bg-sky-500 data-[state=active]:text-white px-1">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Kualitas
               </TabsTrigger>
             </TabsList>
 
@@ -441,6 +446,85 @@ export default function ControlPanel({
               <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-2.5 text-[10px] text-slate-400 leading-normal">
                 Model: Keseimbangan energi semi-empiris WMO CIMO No. 8. Error radiasi dipengaruhi oleh albedo, luas
                 penampang efektif sangkar, elevasi matahari, dan pendinginan konvektif angin.
+              </div>
+            </TabsContent>
+
+            {/* TAB 4: PRESET KUALITAS & PIPELINE PBR */}
+            <TabsContent value="kualitas" className="space-y-4 mt-3">
+              <div>
+                <Label className="text-slate-300 text-xs font-semibold mb-2 block">
+                  Preset Kualitas Grafis Real-Time
+                </Label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {(
+                    [
+                      { key: 'low', label: 'Ringan', desc: 'Hemat GPU' },
+                      { key: 'balanced', label: 'Seimbang', desc: 'Default' },
+                      { key: 'high', label: 'Tinggi', desc: 'Ultra PBR' },
+                    ] as const
+                  ).map((q) => (
+                    <button
+                      key={q.key}
+                      onClick={() => onChange({ qualityKey: q.key })}
+                      className={`rounded-xl px-2 py-2 text-center transition ${
+                        state.qualityKey === q.key
+                          ? 'border border-sky-400/65 bg-sky-500/20 text-sky-100 shadow'
+                          : 'border border-slate-700/50 bg-slate-800/60 text-slate-300 hover:border-sky-400/50 hover:text-white'
+                      }`}
+                    >
+                      <div className="text-[11px] font-bold">{q.label}</div>
+                      <div className="mt-0.5 text-[9px] text-slate-400">{q.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ringkasan Konfigurasi Pipeline Aktif */}
+              <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3 text-xs space-y-2">
+                <div className="font-semibold text-sky-300 text-[11px]">Konfigurasi Pipeline Aktif</div>
+                <div className="space-y-1.5 tabular-nums text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Pixel Ratio (DPR Max)</span>
+                    <span className="font-semibold text-slate-100">
+                      {state.qualityKey === 'low' ? '1.0x' : state.qualityKey === 'balanced' ? '1.5x' : '2.0x'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Resolusi Shadow Map</span>
+                    <span className="font-semibold text-slate-100">
+                      {state.qualityKey === 'low'
+                        ? '512 × 512'
+                        : state.qualityKey === 'balanced'
+                        ? '1024 × 1024'
+                        : '2048 × 2048'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Rumput 3D GPU Instanced</span>
+                    <span className="font-semibold text-emerald-300">
+                      {state.qualityKey === 'low'
+                        ? '1.200 helai'
+                        : state.qualityKey === 'balanced'
+                        ? '4.000 helai'
+                        : '8.500 helai'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Refleksi Sky IBL (PMREM)</span>
+                    <span className="font-semibold text-sky-200">
+                      {state.qualityKey === 'low'
+                        ? 'Hemat (Interval Lambat)'
+                        : state.qualityKey === 'balanced'
+                        ? 'Aktif (Throttled)'
+                        : 'Resolusi Penuh'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-slate-800 bg-slate-950/40 p-2.5 text-[10px] text-slate-400 leading-normal">
+                Render PBR dengan 10 tekstur prosedural sintetis (kayu bercat, spangle seng galvanis, stainless,
+                beton, solar panel, tanah liat), Three.js Sky shader (Rayleigh/Mie), dan instancing GPU.
               </div>
             </TabsContent>
           </Tabs>

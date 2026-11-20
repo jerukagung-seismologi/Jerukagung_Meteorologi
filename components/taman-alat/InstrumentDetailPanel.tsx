@@ -19,6 +19,7 @@ interface InstrumentDetailPanelProps {
     windDir: number
     rainIntensity: number
     solarRad: number
+    solarElevation?: number
     volumeKey: string
     louverTilt: number
     epsilonT: number
@@ -66,22 +67,26 @@ export default function InstrumentDetailPanel({
     ]
   } else if (instrumentId === 'pyranometer') {
     const rad = Math.round(telemetry.solarRad)
-    const t5 = (telemetry.tempAmbient + (rad / 420) * 1.6 - 0.8).toFixed(1)
-    const t10 = (telemetry.tempAmbient + (rad / 420) * 1.1 - 1.2).toFixed(1)
-    const t20 = (telemetry.tempAmbient + (rad / 420) * 0.5 - 1.6).toFixed(1)
+    const elev = Math.max(0, telemetry.solarElevation ?? 0)
+    const t5 = (telemetry.tempAmbient + (rad / 420) * 1.6 - 0.7).toFixed(1)
+    const t10 = (telemetry.tempAmbient + (rad / 550) * 0.8 - 1.3).toFixed(1)
+    const t20 = (telemetry.tempAmbient - 2.0).toFixed(1)
+    const t50 = (telemetry.tempAmbient - 3.1).toFixed(1)
     metricItems = [
       { label: 'Radiasi Surya Global', value: `${rad} W/m²` },
-      { label: 'Suhu Tanah 5 cm', value: `${t5} °C` },
-      { label: 'Suhu Tanah 10 cm', value: `${t10} °C` },
-      { label: 'Suhu Tanah 20 cm', value: `${t20} °C` },
+      { label: 'Elevasi Matahari', value: `${elev.toFixed(1)}°` },
+      { label: 'Tanah 5 / 10 cm', value: `${t5}° / ${t10} °C` },
+      { label: 'Tanah 20 / 50 cm', value: `${t20}° / ${t50} °C` },
     ]
   } else if (instrumentId === 'evappan') {
-    const evapEst = (Math.max(0.4, (telemetry.solarRad / 950) * 4.8 + telemetry.windSpeed * 0.35 - (telemetry.rh / 100) * 1.8)).toFixed(1)
+    const vpd = (100 - telemetry.rh) / 100
+    const evap = Math.max(0.4, telemetry.solarRad * 0.0052 + vpd * (1.6 + telemetry.windSpeed * 0.35))
+    const tAir = (telemetry.tempAmbient - 1.1 + telemetry.solarRad * 0.0022).toFixed(1)
     metricItems = [
-      { label: 'Estimasi Evaporasi', value: `${evapEst} mm/hari` },
-      { label: 'Diameter Panci', value: '1.21 m (Galvanis)' },
-      { label: 'Tinggi Muka Air', value: '19.0 cm (Aman)' },
-      { label: 'Wind-Run Permukaan', value: `${(telemetry.windSpeed * 0.65).toFixed(1)} m/s` },
+      { label: 'Laju Evaporasi', value: `${evap.toFixed(1)} mm/hari` },
+      { label: 'Suhu Air Panci', value: `${tAir} °C` },
+      { label: 'Wind-Run 0.5 m', value: `${(telemetry.windSpeed * 0.65).toFixed(1)} m/s` },
+      { label: 'Diameter Panci', value: '1.21 m (Kelas A)' },
     ]
   }
 

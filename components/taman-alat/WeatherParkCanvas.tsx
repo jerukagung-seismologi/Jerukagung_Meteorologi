@@ -3,15 +3,17 @@
 import React, { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
+import { Sky } from 'three/examples/jsm/objects/Sky.js'
 import { InstrumentId, INSTRUMENT_CATALOG } from '@/lib/tamanAlatCatalog'
 import {
   SimulationState,
+  QUALITY_PRESETS,
   calculateSunPosition,
   clamp,
   degToRad,
 } from '@/lib/tamanAlatPhysics'
-import { createSharedMaterials } from './models/sharedMaterials'
-import { buildParkEnvironment } from './models/parkEnvironment'
+import { createSharedPBRMaterials } from './models/sharedMaterials'
+import { buildParkEnvironment, buildInstancedGrass } from './models/parkEnvironment'
 import { buildStevensonScreen, StevensonScreenControls } from './models/stevensonScreen'
 import { buildWindStation, WindStationControls } from './models/windStation'
 import { buildRainGaugeStation, RainGaugeControls } from './models/rainGauge'
@@ -19,12 +21,12 @@ import { buildPyranometerAndSoil } from './models/solarAndSoil'
 import { buildEvaporationPan, EvaporationPanControls } from './models/evaporationPan'
 
 export const CAMERA_PRESETS: Record<string, { pos: THREE.Vector3; target: THREE.Vector3 }> = {
-  overview: { pos: new THREE.Vector3(9.6, 6.4, 10.6), target: new THREE.Vector3(0, 1.1, 0) },
-  stevenson: { pos: new THREE.Vector3(1.85, 2.05, 2.55), target: new THREE.Vector3(0, 1.85, 0) },
-  anemometer: { pos: new THREE.Vector3(-1.4, 3.0, -0.7), target: new THREE.Vector3(-3.8, 2.45, -3.2) },
-  raingauge: { pos: new THREE.Vector3(3.9, 1.35, -0.85), target: new THREE.Vector3(4.15, 0.52, -2.5) },
-  pyranometer: { pos: new THREE.Vector3(2.3, 1.55, 4.45), target: new THREE.Vector3(3.85, 0.72, 2.8) },
-  evappan: { pos: new THREE.Vector3(-1.85, 1.55, 4.7), target: new THREE.Vector3(-3.6, 0.35, 2.8) },
+  overview:    { pos: new THREE.Vector3(10.2, 6.2, 11.0),   target: new THREE.Vector3(0, 1.1, 0) },
+  stevenson:   { pos: new THREE.Vector3(1.85, 2.05, 2.55),  target: new THREE.Vector3(0, 1.85, 0) },
+  anemometer:  { pos: new THREE.Vector3(-1.35, 2.95, -0.55), target: new THREE.Vector3(-3.8, 2.35, -3.2) },
+  raingauge:   { pos: new THREE.Vector3(3.95, 1.32, -0.85), target: new THREE.Vector3(4.25, 0.52, -2.6) },
+  pyranometer: { pos: new THREE.Vector3(2.15, 1.55, 4.45),  target: new THREE.Vector3(3.9, 0.65, 2.8) },
+  evappan:     { pos: new THREE.Vector3(-1.85, 1.55, 4.65), target: new THREE.Vector3(-3.6, 0.38, 2.8) },
 }
 
 interface WeatherParkCanvasProps {
@@ -37,7 +39,7 @@ interface WeatherParkCanvasProps {
   onHourTick?: (newHour: number) => void
 }
 
-const MAX_RAIN_DROPS = 1400
+const MAX_RAIN_DROPS = 1600
 
 export default function WeatherParkCanvas({
   state,
@@ -52,7 +54,6 @@ export default function WeatherParkCanvas({
   const [hoveredInstrument, setHoveredInstrument] = useState<string | null>(null)
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null)
 
-  // Mutable refs to pass reactive state into render loop without resetting canvas
   const stateRef = useRef(state)
   stateRef.current = state
   const activePresetRef = useRef(activeCamPreset)
@@ -64,6 +65,15 @@ export default function WeatherParkCanvas({
   const windStationRef = useRef<WindStationControls | null>(null)
   const rainGaugeRef = useRef<RainGaugeControls | null>(null)
   const evapPanRef = useRef<EvaporationPanControls | null>(null)
+  const grassMeshRef = useRef<THREE.InstancedMesh | null>(null)
+  const sceneRef = useRef<THREE.Scene | null>(null)
+  const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
+
+  const grassUniformsRef = useRef({
+    uTime: { value: 0 },
+    uWindSpeed: { value: 3.8 },
+    uWindDir: { value: new THREE.Vector2(-0.7, -0.7) },
+  })
 
   // Camera transition controller
   const camTransitionRef = useRef({
@@ -72,7 +82,7 @@ export default function WeatherParkCanvas({
     targetLook: new THREE.Vector3().copy(CAMERA_PRESETS.overview.target),
   })
 
-  // Watch for activeCamPreset changes to start camera lerp
+  // Watch for activeCamPreset changes
   useEffect(() => {
     const preset = CAMERA_PRESETS[activeCamPreset]
     if (preset) {
@@ -82,7 +92,7 @@ export default function WeatherParkCanvas({
     }
   }, [activeCamPreset])
 
-  // Watch for Stevenson structural parameter changes to trigger rebuild
+  // Watch for Stevenson structural parameter changes
   useEffect(() => {
     if (stevensonRef.current) {
       stevensonRef.current.rebuild({
@@ -107,50 +117,97 @@ export default function WeatherParkCanvas({
     }
   }, [state.xrayMode, activeCamPreset, selectedInstrument])
 
+  // Watch for Quality preset changes to rebuild grass count & adapt DPR
+  useEffect(() => {
+    const q = QUALITY_PRESETS[state.qualityKey] || QUALITY_PRESETS.balanced
+    if (rendererRef.current && mountRef.current) {
+      rendererRef.current.setPixelRatio(Math.min(window.devicePixelRatio, q.maxDpr))
+      rendererRef.current.setSize(mountRef.current.clientWidth, mountRef.current.clientHeight)
+    }
+    if (sceneRef.current) {
+      if (grassMeshRef.current) {
+        sceneRef.current.remove(grassMeshRef.current)
+        grassMeshRef.current.geometry.dispose()
+        ;(grassMeshRef.current.material as THREE.Material).dispose()
+        grassMeshRef.current = null
+      }
+      grassMeshRef.current = buildInstancedGrass(sceneRef.current, q.grassCount, grassUniformsRef.current)
+    }
+  }, [state.qualityKey])
+
   useEffect(() => {
     const container = mountRef.current
     if (!container) return
 
     // Scene & Renderer
     const scene = new THREE.Scene()
-    scene.background = new THREE.Color(0x60a5fa)
-    scene.fog = new THREE.FogExp2(0x60a5fa, 0.0085)
+    sceneRef.current = scene
+    scene.fog = new THREE.FogExp2(0x9bc5e3, 0.008)
 
-    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 250)
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.08, 300)
     camera.position.copy(CAMERA_PRESETS.overview.pos)
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    rendererRef.current = renderer
+    const initialPreset = QUALITY_PRESETS[stateRef.current.qualityKey] || QUALITY_PRESETS.balanced
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, initialPreset.maxDpr))
     renderer.setSize(container.clientWidth, container.clientHeight)
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
-    renderer.outputColorSpace = THREE.SRGBColorSpace
+    renderer.toneMapping = THREE.ACESFilmicToneMapping
+    renderer.toneMappingExposure = 1.0
     container.appendChild(renderer.domElement)
 
     const controls = new OrbitControls(camera, renderer.domElement)
     controls.target.copy(CAMERA_PRESETS.overview.target)
     controls.enableDamping = true
     controls.dampingFactor = 0.065
-    controls.maxPolarAngle = Math.PI / 2 - 0.03
-    controls.minDistance = 1.1
-    controls.maxDistance = 32
+    controls.maxPolarAngle = Math.PI / 2 - 0.025
+    controls.minDistance = 0.95
+    controls.maxDistance = 30
     controls.update()
 
     controls.addEventListener('start', () => {
       camTransitionRef.current.active = false
     })
 
+    // Sky Shader (Rayleigh & Mie Atmospheric Scattering)
+    const sky = new Sky()
+    sky.scale.setScalar(220)
+    scene.add(sky)
+
+    // PMREM IBL Generator & Environment Scene
+    const pmremGenerator = new THREE.PMREMGenerator(renderer)
+    pmremGenerator.compileEquirectangularShader()
+
+    const envScene = new THREE.Scene()
+    const envSky = new Sky()
+    envSky.scale.setScalar(50)
+    envScene.add(envSky)
+
+    const envGround = new THREE.Mesh(
+      new THREE.CircleGeometry(48, 24),
+      new THREE.MeshBasicMaterial({ color: 0x386130 })
+    )
+    envGround.rotation.x = -Math.PI / 2
+    envGround.position.y = -0.5
+    envScene.add(envGround)
+
+    let envRenderTarget: THREE.WebGLRenderTarget | null = null
+    let lastIblElevDeg = -999
+    let lastIblCloud = -999
+    let lastIblUpdateMs = 0
+
     // Lighting
-    const hemiLight = new THREE.HemisphereLight(0xdbeafe, 0x3f6212, 0.72)
+    const hemiLight = new THREE.HemisphereLight(0xdbeafe, 0x3b5924, 0.55)
     scene.add(hemiLight)
 
-    const sunLight = new THREE.DirectionalLight(0xfffbeb, 2.3)
+    const sunLight = new THREE.DirectionalLight(0xfffbeb, 2.5)
     sunLight.castShadow = true
-    sunLight.shadow.mapSize.width = 2048
-    sunLight.shadow.mapSize.height = 2048
+    sunLight.shadow.mapSize.set(initialPreset.shadowSize, initialPreset.shadowSize)
     sunLight.shadow.camera.near = 2
     sunLight.shadow.camera.far = 65
-    const d = 8.8
+    const d = 8.6
     sunLight.shadow.camera.left = -d
     sunLight.shadow.camera.right = d
     sunLight.shadow.camera.top = d
@@ -159,28 +216,12 @@ export default function WeatherParkCanvas({
     sunLight.shadow.normalBias = 0.025
     scene.add(sunLight)
 
-    // Sun Sphere & Halo
-    const sunGeo = new THREE.SphereGeometry(1.15, 24, 24)
-    const sunMat = new THREE.MeshBasicMaterial({ color: 0xfff5c2 })
-    const sunMesh = new THREE.Mesh(sunGeo, sunMat)
-    scene.add(sunMesh)
-
-    const haloGeo = new THREE.SphereGeometry(1.85, 24, 24)
-    const haloMat = new THREE.MeshBasicMaterial({
-      color: 0xfde68a,
-      transparent: true,
-      opacity: 0.25,
-      depthWrite: false,
-    })
-    const sunHalo = new THREE.Mesh(haloGeo, haloMat)
-    sunMesh.add(sunHalo)
-
-    // Clouds
+    // Procedural Clouds
     const cloudGroup = new THREE.Group()
     const cloudMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
-      roughness: 0.95,
-      metalness: 0,
+      roughness: 0.96,
+      metalness: 0.0,
       transparent: true,
       opacity: 0.35,
     })
@@ -191,23 +232,25 @@ export default function WeatherParkCanvas({
       const puffs = 3 + (i % 3)
       for (let p = 0; p < puffs; p++) {
         const m = new THREE.Mesh(puffGeo, cloudMat)
-        m.position.set((p - 1) * 1.8, (Math.random() - 0.5) * 0.6, (Math.random() - 0.5) * 1.4)
-        m.scale.set(1.8 + Math.random() * 1.3, 0.8 + Math.random() * 0.45, 1.5 + Math.random() * 1.0)
+        m.position.set((p - 1) * 1.9, (Math.random() - 0.5) * 0.55, (Math.random() - 0.5) * 1.3)
+        m.scale.set(1.9 + Math.random() * 1.3, 0.78 + Math.random() * 0.45, 1.5 + Math.random() * 1.1)
         cluster.add(m)
       }
-      const angle = (i / 16) * Math.PI * 2 + 0.2
-      const radius = 14 + (i % 4) * 9
-      cluster.position.set(Math.cos(angle) * radius, 15 + (i % 3) * 2.5, Math.sin(angle) * radius)
-      cluster.userData = { speed: 0.25 + (i % 4) * 0.12, baseY: cluster.position.y }
+      const angle = (i / 16) * Math.PI * 2 + 0.15
+      const radius = 15 + (i % 4) * 9.5
+      cluster.position.set(Math.cos(angle) * radius, 16 + (i % 3) * 2.4, Math.sin(angle) * radius)
+      cluster.userData = { speed: 0.25 + (i % 4) * 0.12 }
       cloudGroup.add(cluster)
     }
+    cloudGroup.userData = { cloudMat }
     scene.add(cloudGroup)
 
-    // Shared Materials
-    const sharedMats = createSharedMaterials()
+    // Shared PBR Materials
+    const sharedMats = createSharedPBRMaterials()
 
-    // Environment (grass, curbs, walkways, fence, compass plaques)
+    // Environment & Grass
     buildParkEnvironment(scene, sharedMats)
+    grassMeshRef.current = buildInstancedGrass(scene, initialPreset.grassCount, grassUniformsRef.current)
 
     // Instruments
     const stevenson = buildStevensonScreen(scene, sharedMats, {
@@ -239,33 +282,34 @@ export default function WeatherParkCanvas({
       evapPan.root,
     ]
 
-    // Rain Lines System
-    const rainPositions = new Float32Array(MAX_RAIN_DROPS * 2 * 3)
-    const rainBaseData: { x: number; y: number; z: number; speed: number }[] = []
+    // Rain Instanced Particles System
+    const dropGeo = new THREE.CylinderGeometry(0.0038, 0.0038, 0.44, 4)
+    const dropMat = new THREE.MeshBasicMaterial({
+      color: 0xcbeafe,
+      transparent: true,
+      opacity: 0.56,
+      depthWrite: false,
+    })
+    const rainInstMesh = new THREE.InstancedMesh(dropGeo, dropMat, MAX_RAIN_DROPS)
+    rainInstMesh.count = 0
+    rainInstMesh.frustumCulled = false
+
+    const rainData: { x: number; y: number; z: number; speed: number }[] = []
     for (let i = 0; i < MAX_RAIN_DROPS; i++) {
-      rainBaseData.push({
+      rainData.push({
         x: (Math.random() - 0.5) * 18,
         y: Math.random() * 11,
         z: (Math.random() - 0.5) * 18,
-        speed: 9.5 + Math.random() * 4.5,
+        speed: 9.8 + Math.random() * 4.2,
       })
     }
-    const rainGeo = new THREE.BufferGeometry()
-    rainGeo.setAttribute('position', new THREE.BufferAttribute(rainPositions, 3))
-    rainGeo.setDrawRange(0, 0)
-    const rainMat = new THREE.LineBasicMaterial({
-      color: 0xbae6fd,
-      transparent: true,
-      opacity: 0.55,
-    })
-    const rainLines = new THREE.LineSegments(rainGeo, rainMat)
-    rainLines.frustumCulled = false
-    scene.add(rainLines)
+    const rainDummy = new THREE.Object3D()
+    scene.add(rainInstMesh)
 
     // Airflow Streamline System
     const airflowGroup = new THREE.Group()
     scene.add(airflowGroup)
-    const arrowMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.68 })
+    const arrowMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.7 })
     const shaftGeo = new THREE.CylinderGeometry(0.008, 0.008, 0.34, 6)
     shaftGeo.rotateX(Math.PI / 2)
     const headGeo = new THREE.ConeGeometry(0.025, 0.08, 6)
@@ -281,10 +325,9 @@ export default function WeatherParkCanvas({
 
     for (let i = 0; i < 24; i++) {
       const g = new THREE.Group()
-      const shaft = new THREE.Mesh(shaftGeo, arrowMat)
+      g.add(new THREE.Mesh(shaftGeo, arrowMat))
       const head = new THREE.Mesh(headGeo, arrowMat)
       head.position.z = 0.21
-      g.add(shaft)
       g.add(head)
 
       airflowParticles.push({
@@ -345,7 +388,7 @@ export default function WeatherParkCanvas({
 
     const onPointerUp = (e: PointerEvent) => {
       const dist = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y)
-      if (dist > 6) return // User was dragging the camera, not clicking
+      if (dist > 6) return
 
       const rect = renderer.domElement.getBoundingClientRect()
       pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
@@ -380,50 +423,59 @@ export default function WeatherParkCanvas({
       const elapsed = clock.getElapsedTime()
       const currentState = stateRef.current
 
-      // 1. Sun & Atmosphere Updates
+      // 1. Sun & Atmosphere Updates (Sky Shader & Lighting)
       const sun = calculateSunPosition(currentState.hour)
-      sunMesh.position.set(sun.sx, sun.sy, sun.sz)
-      sunMesh.visible = sun.elevDeg > -3
-      sunLight.position.set(sun.sx, Math.max(1.5, sun.sy), sun.sz)
+      const sunDir = new THREE.Vector3(sun.sx, sun.sy, sun.sz).normalize()
+      sunLight.position.copy(sunDir).multiplyScalar(28)
+      if (sunLight.position.y < 1.2) sunLight.position.y = 1.2
 
       const cloudFrac = currentState.cloudCover / 100
-      const rainFrac = Math.min(1, currentState.rainIntensity / 60)
-      const overcast = Math.min(1, cloudFrac * 0.75 + rainFrac * 0.45)
+      const rainFrac = Math.min(1, currentState.rainIntensity / 65)
+      const overcast = Math.min(1, cloudFrac * 0.78 + rainFrac * 0.48)
+      const dayFactor = clamp((sun.elevDeg + 4) / 26, 0, 1)
+      const sunHigh = clamp(sun.elevDeg / 45, 0, 1)
 
-      // Sky colors
-      const nightSky = new THREE.Color(0x0f172a)
-      const sunsetSky = new THREE.Color(0xf97316).lerp(new THREE.Color(0x64748b), 0.35)
-      const clearDaySky = new THREE.Color(0x60a5fa).lerp(new THREE.Color(0xbae6fd), 0.35)
-      const cloudySky = new THREE.Color(0x64748b).lerp(new THREE.Color(0x94a3b8), 0.35)
+      // Atmospheric parameters
+      const turbidity = 2.0 + overcast * 10.5 + (1 - sunHigh) * 2.5
+      const rayleigh = Math.max(0.35, (2.6 - overcast * 1.9) * (0.35 + 0.65 * dayFactor))
+      const mieCoeff = 0.0045 + overcast * 0.018
+      const mieG = 0.82 - overcast * 0.16
 
-      const baseDaySky = sunsetSky.clone().lerp(clearDaySky, sun.sunHeightFactor)
-      const weatheredSky = baseDaySky.lerp(cloudySky, overcast * 0.85)
-      const finalSky = nightSky.clone().lerp(weatheredSky, sun.dayFactor)
+      ;[sky, envSky].forEach((s) => {
+        const u = s.material.uniforms
+        if (u['turbidity']) u['turbidity'].value = turbidity
+        if (u['rayleigh']) u['rayleigh'].value = rayleigh
+        if (u['mieCoefficient']) u['mieCoefficient'].value = mieCoeff
+        if (u['mieDirectionalG']) u['mieDirectionalG'].value = mieG
+        if (u['sunPosition']) u['sunPosition'].value.copy(sunDir)
+      })
 
-      scene.background = finalSky
-      if (scene.fog instanceof THREE.FogExp2) {
-        scene.fog.color.copy(finalSky)
-        scene.fog.density = 0.0085 + overcast * 0.011 + rainFrac * 0.008
-      }
-
-      // Sun & Hemi light
-      const sunWarm = new THREE.Color(0xff9e5e)
-      const sunNoon = new THREE.Color(0xfffbeb)
-      sunLight.color.copy(sunWarm).lerp(sunNoon, sun.sunHeightFactor)
+      const sunWarm = new THREE.Color(0xff9c54)
+      const sunDay = new THREE.Color(0xfffcf2)
+      sunLight.color.copy(sunWarm).lerp(sunDay, sunHigh)
       sunLight.intensity =
-        sun.elevDeg > 0 ? Math.max(0.25, (2.6 * Math.sin(degToRad(sun.elevDeg)) + 0.35) * (1 - overcast * 0.72)) : 0.08
+        sun.elevDeg > -1
+          ? Math.max(0.22, (2.85 * Math.sin(Math.max(0.05, degToRad(sun.elevDeg))) + 0.35) * (1 - overcast * 0.75))
+          : 0.08
 
-      hemiLight.intensity = 0.22 + sun.dayFactor * (0.68 - overcast * 0.18)
-      hemiLight.color.copy(finalSky).lerp(new THREE.Color(0xffffff), 0.4)
+      hemiLight.intensity = 0.16 + dayFactor * (0.58 - overcast * 0.18)
+      renderer.toneMappingExposure = 0.52 + dayFactor * (0.52 - overcast * 0.16)
 
-      // Cloud appearance
-      cloudMat.opacity = clamp(0.08 + cloudFrac * 0.78 + rainFrac * 0.15, 0.05, 0.92)
-      const cColor = new THREE.Color(0xffffff).lerp(new THREE.Color(0x475569), rainFrac * 0.65 + cloudFrac * 0.25)
-      cColor.multiplyScalar(0.25 + 0.75 * sun.dayFactor)
+      const fogNight = new THREE.Color(0x0f172a)
+      const fogSunset = new THREE.Color(0xd98a5b)
+      const fogClear = new THREE.Color(0x9ecae8)
+      const fogCloudy = new THREE.Color(0x7c8b9c)
+      const fogDay = fogSunset.clone().lerp(fogClear, sunHigh).lerp(fogCloudy, overcast * 0.85)
+      scene.fog.color.copy(fogNight).lerp(fogDay, dayFactor)
+      scene.fog.density = 0.006 + overcast * 0.011 + rainFrac * 0.009
+
+      // Cloud appearance & drift
+      cloudMat.opacity = clamp(0.06 + cloudFrac * 0.8 + rainFrac * 0.16, 0.05, 0.92)
+      const cColor = new THREE.Color(0xffffff).lerp(new THREE.Color(0x4b5563), rainFrac * 0.6 + cloudFrac * 0.28)
+      cColor.multiplyScalar(0.22 + 0.78 * dayFactor)
       cloudMat.color.copy(cColor)
       cloudGroup.visible = currentState.cloudCover > 2 || currentState.rainIntensity > 0
 
-      // Cloud drift
       if (cloudGroup.visible) {
         const dirRad = degToRad(currentState.windDir)
         const cVx = -Math.sin(dirRad) * Math.max(0.25, currentState.windSpeed * 0.14)
@@ -438,7 +490,32 @@ export default function WeatherParkCanvas({
         })
       }
 
-      // 2. Timelapse Handler
+      // Throttled PMREM IBL Regeneration
+      const q = QUALITY_PRESETS[currentState.qualityKey] || QUALITY_PRESETS.balanced
+      const now = performance.now()
+      const elevMoved = Math.abs(sun.elevDeg - lastIblElevDeg) >= q.iblMinDeltaDeg
+      const cloudMoved = Math.abs(currentState.cloudCover - lastIblCloud) >= 7
+      const timeReady = now - lastIblUpdateMs >= q.iblMinIntervalMs
+
+      if (!envRenderTarget || ((elevMoved || cloudMoved) && timeReady)) {
+        const nextRT = pmremGenerator.fromScene(envScene, q.iblBlur, 0.1, 100)
+        if (envRenderTarget) envRenderTarget.dispose()
+        envRenderTarget = nextRT
+        scene.environment = envRenderTarget.texture
+        scene.environmentIntensity = 0.35 + dayFactor * (0.65 - overcast * 0.2)
+
+        lastIblElevDeg = sun.elevDeg
+        lastIblCloud = currentState.cloudCover
+        lastIblUpdateMs = now
+      }
+
+      // 2. Wind sway on 3D grass
+      const windRad = degToRad(currentState.windDir)
+      grassUniformsRef.current.uTime.value = elapsed
+      grassUniformsRef.current.uWindSpeed.value = currentState.windSpeed
+      grassUniformsRef.current.uWindDir.value.set(-Math.sin(windRad), Math.cos(windRad))
+
+      // 3. Timelapse Handler
       if (currentState.timelapse && onHourTick) {
         timelapseThrottle += dt
         if (timelapseThrottle >= 0.1) {
@@ -449,7 +526,7 @@ export default function WeatherParkCanvas({
         }
       }
 
-      // 3. Smooth Camera Lerp
+      // 4. Smooth Camera Lerp
       if (camTransitionRef.current.active) {
         const alpha = 1 - Math.exp(-5.5 * dt)
         camera.position.lerp(camTransitionRef.current.targetPos, alpha)
@@ -462,75 +539,72 @@ export default function WeatherParkCanvas({
         }
       }
 
-      // 4. Stevenson Screen Animation
+      // 5. Stevenson Screen Animation
       const targetDoor = currentState.doorOpen ? -degToRad(105) : 0
       currentDoorAngle += (targetDoor - currentDoorAngle) * Math.min(1, dt * 6.5)
       stevenson.updateDoor(currentDoorAngle)
       stevenson.updateEspLed(elapsed)
 
-      // 5. Wind Station Animation
+      // 6. Wind Station Animation
       windStation.update(currentState.windSpeed, currentState.windDir, dt, elapsed)
 
-      // 6. Rain Gauge Animation
+      // 7. Rain Gauge Animation
       rainGauge.update(currentState.rainIntensity, dt, onTipRainGauge)
 
-      // 7. Evaporation Pan Ripples & Mini Rotor
+      // 8. Evaporation Pan Ripples & Mini Rotor
       evapPan.update(currentState.windSpeed, currentState.rainIntensity, dt, elapsed)
 
-      // 8. Rain Drops Particles
+      // 9. Instanced Rain Drops
       if (currentState.rainIntensity <= 0.1) {
-        rainLines.geometry.setDrawRange(0, 0)
+        rainInstMesh.count = 0
       } else {
-        const activeDrops = Math.min(
+        const active = Math.min(
           MAX_RAIN_DROPS,
-          Math.floor((currentState.rainIntensity / 100) * MAX_RAIN_DROPS) + 90
+          Math.floor((currentState.rainIntensity / 100) * MAX_RAIN_DROPS) + 100
         )
-        rainLines.geometry.setDrawRange(0, activeDrops * 2)
+        rainInstMesh.count = active
 
-        const dirRad = degToRad(currentState.windDir)
-        const flowVx = -Math.sin(dirRad) * (currentState.windSpeed * 0.28)
-        const flowVz = Math.cos(dirRad) * (currentState.windSpeed * 0.28)
-        const streakLen = 0.28 + (currentState.rainIntensity / 100) * 0.18
+        const flowVx = -Math.sin(windRad) * (currentState.windSpeed * 0.28)
+        const flowVz = Math.cos(windRad) * (currentState.windSpeed * 0.28)
+        const fallVec = new THREE.Vector3(flowVx, -11.5, flowVz).normalize()
+        const upVec = new THREE.Vector3(0, 1, 0)
+        const tiltQuat = new THREE.Quaternion().setFromUnitVectors(upVec, fallVec.clone().negate())
 
-        for (let i = 0; i < activeDrops; i++) {
-          const d = rainBaseData[i]
+        for (let i = 0; i < active; i++) {
+          const d = rainData[i]
           d.y -= d.speed * dt
           d.x += flowVx * dt
           d.z += flowVz * dt
 
-          if (d.y < 0.05) {
+          if (d.y < 0.08) {
             d.y = 9.5 + Math.random() * 2.5
-            d.x = (Math.random() - 0.5) * 17
-            d.z = (Math.random() - 0.5) * 17
+            d.x = (Math.random() - 0.5) * 17.5
+            d.z = (Math.random() - 0.5) * 17.5
           }
           if (d.x > 9) d.x -= 18
           if (d.x < -9) d.x += 18
           if (d.z > 9) d.z -= 18
           if (d.z < -9) d.z += 18
 
-          const baseIdx = i * 6
-          rainPositions[baseIdx] = d.x
-          rainPositions[baseIdx + 1] = d.y
-          rainPositions[baseIdx + 2] = d.z
-
-          rainPositions[baseIdx + 3] = d.x - flowVx * 0.045
-          rainPositions[baseIdx + 4] = d.y + streakLen
-          rainPositions[baseIdx + 5] = d.z - flowVz * 0.045
+          rainDummy.position.set(d.x, d.y, d.z)
+          rainDummy.quaternion.copy(tiltQuat)
+          rainDummy.scale.set(1, 0.85 + (currentState.rainIntensity / 100) * 0.45, 1)
+          rainDummy.updateMatrix()
+          rainInstMesh.setMatrixAt(i, rainDummy.matrix)
         }
-        rainLines.geometry.attributes.position.needsUpdate = true
+        rainInstMesh.instanceMatrix.needsUpdate = true
       }
 
-      // 9. Airflow Particles
+      // 10. Airflow Particles
       airflowGroup.visible = currentState.showAirflow && currentState.windSpeed > 0.1
       if (airflowGroup.visible) {
         const centerY = 0.05 + currentState.legHeight + 0.84 * 0.5
-        const dirRad = degToRad(currentState.windDir)
-        const flowX = -Math.sin(dirRad)
-        const flowZ = Math.cos(dirRad)
+        const flowX = -Math.sin(windRad)
+        const flowZ = Math.cos(windRad)
         const perpX = flowZ
         const perpZ = -flowX
         const yaw = Math.atan2(flowX, flowZ)
-        const speed = Math.min(3.5, 0.35 + currentState.windSpeed * 0.14)
+        const speed = Math.min(3.6, 0.35 + currentState.windSpeed * 0.14)
 
         for (let i = 0; i < airflowParticles.length; i++) {
           const p = airflowParticles[i]
@@ -538,8 +612,8 @@ export default function WeatherParkCanvas({
           if (p.progress > 1) p.progress -= 1
 
           const along = (p.progress - 0.5) * 3.4
-          const insideFactor = Math.exp(-(along * along) / 0.45)
-          const yWave = Math.sin(p.progress * Math.PI * 2) * 0.04 * insideFactor
+          const inside = Math.exp(-(along * along) / 0.45)
+          const yWave = Math.sin(p.progress * Math.PI * 2) * 0.04 * inside
 
           p.mesh.position.set(
             flowX * along + perpX * p.lateral,
@@ -547,8 +621,7 @@ export default function WeatherParkCanvas({
             flowZ * along + perpZ * p.lateral
           )
           p.mesh.rotation.y = yaw
-          const edgeScale = Math.sin(p.progress * Math.PI)
-          p.mesh.scale.setScalar(0.45 + 0.65 * edgeScale)
+          p.mesh.scale.setScalar(0.45 + 0.65 * Math.sin(p.progress * Math.PI))
         }
       }
 
@@ -558,7 +631,6 @@ export default function WeatherParkCanvas({
 
     animate()
 
-    // Resize Observer
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const { width, height } = entry.contentRect
@@ -580,16 +652,17 @@ export default function WeatherParkCanvas({
       domEl.removeEventListener('pointerup', onPointerUp)
       controls.dispose()
       renderer.dispose()
+      if (envRenderTarget) envRenderTarget.dispose()
+      pmremGenerator.dispose()
       if (container.contains(domEl)) {
         container.removeChild(domEl)
       }
       stevenson.dispose()
     }
-  }, []) // Mount once
+  }, [])
 
   return (
     <div className="relative h-full w-full select-none overflow-hidden" ref={mountRef}>
-      {/* Hover Tooltip */}
       {hoveredInstrument && tooltipPos && (
         <div
           className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-12 rounded-lg border border-sky-400/40 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-sky-200 shadow-xl backdrop-blur-md transition-all duration-75"

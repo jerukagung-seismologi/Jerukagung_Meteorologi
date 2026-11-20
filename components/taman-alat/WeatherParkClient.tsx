@@ -34,6 +34,7 @@ const WeatherParkCanvas = dynamic(() => import('./WeatherParkCanvas'), {
 })
 
 const INITIAL_SIMULATION: SimulationState = {
+  qualityKey: 'balanced',
   volumeKey: 'casella',
   legHeight: 1.5,
   louverTilt: 45,
@@ -257,6 +258,7 @@ export default function WeatherParkClient() {
                   windDir: state.windDir,
                   rainIntensity: state.rainIntensity,
                   solarRad: analytics.solarRad,
+                  solarElevation: analytics.elevationDeg,
                   volumeKey: state.volumeKey,
                   louverTilt: state.louverTilt,
                   epsilonT: analytics.epsilonT,

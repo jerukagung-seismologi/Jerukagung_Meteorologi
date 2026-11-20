@@ -1,3 +1,53 @@
+export type QualityKey = 'low' | 'balanced' | 'high'
+
+export interface QualityPreset {
+  key: QualityKey
+  label: string
+  maxDpr: number
+  shadowSize: number
+  grassCount: number
+  iblMinDeltaDeg: number
+  iblMinIntervalMs: number
+  iblBlur: number
+  iblDesc: string
+}
+
+export const QUALITY_PRESETS: Record<QualityKey, QualityPreset> = {
+  low: {
+    key: 'low',
+    label: 'Ringan',
+    maxDpr: 1.0,
+    shadowSize: 512,
+    grassCount: 1200,
+    iblMinDeltaDeg: 5.0,
+    iblMinIntervalMs: 700,
+    iblBlur: 0.06,
+    iblDesc: 'Hemat (Interval Lambat)',
+  },
+  balanced: {
+    key: 'balanced',
+    label: 'Seimbang',
+    maxDpr: 1.5,
+    shadowSize: 1024,
+    grassCount: 4000,
+    iblMinDeltaDeg: 2.2,
+    iblMinIntervalMs: 280,
+    iblBlur: 0.03,
+    iblDesc: 'Aktif (Throttled)',
+  },
+  high: {
+    key: 'high',
+    label: 'Tinggi',
+    maxDpr: 2.0,
+    shadowSize: 2048,
+    grassCount: 8500,
+    iblMinDeltaDeg: 1.0,
+    iblMinIntervalMs: 140,
+    iblBlur: 0.012,
+    iblDesc: 'Resolusi Penuh',
+  },
+}
+
 export interface VolumePreset {
   key: string
   label: string
@@ -39,14 +89,16 @@ export const VOLUME_PRESETS: Record<string, VolumePreset> = {
     dm3: 1000,
     vSh: 1.0,
     aSec: 1.0,
-    aSh: 6.0,
+    aSh: 6.2,
     width: 0.98,
     depth: 0.98,
-    height: 1.05,
+    height: 1.04,
   },
 }
 
 export interface SimulationState {
+  qualityKey: QualityKey
+
   // Stevenson Screen Parameters
   volumeKey: string
   legHeight: number
@@ -191,12 +243,11 @@ export function calculatePhysicsAnalytics(state: {
   const absorbedRad = (1 - state.albedo) * solarRad
 
   // 3. Kecepatan angin efektif di dalam sangkar & Response Time (tau_sh)
-  // Persamaan keseimbangan energi: zeta_1 = (A_sec * C_v) / (m_sen*C_sen + V_sh*C_v)
   const Cv = 1200 // J/(m^3 K)
   const sensorThermalMass = 45 // J/K
   const uEff = Math.max(0.16, 0.26 * state.windSpeed + 0.14)
   const zeta1 = (preset.aSec * Cv) / (sensorThermalMass + preset.vSh * Cv)
-  const tauSh = Math.round((1 / (zeta1 * uEff)) * 42) // skala detik (~20–280 dtk)
+  const tauSh = Math.round((1 / (zeta1 * uEff)) * 42)
 
   // 4. Evaluasi Proteksi Bayangan & Kebocoran Sinar Langsung
   let leakRad = 0
