@@ -112,25 +112,54 @@ export function buildStevensonScreen(
       metalness: 0.08,
     })
 
-    // 1. EMPAT KAKI PENYANGGA DENGAN PONDASI BETON BERBAUT ANGKUR
-    const legThick = 0.06
+    // 1. EMPAT KAKI PENYANGGA DI ATAS 4 MINI PLINTH BETON BERBAUT ANGKUR LENGKAP
+    const legThick = 0.062
     const legOffsetX = W / 2 - 0.04
     const legOffsetZ = D / 2 - 0.04
-    const splay = 0.09
-    const footAnchorGroup = new THREE.Group()
-    dynamicGroup.add(footAnchorGroup)
+    const splay = 0.10
+
+    const shoeMat = sharedMats?.darkSteel || new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.45, metalness: 0.7 })
+    const boltMat = sharedMats?.stainless || new THREE.MeshStandardMaterial({ color: 0xcfd8dc, roughness: 0.3, metalness: 0.85 })
+    const hBoltGeo = new THREE.CylinderGeometry(0.007, 0.007, legThick + 0.028, 8)
+    hBoltGeo.rotateZ(Math.PI / 2)
+    const hNutGeo = new THREE.CylinderGeometry(0.012, 0.012, 0.007, 6)
+    hNutGeo.rotateZ(Math.PI / 2)
 
     ;[[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => {
       const bx = sx * (legOffsetX + splay)
       const bz = sz * (legOffsetZ + splay)
-      const plinthTop = addConcretePlinthWithBolts(footAnchorGroup, 0.22, 0.22, 0.05, 0.14, 0.06, sharedMats)
+
+      // Mini pondasi beton & 4 baut angkur di setiap kaki sangkar
+      const footAnchorGroup = new THREE.Group()
+      footAnchorGroup.position.set(bx, 0.06, bz)
+      dynamicGroup.add(footAnchorGroup)
+      const plateTopY = addConcretePlinthWithBolts(footAnchorGroup, 0.22, 0.22, 0.05, 0.14, 0, sharedMats)
+
+      // Sepatu penambat kaki baja (steel mounting shoe / bracket) penopang kaki kayu
+      const shoe = new THREE.Mesh(new THREE.BoxGeometry(legThick + 0.014, 0.07, legThick + 0.014), shoeMat)
+      shoe.position.set(0, plateTopY + 0.035, 0)
+      shoe.castShadow = true
+      shoe.receiveShadow = true
+      footAnchorGroup.add(shoe)
+
+      // Baut penembus horizontal pengunci kaki ke penambat baja
+      const hBolt = new THREE.Mesh(hBoltGeo, shoeMat)
+      hBolt.position.set(0, plateTopY + 0.04, 0)
+      footAnchorGroup.add(hBolt)
+
+      const hNut1 = new THREE.Mesh(hNutGeo, boltMat)
+      hNut1.position.set(-(legThick + 0.024) / 2, plateTopY + 0.04, 0)
+      footAnchorGroup.add(hNut1)
+
+      const hNut2 = new THREE.Mesh(hNutGeo, boltMat)
+      hNut2.position.set((legThick + 0.024) / 2, plateTopY + 0.04, 0)
+      footAnchorGroup.add(hNut2)
 
       const topP = new THREE.Vector3(sx * legOffsetX, legH, sz * legOffsetZ)
-      const botP = new THREE.Vector3(bx, 0.06 + plinthTop, bz)
+      const botP = new THREE.Vector3(bx, 0.06 + plateTopY, bz)
       const dir = new THREE.Vector3().subVectors(topP, botP)
-      const len = dir.length()
 
-      const leg = new THREE.Mesh(new THREE.BoxGeometry(legThick, len, legThick), legMat)
+      const leg = new THREE.Mesh(new THREE.BoxGeometry(legThick, dir.length(), legThick), legMat)
       leg.position.copy(botP).addScaledVector(dir, 0.5)
       leg.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize())
       leg.castShadow = true
@@ -138,9 +167,9 @@ export function buildStevensonScreen(
       dynamicGroup.add(leg)
     })
 
-    // Palang horizontal
-    ;[0.35, 0.96].forEach((ratio) => {
-      const y = 0.08 + (legH - 0.08) * ratio
+    // Palang horizontal penguat kaki (tengah & atas)
+    ;[0.36, 0.96].forEach((ratio) => {
+      const y = 0.12 + (legH - 0.12) * ratio
       const curW = (legOffsetX + splay * (1 - ratio)) * 2
       const curD = (legOffsetZ + splay * (1 - ratio)) * 2
 
@@ -148,49 +177,89 @@ export function buildStevensonScreen(
         const brace = new THREE.Mesh(new THREE.BoxGeometry(curW, 0.045, 0.045), legMat)
         brace.position.set(0, y, sz * (curD / 2))
         brace.castShadow = true
+        brace.receiveShadow = true
         dynamicGroup.add(brace)
       })
       ;[-1, 1].forEach((sx) => {
         const brace = new THREE.Mesh(new THREE.BoxGeometry(0.045, 0.045, curD), legMat)
         brace.position.set(sx * (curW / 2), y, 0)
         brace.castShadow = true
+        brace.receiveShadow = true
         dynamicGroup.add(brace)
       })
     })
 
-    // Pipa konduit bawah dari plinth ke rak dalam sangkar
-    addConduitTube(
-      dynamicGroup,
-      [
-        new THREE.Vector3(-W * 0.24, 0.06, -D * 0.22),
-        new THREE.Vector3(-W * 0.24, legH * 0.5, -D * 0.20),
-        new THREE.Vector3(-W * 0.20, legH - 0.02, -D * 0.14),
-      ],
-      0.011,
-      sharedMats.conduitGrey
-    )
+    // Ikatan silang diagonal (diagonal X-bracing) pada sisi Utara, Timur, dan Barat
+    const addCrossBrace = (p1: THREE.Vector3, p2: THREE.Vector3) => {
+      const dir = new THREE.Vector3().subVectors(p2, p1)
+      const strut = new THREE.Mesh(new THREE.BoxGeometry(0.028, dir.length(), 0.022), legMat)
+      strut.position.copy(p1).addScaledVector(dir, 0.5)
+      strut.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize())
+      strut.castShadow = true
+      strut.receiveShadow = true
+      dynamicGroup.add(strut)
+    }
 
-    // Tangga observasi pengamat di sisi Selatan (+Z)
+    const yBot = 0.12 + (legH - 0.12) * 0.36
+    const yTop = 0.12 + (legH - 0.12) * 0.96
+    const wBot = (legOffsetX + splay * (1 - 0.36)) * 2
+    const wTop = (legOffsetX + splay * (1 - 0.96)) * 2
+    const dBot = (legOffsetZ + splay * (1 - 0.36)) * 2
+    const dTop = (legOffsetZ + splay * (1 - 0.96)) * 2
+
+    // Sisi Utara (Belakang)
+    addCrossBrace(new THREE.Vector3(-wBot / 2, yBot, -dBot / 2), new THREE.Vector3(wTop / 2, yTop, -dTop / 2))
+    addCrossBrace(new THREE.Vector3(wBot / 2, yBot, -dBot / 2), new THREE.Vector3(-wTop / 2, yTop, -dTop / 2))
+
+    // Sisi Timur (Kanan)
+    addCrossBrace(new THREE.Vector3(wBot / 2, yBot, -dBot / 2), new THREE.Vector3(wTop / 2, yTop, dTop / 2))
+    addCrossBrace(new THREE.Vector3(wBot / 2, yBot, dBot / 2), new THREE.Vector3(wTop / 2, yTop, -dTop / 2))
+
+    // Sisi Barat (Kiri)
+    addCrossBrace(new THREE.Vector3(-wBot / 2, yBot, -dBot / 2), new THREE.Vector3(-wTop / 2, yTop, dTop / 2))
+    addCrossBrace(new THREE.Vector3(-wBot / 2, yBot, dBot / 2), new THREE.Vector3(-wTop / 2, yTop, -dTop / 2))
+
+    // Tangga pijakan pengamat di sisi Selatan (+Z)
     const stepCount = legH > 1.65 ? 3 : 2
     for (let s = 0; s < stepCount; s++) {
-      const sy = 0.22 + s * 0.24
-      const sz = D / 2 + 0.52 - s * 0.14
-      const tread = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.035, 0.16), legMat)
+      const sy = 0.24 + s * 0.24
+      const sz = D / 2 + 0.54 - s * 0.14
+      const tread = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.036, 0.16), legMat)
       tread.position.set(0, sy, sz)
       tread.castShadow = true
       tread.receiveShadow = true
       dynamicGroup.add(tread)
     }
     ;[-0.21, 0.21].forEach((sx) => {
-      const pTop = new THREE.Vector3(sx, 0.22 + (stepCount - 1) * 0.24 + 0.05, D / 2 + 0.52 - (stepCount - 1) * 0.14 - 0.05)
-      const pBot = new THREE.Vector3(sx, 0.05, D / 2 + 0.62)
+      const pTop = new THREE.Vector3(sx, 0.24 + (stepCount - 1) * 0.24 + 0.05, D / 2 + 0.54 - (stepCount - 1) * 0.14 - 0.05)
+      const pBot = new THREE.Vector3(sx, 0.06, D / 2 + 0.64)
       const dir = new THREE.Vector3().subVectors(pTop, pBot)
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.035, dir.length(), 0.05), legMat)
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(0.036, dir.length(), 0.05), legMat)
       rail.position.copy(pBot).addScaledVector(dir, 0.5)
       rail.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), dir.clone().normalize())
       rail.castShadow = true
+      rail.receiveShadow = true
       dynamicGroup.add(rail)
+
+      // Pelat baja penambat kaki tangga ke lantai beton
+      const ladderShoe = new THREE.Mesh(new THREE.BoxGeometry(0.075, 0.012, 0.08), shoeMat)
+      ladderShoe.position.set(sx, 0.066, D / 2 + 0.64)
+      ladderShoe.castShadow = true
+      dynamicGroup.add(ladderShoe)
     })
+
+    // Pipa konduit kabel naik dari pondasi beton ke kotak IP65 internal sangkar
+    addConduitTube(
+      dynamicGroup,
+      [
+        new THREE.Vector3(-W * 0.24, 0.06, -D * 0.22),
+        new THREE.Vector3(-W * 0.24, legH * 0.5, -D * 0.20),
+        new THREE.Vector3(-W * 0.21, legH + 0.04, -D * 0.12),
+        new THREE.Vector3(-W * 0.20, legH + H * 0.36, -D * 0.10),
+      ],
+      0.013,
+      sharedMats.conduitGrey
+    )
 
     // 2. LANTAI BERONGGA
     const baseY = legH
