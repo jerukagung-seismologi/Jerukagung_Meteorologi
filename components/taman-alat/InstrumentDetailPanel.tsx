@@ -1,0 +1,11 @@
+"use client"
+
+import { Badge } from "@/components/ui/badge"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { INSTRUMENT_CATALOG, type InstrumentId } from "@/lib/tamanAlatCatalog"
+
+export default function InstrumentDetailPanel({ instrumentId, metrics }: { instrumentId: string | null; metrics: { temperature: number; humidity: number; windSpeed: number; rainRate: number; solarRadiation: number } }) {
+  if (!instrumentId || !(instrumentId in INSTRUMENT_CATALOG)) return <Card className="bg-background/85 backdrop-blur-md"><CardContent className="p-5 text-sm text-muted-foreground">Klik instrumen di taman untuk membuka detail pengamatan.</CardContent></Card>
+  const instrument = INSTRUMENT_CATALOG[instrumentId as InstrumentId]
+  return <Card className="bg-background/90 shadow-xl backdrop-blur-md"><CardHeader className="pb-3"><div className="flex items-center justify-between gap-2"><CardTitle className="text-base">{instrument.name}</CardTitle><Badge variant="outline">WMO</Badge></div><p className="text-xs text-muted-foreground">{instrument.shortName}</p></CardHeader><CardContent className="space-y-4 text-sm"><p>{instrument.function}</p><div className="grid grid-cols-2 gap-2 rounded-md border p-3 text-xs"><span>Suhu <strong>{metrics.temperature.toFixed(1)} °C</strong></span><span>RH <strong>{metrics.humidity.toFixed(0)}%</strong></span><span>Angin <strong>{metrics.windSpeed.toFixed(1)} m/s</strong></span><span>Hujan <strong>{metrics.rainRate.toFixed(1)} mm/j</strong></span><span className="col-span-2">Radiasi <strong>{metrics.solarRadiation.toFixed(0)} W/m²</strong></span></div><div><p className="font-semibold">Parameter</p><p className="text-muted-foreground">{instrument.measures}</p></div><div><p className="font-semibold">Penempatan</p><p className="text-muted-foreground">{instrument.placement}</p></div><div><p className="font-semibold">Perawatan</p><p className="text-muted-foreground">{instrument.maintenance}</p></div></CardContent></Card>
+}

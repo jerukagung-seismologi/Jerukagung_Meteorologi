@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { Sun, Moon, LayoutDashboard, CloudSun, BarChart2, LineChart, Map as MapIcon, Menu, X } from "lucide-react";
+import { Sun, Moon, LayoutDashboard, CloudSun, BarChart2, LineChart, Map as MapIcon, Box, Menu, X } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -16,6 +16,7 @@ const navItems = [
   { label: "Prediksi Musim", href: "/musim",       icon: MapIcon         },
   { label: "Statistik",      href: "/statistik",   icon: BarChart2       },
   { label: "Klimatologi",    href: "/klimatologi", icon: LineChart       },
+  { label: "Taman Alat 3D",  href: "/taman-alat",  icon: Box            },
 ];
 
 export default function Header() {
