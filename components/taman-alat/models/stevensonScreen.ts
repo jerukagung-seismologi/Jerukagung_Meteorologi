@@ -69,14 +69,14 @@ export function buildStevensonScreen(
     const legH = params.legHeight
     const tiltRad = (params.louverTilt * Math.PI) / 180
 
-    // Material cat sangkar bereaksi terhadap albedo
+    // Material cat sangkar bereaksi terhadap albedo (kecerahan PBR terkontrol agar tidak silau)
     const albedoNorm = (params.albedo - 0.45) / 0.4
     const paintColor = new THREE.Color().setHSL(
       0.11 * (1 - albedoNorm),
-      0.14 * (1 - albedoNorm),
-      0.64 + albedoNorm * 0.34
+      0.08 * (1 - albedoNorm),
+      0.54 + albedoNorm * 0.26
     )
-    const paintRoughness = 0.88 - albedoNorm * 0.46
+    const paintRoughness = 0.88 - albedoNorm * 0.38
 
     const shelterMat = new THREE.MeshStandardMaterial({
       color: paintColor,

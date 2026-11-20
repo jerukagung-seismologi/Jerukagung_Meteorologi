@@ -56,12 +56,13 @@ export function createSharedPBRMaterials() {
     ),
     whiteWoodFence: markShared(
       new THREE.MeshStandardMaterial({
+        color: 0xe0e2e5,
         map: pbrTextures.woodPaint.map,
         bumpMap: pbrTextures.woodPaint.bumpMap,
         bumpScale: 0.014,
         roughnessMap: pbrTextures.woodPaint.roughnessMap,
-        roughness: 0.62,
-        metalness: 0.04,
+        roughness: 0.68,
+        metalness: 0.03,
       })
     ),
     galvanized: markShared(

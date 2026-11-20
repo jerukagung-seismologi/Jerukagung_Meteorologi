@@ -142,7 +142,7 @@ export default function WeatherParkCanvas({
     // Scene & Renderer
     const scene = new THREE.Scene()
     sceneRef.current = scene
-    scene.fog = new THREE.FogExp2(0x9bc5e3, 0.008)
+    scene.fog = new THREE.FogExp2(0x6b90b8, 0.0038)
 
     const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.08, 300)
     camera.position.copy(CAMERA_PRESETS.overview.pos)
@@ -155,7 +155,7 @@ export default function WeatherParkCanvas({
     renderer.shadowMap.enabled = true
     renderer.shadowMap.type = THREE.PCFSoftShadowMap
     renderer.toneMapping = THREE.ACESFilmicToneMapping
-    renderer.toneMappingExposure = 1.0
+    renderer.toneMappingExposure = 0.75
     container.appendChild(renderer.domElement)
 
     const controls = new OrbitControls(camera, renderer.domElement)
@@ -198,11 +198,11 @@ export default function WeatherParkCanvas({
     let lastIblCloud = -999
     let lastIblUpdateMs = 0
 
-    // Lighting
-    const hemiLight = new THREE.HemisphereLight(0xdbeafe, 0x3b5924, 0.55)
+    // Lighting (disesuaikan agar adem dan tidak overexposed)
+    const hemiLight = new THREE.HemisphereLight(0xcde0f7, 0x2b421a, 0.42)
     scene.add(hemiLight)
 
-    const sunLight = new THREE.DirectionalLight(0xfffbeb, 2.5)
+    const sunLight = new THREE.DirectionalLight(0xfff8eb, 1.85)
     sunLight.castShadow = true
     sunLight.shadow.mapSize.set(initialPreset.shadowSize, initialPreset.shadowSize)
     sunLight.shadow.camera.near = 2
@@ -450,24 +450,24 @@ export default function WeatherParkCanvas({
         if (u['sunPosition']) u['sunPosition'].value.copy(sunDir)
       })
 
-      const sunWarm = new THREE.Color(0xff9c54)
-      const sunDay = new THREE.Color(0xfffcf2)
+      const sunWarm = new THREE.Color(0xff9447)
+      const sunDay = new THREE.Color(0xfff7e8)
       sunLight.color.copy(sunWarm).lerp(sunDay, sunHigh)
       sunLight.intensity =
         sun.elevDeg > -1
-          ? Math.max(0.22, (2.85 * Math.sin(Math.max(0.05, degToRad(sun.elevDeg))) + 0.35) * (1 - overcast * 0.75))
-          : 0.08
+          ? Math.max(0.18, (1.92 * Math.sin(Math.max(0.05, degToRad(sun.elevDeg))) + 0.22) * (1 - overcast * 0.72))
+          : 0.06
 
-      hemiLight.intensity = 0.16 + dayFactor * (0.58 - overcast * 0.18)
-      renderer.toneMappingExposure = 0.52 + dayFactor * (0.52 - overcast * 0.16)
+      hemiLight.intensity = 0.12 + dayFactor * (0.40 - overcast * 0.14)
+      renderer.toneMappingExposure = 0.42 + dayFactor * (0.33 - overcast * 0.12)
 
-      const fogNight = new THREE.Color(0x0f172a)
-      const fogSunset = new THREE.Color(0xd98a5b)
-      const fogClear = new THREE.Color(0x9ecae8)
-      const fogCloudy = new THREE.Color(0x7c8b9c)
+      const fogNight = new THREE.Color(0x0a1122)
+      const fogSunset = new THREE.Color(0xc97545)
+      const fogClear = new THREE.Color(0x6b92ba)
+      const fogCloudy = new THREE.Color(0x566a7d)
       const fogDay = fogSunset.clone().lerp(fogClear, sunHigh).lerp(fogCloudy, overcast * 0.85)
       scene.fog.color.copy(fogNight).lerp(fogDay, dayFactor)
-      scene.fog.density = 0.006 + overcast * 0.011 + rainFrac * 0.009
+      scene.fog.density = 0.0032 + overcast * 0.0065 + rainFrac * 0.0055
 
       // Cloud appearance & drift
       cloudMat.opacity = clamp(0.06 + cloudFrac * 0.8 + rainFrac * 0.16, 0.05, 0.92)
@@ -502,7 +502,7 @@ export default function WeatherParkCanvas({
         if (envRenderTarget) envRenderTarget.dispose()
         envRenderTarget = nextRT
         scene.environment = envRenderTarget.texture
-        scene.environmentIntensity = 0.35 + dayFactor * (0.65 - overcast * 0.2)
+        scene.environmentIntensity = 0.22 + dayFactor * (0.42 - overcast * 0.14)
 
         lastIblElevDeg = sun.elevDeg
         lastIblCloud = currentState.cloudCover

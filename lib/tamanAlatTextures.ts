@@ -19,7 +19,7 @@ export function createPaintedWoodPBR(repeatX = 2, repeatY = 2) {
   const ctxB = cBump.getContext('2d')!
   const ctxR = cRough.getContext('2d')!
 
-  ctxM.fillStyle = '#f6f7f9'
+  ctxM.fillStyle = '#ebedf2'
   ctxM.fillRect(0, 0, size, size)
   ctxB.fillStyle = '#808080'
   ctxB.fillRect(0, 0, size, size)
@@ -30,7 +30,7 @@ export function createPaintedWoodPBR(repeatX = 2, repeatY = 2) {
   for (let y = 0; y < size; y += 2) {
     const wave = Math.sin(y * 0.08) * 6 + Math.sin(y * 0.31) * 3
     const delta = Math.round(wave)
-    const shadeM = 240 + Math.max(-10, Math.min(12, delta))
+    const shadeM = 228 + Math.max(-10, Math.min(12, delta))
     const shadeB = 128 + delta * 3
     const shadeR = 148 - delta * 2
 
