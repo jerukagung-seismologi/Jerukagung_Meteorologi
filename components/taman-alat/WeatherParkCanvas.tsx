@@ -19,14 +19,22 @@ import { buildWindStation, WindStationControls } from './models/windStation'
 import { buildRainGaugeStation, RainGaugeControls } from './models/rainGauge'
 import { buildPyranometerAndSoil } from './models/solarAndSoil'
 import { buildEvaporationPan, EvaporationPanControls } from './models/evaporationPan'
+import { buildCampbellStokes } from './models/campbellStokes'
+import { buildDigitalBarometer } from './models/digitalBarometer'
 
 export const CAMERA_PRESETS: Record<string, { pos: THREE.Vector3; target: THREE.Vector3 }> = {
   overview:    { pos: new THREE.Vector3(10.2, 6.2, 11.0),   target: new THREE.Vector3(0, 1.1, 0) },
+  top:         { pos: new THREE.Vector3(0.01, 14.5, 0),     target: new THREE.Vector3(0, 0, 0) },
+  iso:         { pos: new THREE.Vector3(8.5, 7.8, 8.5),     target: new THREE.Vector3(0, 0.8, 0) },
+  front:       { pos: new THREE.Vector3(0, 3.2, 11.8),      target: new THREE.Vector3(0, 1.2, 0) },
+  side:        { pos: new THREE.Vector3(11.8, 3.2, 0),      target: new THREE.Vector3(0, 1.2, 0) },
   stevenson:   { pos: new THREE.Vector3(1.85, 2.05, 2.55),  target: new THREE.Vector3(0, 1.85, 0) },
   anemometer:  { pos: new THREE.Vector3(-1.35, 2.95, -0.55), target: new THREE.Vector3(-3.8, 2.35, -3.2) },
   raingauge:   { pos: new THREE.Vector3(3.95, 1.32, -0.85), target: new THREE.Vector3(4.25, 0.52, -2.6) },
   pyranometer: { pos: new THREE.Vector3(2.15, 1.55, 4.45),  target: new THREE.Vector3(3.9, 0.65, 2.8) },
   evappan:     { pos: new THREE.Vector3(-1.85, 1.55, 4.65), target: new THREE.Vector3(-3.6, 0.38, 2.8) },
+  campbell:    { pos: new THREE.Vector3(-0.45, 1.65, -2.45), target: new THREE.Vector3(-1.65, 1.2, -3.5) },
+  barometer:   { pos: new THREE.Vector3(0.45, 1.75, -2.45),  target: new THREE.Vector3(1.65, 1.3, -3.5) },
 }
 
 interface WeatherParkCanvasProps {
@@ -274,12 +282,17 @@ export default function WeatherParkCanvas({
     const evapPan = buildEvaporationPan(scene, sharedMats)
     evapPanRef.current = evapPan
 
+    const campbell = buildCampbellStokes(scene, sharedMats)
+    const barometer = buildDigitalBarometer(scene, sharedMats)
+
     const interactiveRoots = [
       stevenson.root,
       windStation.root,
       rainGauge.root,
       solarAndSoil.root,
       evapPan.root,
+      campbell.root,
+      barometer.root,
     ]
 
     // Rain Instanced Particles System

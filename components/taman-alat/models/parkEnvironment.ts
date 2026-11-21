@@ -11,6 +11,9 @@ export function isGrassExcluded(x: number, z: number): boolean {
   if (Math.abs(x - 3.8) < 0.44 && z > -2.8 && z < 0.2) return true
   if (Math.abs(x - 3.6) < 0.44 && z > -0.2 && z < 2.8) return true
   if (Math.abs(x + 3.6) < 0.44 && z > -0.2 && z < 2.8) return true
+  // Jalan setapak ke Utara (Campbell-Stokes & Barometer)
+  if (Math.abs(x) < 0.38 && z > -3.6 && z < 0.2) return true
+  if (Math.abs(z + 3.5) < 0.38 && Math.abs(x) < 2.05) return true
 
   // Pondasi instrumen & petak tanah gundul
   if (Math.abs(x) < 0.92 && Math.abs(z) < 0.92) return true // Stevenson Screen
@@ -18,6 +21,8 @@ export function isGrassExcluded(x: number, z: number): boolean {
   if (x > 3.2 && x < 5.4 && z > -3.15 && z < -2.05) return true // Penakar Hujan + OBS
   if (x > 2.8 && x < 5.2 && z > 2.05 && z < 3.55) return true // Pyranometer + Petak Tanah Gundul
   if (Math.abs(x + 3.6) < 0.85 && Math.abs(z - 2.8) < 0.85) return true // Panci Penguapan
+  if (Math.hypot(x + 1.65, z + 3.5) < 0.55) return true // Campbell-Stokes
+  if (Math.hypot(x - 1.65, z + 3.5) < 0.55) return true // Barometer Digital
   // Plakat kompas
   if (Math.hypot(x, z + 5.45) < 0.48 || Math.hypot(x - 1.55, z - 5.45) < 0.48) return true
   if (Math.hypot(x - 5.45, z) < 0.48 || Math.hypot(x + 5.45, z) < 0.48) return true
@@ -81,6 +86,8 @@ export function buildParkEnvironment(scene: THREE.Scene, sharedMats: SharedPBRMa
     [0.6, 0.03, 2.7, 3.8, 0.055, -1.2],    // Ke Penakar Hujan
     [0.6, 0.03, 2.6, 3.6, 0.055, 1.3],     // Ke Pyranometer
     [0.6, 0.03, 2.6, -3.6, 0.055, 1.3],    // Ke Panci Penguapan
+    [0.6, 0.03, 3.5, 0, 0.055, -1.75],     // Menuju Utara (Taman Sisi Utara)
+    [3.9, 0.03, 0.6, 0, 0.055, -3.5],      // Melintang Utara (Campbell-Stokes & Barometer)
   ]
   walkwaySpecs.forEach(([w, h, d, x, y, z]) => {
     const path = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), sharedMats.walkway)

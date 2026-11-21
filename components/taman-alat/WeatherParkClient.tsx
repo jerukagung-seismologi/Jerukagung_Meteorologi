@@ -158,18 +158,27 @@ export default function WeatherParkClient() {
   ])
 
   // Camera Presets
-  const cameraPresets = [
-    { key: 'overview', label: 'Overview Taman' },
-    { key: 'stevenson', label: 'Sangkar Meteo' },
+  const cameraViews = [
+    { key: 'overview', label: 'Overview' },
+    { key: 'top', label: 'Denah (Atas)' },
+    { key: 'iso', label: 'Isometrik' },
+    { key: 'front', label: 'Depan' },
+    { key: 'side', label: 'Samping' },
+  ]
+
+  const instrumentPresets: { key: InstrumentId; label: string }[] = [
+    { key: 'stevenson', label: 'Sangkar' },
     { key: 'anemometer', label: 'Anemometer' },
     { key: 'raingauge', label: 'Penakar Hujan' },
     { key: 'pyranometer', label: 'Pyranometer' },
     { key: 'evappan', label: 'Panci Penguapan' },
+    { key: 'campbell', label: 'Campbell–Stokes' },
+    { key: 'barometer', label: 'Barometer Digital' },
   ]
 
   const handleSelectPreset = (key: string) => {
     setActiveCamPreset(key)
-    if (key === 'overview') {
+    if (['overview', 'top', 'iso', 'front', 'side'].includes(key)) {
       setSelectedInstrument(null)
     } else {
       setSelectedInstrument(key as InstrumentId)
@@ -264,6 +273,8 @@ export default function WeatherParkClient() {
                   epsilonT: analytics.epsilonT,
                   tipCount,
                   rainAccumMm,
+                  pressure: live.pressure,
+                  sunshineDuration: live.solarRadiation > 120 ? 6.8 : 3.5,
                 }}
               />
             )}
@@ -285,23 +296,49 @@ export default function WeatherParkClient() {
 
         {/* Bottom Camera Presets Navigation */}
         <div className="pointer-events-none absolute bottom-4 inset-x-0 z-20 flex justify-center px-4">
-          <div className="pointer-events-auto flex max-w-full items-center gap-1.5 overflow-x-auto rounded-full border border-slate-700/60 bg-slate-900/85 p-1.5 shadow-2xl backdrop-blur-xl">
-            {cameraPresets.map((preset) => {
-              const active = activeCamPreset === preset.key
-              return (
-                <button
-                  key={preset.key}
-                  onClick={() => handleSelectPreset(preset.key)}
-                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
-                    active
-                      ? 'bg-sky-500 text-white shadow-md'
-                      : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
-                  }`}
-                >
-                  {preset.label}
-                </button>
-              )
-            })}
+          <div className="pointer-events-auto flex max-w-full items-center gap-1.5 overflow-x-auto rounded-full border border-slate-700/60 bg-slate-900/90 p-1.5 shadow-2xl backdrop-blur-xl">
+            {/* View Presets */}
+            <div className="flex items-center gap-1">
+              {cameraViews.map((preset) => {
+                const active = activeCamPreset === preset.key
+                return (
+                  <button
+                    key={preset.key}
+                    onClick={() => handleSelectPreset(preset.key)}
+                    className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                      active
+                        ? 'bg-sky-500 text-white shadow-md'
+                        : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                )
+              })}
+            </div>
+
+            {/* Separator Divider */}
+            <div className="h-4 w-px bg-slate-700/80 mx-1 shrink-0" />
+
+            {/* Instrument Presets */}
+            <div className="flex items-center gap-1">
+              {instrumentPresets.map((preset) => {
+                const active = activeCamPreset === preset.key || selectedInstrument === preset.key
+                return (
+                  <button
+                    key={preset.key}
+                    onClick={() => handleSelectPreset(preset.key)}
+                    className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                      active
+                        ? 'bg-amber-500 text-white shadow-md'
+                        : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         </div>
       </main>

@@ -1,7 +1,18 @@
 'use client'
 
-import React from 'react'
-import { X, Eye, ShieldCheck, Cpu, Info, Compass } from 'lucide-react'
+import React, { useState } from 'react'
+import {
+  X,
+  Eye,
+  ShieldCheck,
+  Cpu,
+  Info,
+  BookOpen,
+  Wrench,
+  CheckCircle2,
+  Activity,
+  Layers,
+} from 'lucide-react'
 import { InstrumentId, INSTRUMENT_CATALOG } from '@/lib/tamanAlatCatalog'
 import { VOLUME_PRESETS, getCompassLabel } from '@/lib/tamanAlatPhysics'
 import { Button } from '@/components/ui/button'
@@ -25,8 +36,12 @@ interface InstrumentDetailPanelProps {
     epsilonT: number
     tipCount: number
     rainAccumMm: number
+    pressure?: number
+    sunshineDuration?: number
   }
 }
+
+type TabType = 'metrics' | 'principle' | 'components' | 'operation'
 
 export default function InstrumentDetailPanel({
   instrumentId,
@@ -34,6 +49,8 @@ export default function InstrumentDetailPanel({
   onFocusCamera,
   telemetry,
 }: InstrumentDetailPanelProps) {
+  const [activeTab, setActiveTab] = useState<TabType>('metrics')
+
   if (!instrumentId || !INSTRUMENT_CATALOG[instrumentId]) return null
 
   const info = INSTRUMENT_CATALOG[instrumentId]
@@ -88,10 +105,27 @@ export default function InstrumentDetailPanel({
       { label: 'Wind-Run 0.5 m', value: `${(telemetry.windSpeed * 0.65).toFixed(1)} m/s` },
       { label: 'Diameter Panci', value: '1.21 m (Kelas A)' },
     ]
+  } else if (instrumentId === 'campbell') {
+    const sunHours = telemetry.sunshineDuration ?? (telemetry.solarRad > 120 ? 6.8 : 3.5)
+    metricItems = [
+      { label: 'Lama Penyinaran', value: `${sunHours.toFixed(1)} Jam` },
+      { label: 'Ambang Pembakaran', value: '> 120 W/m² (WMO)' },
+      { label: 'Status Fokus Pias', value: telemetry.solarRad > 120 ? 'Membakar (Aktif)' : 'Siaga Redup' },
+      { label: 'Lintang Stasiun', value: '7.67° LS (Kebumen)' },
+    ]
+  } else if (instrumentId === 'barometer') {
+    const qfe = telemetry.pressure ?? 1012.4
+    const qnh = qfe + 1.4
+    metricItems = [
+      { label: 'Tekanan Stasiun (QFE)', value: `${qfe.toFixed(1)} hPa` },
+      { label: 'Tekanan Laut (QNH)', value: `${qnh.toFixed(1)} hPa` },
+      { label: 'Tendensi 3 Jam', value: '+0.2 hPa (Stabil)' },
+      { label: 'Akurasi Sensor', value: '±0.1 hPa (WMO)' },
+    ]
   }
 
   return (
-    <div className="pointer-events-auto w-full max-w-sm rounded-2xl border border-sky-500/30 bg-slate-900/90 p-5 text-slate-100 shadow-2xl backdrop-blur-xl transition-all duration-200">
+    <div className="pointer-events-auto w-full max-w-sm rounded-2xl border border-sky-500/30 bg-slate-900/95 p-4 sm:p-5 text-slate-100 shadow-2xl backdrop-blur-xl transition-all duration-200">
       {/* Header */}
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -115,30 +149,125 @@ export default function InstrumentDetailPanel({
         <span className="truncate">{info.sensor}</span>
       </div>
 
-      {/* Metrics Grid */}
-      <div className="mt-3.5 grid grid-cols-2 gap-2">
-        {metricItems.map((item, idx) => (
-          <div key={idx} className="rounded-xl border border-slate-800 bg-slate-950/60 p-2.5">
-            <span className="block text-[10px] font-medium text-slate-400">{item.label}</span>
-            <span className="mt-0.5 block text-xs font-bold text-white">{item.value}</span>
-          </div>
-        ))}
+      {/* Navigation Tabs */}
+      <div className="mt-3 flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-950/70 p-1 text-[11px] font-medium">
+        <button
+          onClick={() => setActiveTab('metrics')}
+          className={`flex-1 rounded-lg py-1 transition ${
+            activeTab === 'metrics'
+              ? 'bg-sky-500 text-white shadow-sm font-semibold'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Metrik
+        </button>
+        <button
+          onClick={() => setActiveTab('principle')}
+          className={`flex-1 rounded-lg py-1 transition ${
+            activeTab === 'principle'
+              ? 'bg-sky-500 text-white shadow-sm font-semibold'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Prinsip
+        </button>
+        <button
+          onClick={() => setActiveTab('components')}
+          className={`flex-1 rounded-lg py-1 transition ${
+            activeTab === 'components'
+              ? 'bg-sky-500 text-white shadow-sm font-semibold'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Komponen
+        </button>
+        <button
+          onClick={() => setActiveTab('operation')}
+          className={`flex-1 rounded-lg py-1 transition ${
+            activeTab === 'operation'
+              ? 'bg-sky-500 text-white shadow-sm font-semibold'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          SOP WMO
+        </button>
       </div>
 
-      {/* Description */}
-      <div className="mt-3.5 space-y-2 text-xs text-slate-300">
-        <div className="flex items-start gap-1.5">
-          <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-400" />
-          <p className="leading-relaxed text-slate-300">{info.desc}</p>
-        </div>
-        <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/30 p-2.5 text-[11px] leading-relaxed text-emerald-300">
-          <div className="flex items-center gap-1.5 font-semibold text-emerald-200 mb-1">
-            <ShieldCheck className="h-3.5 w-3.5" />
-            Standar Penempatan WMO:
+      {/* Tab 1: Live Metrik & Info Singkat */}
+      {activeTab === 'metrics' && (
+        <div className="mt-3 space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            {metricItems.map((item, idx) => (
+              <div key={idx} className="rounded-xl border border-slate-800 bg-slate-950/60 p-2.5">
+                <span className="block text-[10px] font-medium text-slate-400">{item.label}</span>
+                <span className="mt-0.5 block text-xs font-bold text-white">{item.value}</span>
+              </div>
+            ))}
           </div>
-          {info.wmo}
+          <div className="flex items-start gap-1.5 text-xs text-slate-300">
+            <Info className="mt-0.5 h-3.5 w-3.5 shrink-0 text-sky-400" />
+            <p className="leading-relaxed">{info.desc}</p>
+          </div>
+          <div className="rounded-xl border border-sky-500/20 bg-sky-950/20 p-2.5 text-[11px] text-sky-300">
+            <span className="font-semibold text-sky-200">Parameter yang Diukur:</span> {info.parameter}
+          </div>
         </div>
-      </div>
+      )}
+
+      {/* Tab 2: Prinsip Kerja Ilmiah */}
+      {activeTab === 'principle' && (
+        <div className="mt-3 space-y-2.5 text-xs text-slate-300">
+          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+            <div className="flex items-center gap-1.5 font-semibold text-sky-300 mb-1">
+              <BookOpen className="h-3.5 w-3.5 text-sky-400" />
+              Fungsi Ilmiah:
+            </div>
+            <p className="leading-relaxed text-slate-300 text-[11px]">{info.scientificFunction}</p>
+          </div>
+          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3">
+            <div className="flex items-center gap-1.5 font-semibold text-amber-300 mb-1">
+              <Activity className="h-3.5 w-3.5 text-amber-400" />
+              Prinsip Pengukuran:
+            </div>
+            <p className="leading-relaxed text-slate-300 text-[11px]">{info.principle}</p>
+          </div>
+        </div>
+      )}
+
+      {/* Tab 3: Daftar Komponen Utama */}
+      {activeTab === 'components' && (
+        <div className="mt-3 space-y-1.5 max-h-56 overflow-y-auto pr-1">
+          {info.components.map((comp, idx) => (
+            <div
+              key={idx}
+              className="flex items-start gap-2 rounded-xl border border-slate-800 bg-slate-950/60 px-2.5 py-2 text-[11px] text-slate-200"
+            >
+              <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
+              <span className="leading-snug">{comp}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Tab 4: Operasional & Standar WMO */}
+      {activeTab === 'operation' && (
+        <div className="mt-3 space-y-2.5 text-xs">
+          <div className="rounded-xl border border-slate-800 bg-slate-950/60 p-3 text-[11px] text-slate-300">
+            <div className="flex items-center gap-1.5 font-semibold text-sky-300 mb-1">
+              <Wrench className="h-3.5 w-3.5 text-sky-400" />
+              Prosedur Operasional Stasiun:
+            </div>
+            <p className="leading-relaxed">{info.operation}</p>
+          </div>
+          <div className="rounded-xl border border-emerald-500/20 bg-emerald-950/30 p-3 text-[11px] text-emerald-300">
+            <div className="flex items-center gap-1.5 font-semibold text-emerald-200 mb-1">
+              <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+              Standar Penempatan WMO CIMO:
+            </div>
+            <p className="leading-relaxed">{info.wmo}</p>
+          </div>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="mt-4 flex items-center gap-2">
