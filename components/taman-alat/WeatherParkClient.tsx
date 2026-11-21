@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useWeatherParkData } from '@/hooks/useWeatherParkData'
 import { InstrumentId } from '@/lib/tamanAlatCatalog'
-import { InstrumentProximityInfo } from './FirstPersonController'
+import { InstrumentProximityInfo, SurfaceInfo } from './FirstPersonController'
 import {
   SimulationState,
   calculatePhysicsAnalytics,
@@ -66,6 +66,7 @@ export default function WeatherParkClient() {
   const [activeCamPreset, setActiveCamPreset] = useState<string>('overview')
   const [selectedInstrument, setSelectedInstrument] = useState<InstrumentId | null>(null)
   const [proximityInfo, setProximityInfo] = useState<InstrumentProximityInfo | null>(null)
+  const [surfaceInfo, setSurfaceInfo] = useState<SurfaceInfo | null>(null)
 
   // Simulation rain tipping statistics
   const [tipCount, setTipCount] = useState<number>(0)
@@ -219,8 +220,24 @@ export default function WeatherParkClient() {
             onTipRainGauge={handleRainTip}
             onHourTick={handleHourTick}
             onProximityChange={setProximityInfo}
+            onSurfaceChange={setSurfaceInfo}
           />
         </div>
+
+        {/* First-Person Surface & Conservation Status (WMO-No. 8) */}
+        {state.navMode === 'firstPerson' && surfaceInfo && (
+          <div className="pointer-events-none absolute top-14 left-1/2 -translate-x-1/2 z-20 transition-all duration-300">
+            <div
+              className={`flex items-center gap-2 rounded-full px-3.5 py-1 text-[11px] font-semibold shadow-xl backdrop-blur-md border ${
+                surfaceInfo.isOnWalkway
+                  ? 'border-emerald-500/50 bg-emerald-950/85 text-emerald-300'
+                  : 'border-rose-500/60 bg-rose-950/90 text-rose-200 animate-pulse'
+              }`}
+            >
+              <span>{surfaceInfo.isOnWalkway ? '🟢 Jalur Setapak WMO (SOP Sah)' : '⚠️ Menginjak Rumput Konservasi (Dilarang WMO)'}</span>
+            </div>
+          </div>
+        )}
 
         {/* First-Person Center Crosshair */}
         {state.navMode === 'firstPerson' && (
@@ -337,6 +354,10 @@ export default function WeatherParkClient() {
                   rainAccumMm,
                   pressure: live.pressure,
                   sunshineDuration: live.solarRadiation > 120 ? 6.8 : 3.5,
+                  soil: analytics.soil,
+                  psychrometric: analytics.psychrometric,
+                  campbell: analytics.campbell,
+                  pan: analytics.pan,
                 }}
               />
             )}

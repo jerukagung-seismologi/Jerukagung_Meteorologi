@@ -473,6 +473,34 @@ export function buildStevensonScreen(
     )
     waterCup.position.set(0.07, H * 0.1 - 0.17, 0.04)
     internal.add(waterCup)
+
+    // 3. Termometer Maksimum (Air raksa miring 2° dengan konstriksi kapiler)
+    const maxStem = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, W * 0.38, 8), sharedMats.stainless)
+    maxStem.position.set(W * 0.03, H * 0.02, 0.04)
+    maxStem.rotation.z = Math.PI / 2 + 0.035 // Kemiringan 2° standar BMKG
+    internal.add(maxStem)
+    const maxBulb = new THREE.Mesh(
+      new THREE.SphereGeometry(0.012, 10, 10),
+      new THREE.MeshStandardMaterial({ color: 0x94a3b8, metalness: 0.9, roughness: 0.1 })
+    )
+    maxBulb.position.set(-W * 0.16, H * 0.02 - 0.006, 0.04)
+    internal.add(maxBulb)
+
+    // 4. Termometer Minimum (Alkohol horizontal dengan indeks dumb-bell hitam)
+    const minStem = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, W * 0.38, 8), sharedMats.glassPhysical)
+    minStem.position.set(W * 0.03, -H * 0.08, 0.04)
+    minStem.rotation.z = Math.PI / 2
+    internal.add(minStem)
+    const minBulb = new THREE.Mesh(
+      new THREE.SphereGeometry(0.012, 10, 10),
+      new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.75 })
+    )
+    minBulb.position.set(-W * 0.16, -H * 0.08, 0.04)
+    internal.add(minBulb)
+
+    const minIndex = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.004, 0.004), sharedMats.darkSteel)
+    minIndex.position.set(0.01, -H * 0.08, 0.04)
+    internal.add(minIndex)
   }
 
   rebuild(initialParams)

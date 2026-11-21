@@ -1,10 +1,17 @@
 import * as THREE from 'three'
 import { InstrumentId, INSTRUMENT_CATALOG } from '@/lib/tamanAlatCatalog'
+import { isGrassExcluded } from './models/parkEnvironment'
 
 export interface InstrumentProximityInfo {
   instrumentId: InstrumentId
   name: string
   distance: number
+}
+
+export interface SurfaceInfo {
+  isOnWalkway: boolean
+  surfaceType: 'concrete' | 'grass'
+  warning?: string
 }
 
 const INSTRUMENT_LOCATIONS: { id: InstrumentId; x: number; z: number }[] = [
@@ -52,11 +59,13 @@ export class FirstPersonController {
   private virtualMoveX = 0
   private virtualMoveY = 0
 
-  // Proximity callback
+  // Proximity & Surface callbacks
   public onProximityChange?: (info: InstrumentProximityInfo | null) => void
+  public onSurfaceChange?: (info: SurfaceInfo) => void
   public onInteract?: (id: InstrumentId) => void
 
   private currentNearInstrument: InstrumentId | null = null
+  private lastSurfaceOnWalkway: boolean | null = null
 
   constructor(camera: THREE.PerspectiveCamera, domElement: HTMLElement) {
     this.camera = camera
@@ -267,6 +276,21 @@ export class FirstPersonController {
 
     // 5. Cek Proximity ke 7 Instrumen
     this.checkProximity()
+
+    // 6. Deteksi Permukaan Tapak (Jalur Setapak Beton vs Rumput Konservasi WMO-No. 8)
+    const onWalkway = isGrassExcluded(this.position.x, this.position.z)
+    if (this.lastSurfaceOnWalkway !== onWalkway) {
+      this.lastSurfaceOnWalkway = onWalkway
+      if (this.onSurfaceChange) {
+        this.onSurfaceChange({
+          isOnWalkway: onWalkway,
+          surfaceType: onWalkway ? 'concrete' : 'grass',
+          warning: onWalkway
+            ? undefined
+            : 'Perhatian: Anda menginjak petak rumput konservasi. Pedoman WMO-No. 8 mewajibkan pengamat tetap berada di jalur setapak semen.',
+        })
+      }
+    }
   }
 
   private checkProximity() {

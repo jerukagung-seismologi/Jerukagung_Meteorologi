@@ -133,6 +133,27 @@ export function buildRainGaugeStation(scene: THREE.Scene, sharedMats: SharedPBRM
   tapHandle.position.set(0, obsTopY + 0.65, 0.125)
   obs.add(tapHandle)
 
+  // Gelas Ukur Kalibrasi OBS BMKG (Kapasitas 25 mm, luas penampang 100 cm²)
+  const glassCylinder = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.024, 0.024, 0.18, 16, 1, true),
+    sharedMats.glassPhysical
+  )
+  glassCylinder.position.set(0, obsTopY + 0.46, 0.11)
+  glassCylinder.castShadow = true
+  obs.add(glassCylinder)
+
+  const glassBase = new THREE.Mesh(new THREE.CylinderGeometry(0.034, 0.034, 0.014, 16), sharedMats.glassPhysical)
+  glassBase.position.set(0, obsTopY + 0.365, 0.11)
+  obs.add(glassBase)
+
+  // Air terukur di dalam gelas ukur OBS
+  const waterInGlass = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.022, 0.022, 0.09, 14),
+    new THREE.MeshStandardMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.65 })
+  )
+  waterInGlass.position.set(0, obsTopY + 0.41, 0.11)
+  obs.add(waterInGlass)
+
   scene.add(group)
 
   let bucketFillMm = 0

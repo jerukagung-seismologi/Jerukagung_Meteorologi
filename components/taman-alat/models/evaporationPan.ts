@@ -100,6 +100,12 @@ export function buildEvaporationPan(scene: THREE.Scene, sharedMats: SharedPBRMat
   hookRod.position.set(0.36, panBaseY + 0.29, 0.22)
   group.add(hookRod)
 
+  // Ujung jarum kait tajam (Hook Tip) yang menyentuh permukaan air
+  const hookTip = new THREE.Mesh(new THREE.ConeGeometry(0.004, 0.016, 8), sharedMats.stainless)
+  hookTip.position.set(0.36, panBaseY + 0.205, 0.22)
+  hookTip.rotation.x = Math.PI // Jarum menghadap ke atas menembus meniscus air
+  group.add(hookTip)
+
   const micrometer = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.032, 16), sharedMats.brass)
   micrometer.position.set(0.36, panBaseY + 0.37, 0.22)
   group.add(micrometer)

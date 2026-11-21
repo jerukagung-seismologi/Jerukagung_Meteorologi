@@ -18,6 +18,13 @@ import { VOLUME_PRESETS, getCompassLabel } from '@/lib/tamanAlatPhysics'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 
+import {
+  SoilTemperatures,
+  PsychrometricData,
+  CampbellStokesState,
+  PanWaterState,
+} from '@/lib/tamanAlatPhysics'
+
 interface InstrumentDetailPanelProps {
   instrumentId: InstrumentId | null
   onClose: () => void
@@ -38,6 +45,10 @@ interface InstrumentDetailPanelProps {
     rainAccumMm: number
     pressure?: number
     sunshineDuration?: number
+    soil?: SoilTemperatures
+    psychrometric?: PsychrometricData
+    campbell?: CampbellStokesState
+    pan?: PanWaterState
   }
 }
 
@@ -60,11 +71,20 @@ export default function InstrumentDetailPanel({
 
   if (instrumentId === 'stevenson') {
     const preset = VOLUME_PRESETS[telemetry.volumeKey] || VOLUME_PRESETS.casella
+    const psych = telemetry.psychrometric
     metricItems = [
-      { label: 'Suhu Terukur (T_sh)', value: `${telemetry.tempMeasured.toFixed(2)} °C` },
-      { label: 'Kelembapan Relatif', value: `${Math.round(telemetry.rh)}%` },
+      { label: 'Suhu Udara (Kering)', value: `${telemetry.tempMeasured.toFixed(2)} °C` },
+      {
+        label: 'Bola Basah (Tw)',
+        value: psych ? `${psych.tempWet.toFixed(1)} °C (Depresi: ${psych.depression.toFixed(1)}°)` : `${(telemetry.tempMeasured - 2.8).toFixed(1)} °C`,
+      },
+      {
+        label: 'Kelembapan / Titik Embun',
+        value: psych ? `${Math.round(telemetry.rh)}% / ${psych.dewPoint.toFixed(1)} °C` : `${Math.round(telemetry.rh)}%`,
+      },
       { label: 'Error Radiasi (ε_T)', value: `+${telemetry.epsilonT.toFixed(2)} °C` },
       { label: 'Volume / Louver', value: `${preset.dm3} dm³ / ${telemetry.louverTilt}°` },
+      { label: 'Standar Tropis BMKG', value: 'Dua Pintu (Utara & Selatan)' },
     ]
   } else if (instrumentId === 'anemometer') {
     const rpm = Math.round(telemetry.windSpeed * 28.5)
@@ -78,39 +98,62 @@ export default function InstrumentDetailPanel({
   } else if (instrumentId === 'raingauge') {
     metricItems = [
       { label: 'Intensitas Hujan', value: `${telemetry.rainIntensity.toFixed(1)} mm/jam` },
-      { label: 'Jumlah Tip (0.2 mm)', value: `${telemetry.tipCount} tip` },
-      { label: 'Akumulasi Terukur', value: `${telemetry.rainAccumMm.toFixed(1)} mm` },
-      { label: 'Status Mekanisme', value: telemetry.rainIntensity > 0 ? 'Aktif Berayun' : 'Siaga (Kering)' },
+      { label: 'Tipping Bucket AWS', value: `${telemetry.tipCount} tip (${telemetry.rainAccumMm.toFixed(1)} mm)` },
+      { label: 'Penakar Manual OBS', value: `${telemetry.rainAccumMm.toFixed(1)} mm (Gelas 100 cm²)` },
+      { label: 'Status Mekanisme', value: telemetry.rainIntensity > 0 ? 'Aktif Berayun' : 'Siaga Pengamatan' },
     ]
   } else if (instrumentId === 'pyranometer') {
     const rad = Math.round(telemetry.solarRad)
     const elev = Math.max(0, telemetry.solarElevation ?? 0)
-    const t5 = (telemetry.tempAmbient + (rad / 420) * 1.6 - 0.7).toFixed(1)
-    const t10 = (telemetry.tempAmbient + (rad / 550) * 0.8 - 1.3).toFixed(1)
-    const t20 = (telemetry.tempAmbient - 2.0).toFixed(1)
-    const t50 = (telemetry.tempAmbient - 3.1).toFixed(1)
+    const soil = telemetry.soil
     metricItems = [
       { label: 'Radiasi Surya Global', value: `${rad} W/m²` },
       { label: 'Elevasi Matahari', value: `${elev.toFixed(1)}°` },
-      { label: 'Tanah 5 / 10 cm', value: `${t5}° / ${t10} °C` },
-      { label: 'Tanah 20 / 50 cm', value: `${t20}° / ${t50} °C` },
+      {
+        label: 'Tanah 0 & 5 cm',
+        value: soil ? `${soil.t0}° / ${soil.t5} °C` : `${(telemetry.tempAmbient + 2.5).toFixed(1)} °C`,
+      },
+      {
+        label: 'Tanah 10 & 20 cm',
+        value: soil ? `${soil.t10}° / ${soil.t20} °C` : `${telemetry.tempAmbient.toFixed(1)} °C`,
+      },
+      {
+        label: 'Tanah Dalam 50 cm',
+        value: soil ? `${soil.t50} °C ${soil.inversionActive ? '(Inversi Malam 🌙)' : ''}` : `${(telemetry.tempAmbient - 1.5).toFixed(1)} °C`,
+      },
+      { label: 'Model Difusi Termal', value: '1D Fourier (arXiv:2405.15284)' },
     ]
   } else if (instrumentId === 'evappan') {
-    const vpd = (100 - telemetry.rh) / 100
-    const evap = Math.max(0.4, telemetry.solarRad * 0.0052 + vpd * (1.6 + telemetry.windSpeed * 0.35))
-    const tAir = (telemetry.tempAmbient - 1.1 + telemetry.solarRad * 0.0022).toFixed(1)
+    const pan = telemetry.pan
     metricItems = [
-      { label: 'Laju Evaporasi', value: `${evap.toFixed(1)} mm/hari` },
-      { label: 'Suhu Air Panci', value: `${tAir} °C` },
-      { label: 'Wind-Run 0.5 m', value: `${(telemetry.windSpeed * 0.65).toFixed(1)} m/s` },
-      { label: 'Diameter Panci', value: '1.21 m (Kelas A)' },
+      {
+        label: 'Laju Evaporasi (Dalton)',
+        value: pan ? `${pan.evapRateMmPerDay} mm/hari` : '3.8 mm/hari',
+      },
+      {
+        label: 'Neraca Air (dH = P - E)',
+        value: pan ? `${pan.netWaterChangeMmPerHour > 0 ? '+' : ''}${pan.netWaterChangeMmPerHour} mm/jam` : '0 mm/jam',
+      },
+      {
+        label: 'Suhu Air Panci',
+        value: pan ? `${pan.waterTemp} °C` : `${(telemetry.tempAmbient - 0.5).toFixed(1)} °C`,
+      },
+      { label: 'Wind-Run 0.5 m', value: `${(telemetry.windSpeed * 0.72).toFixed(1)} m/s` },
+      { label: 'Stilling Well & Hook', value: 'Mikrometer Vernier BMKG' },
     ]
   } else if (instrumentId === 'campbell') {
-    const sunHours = telemetry.sunshineDuration ?? (telemetry.solarRad > 120 ? 6.8 : 3.5)
+    const camp = telemetry.campbell
     metricItems = [
-      { label: 'Lama Penyinaran', value: `${sunHours.toFixed(1)} Jam` },
-      { label: 'Ambang Pembakaran', value: '> 120 W/m² (WMO)' },
-      { label: 'Status Fokus Pias', value: telemetry.solarRad > 120 ? 'Membakar (Aktif)' : 'Siaga Redup' },
+      {
+        label: 'Radiasi Langsung (DNI)',
+        value: camp ? `${camp.dni} W/m²` : `${Math.round(telemetry.solarRad)} W/m²`,
+      },
+      { label: 'Ambang Batas WMO', value: '≥ 120 W/m²' },
+      {
+        label: 'Status Pembakaran Pias',
+        value: camp ? (camp.isBurning ? '🔥 Aktif Membakar Pias' : '⏸️ Di Bawah Ambang Batas') : 'Siaga',
+      },
+      { label: 'Jenis Kertas Pias', value: 'Pias Ekuinoks / Lengkung' },
       { label: 'Lintang Stasiun', value: '7.67° LS (Kebumen)' },
     ]
   } else if (instrumentId === 'barometer') {

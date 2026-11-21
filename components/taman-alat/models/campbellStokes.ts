@@ -4,6 +4,7 @@ import { addConcretePlinthWithBolts } from './mechanicalDetails'
 
 export interface CampbellStokesControls {
   root: THREE.Group
+  update: (dni: number, isBurning: boolean, hour: number) => void
 }
 
 /**
@@ -145,7 +146,7 @@ export function buildCampbellStokes(
   bracketGroup.add(card)
 
   // Jejak gosong / terbakar sinar matahari terfokus pada kartu pias (Burnt trace line)
-  const burnTraceMat = new THREE.MeshBasicMaterial({ color: 0x1c1917 }) // Gosong kehitaman
+  const burnTraceMat = new THREE.MeshBasicMaterial({ color: 0x18181b, transparent: true, opacity: 0.94 })
   const burnGeo = new THREE.CylinderGeometry(
     bowlRadius + 0.003,
     bowlRadius + 0.003,
@@ -159,6 +160,12 @@ export function buildCampbellStokes(
   const burnTrace = new THREE.Mesh(burnGeo, burnTraceMat)
   burnTrace.position.set(0, sphereCenterY, 0)
   bracketGroup.add(burnTrace)
+
+  // Titik bara api aktif terfokus (hot spot focus point)
+  const focalSpotMat = new THREE.MeshBasicMaterial({ color: 0xf97316, transparent: true, opacity: 0.0 })
+  const focalSpot = new THREE.Mesh(new THREE.SphereGeometry(0.0055, 12, 12), focalSpotMat)
+  focalSpot.position.set(0, sphereCenterY, -bowlRadius - 0.002)
+  bracketGroup.add(focalSpot)
 
   // 6. BOLA KACA PEJAL OPTIK BENING (SOLID OPTICAL GLASS SPHERE)
   const glassSphereRadius = 0.05
@@ -194,5 +201,27 @@ export function buildCampbellStokes(
     }
   })
 
-  return { root }
+  const update = (dni: number, isBurning: boolean, hour: number) => {
+    if (isBurning && hour >= 6.0 && hour <= 18.0) {
+      // Sudut fokus busur dari Timur (-Z / +X) ke Barat (-Z / -X)
+      const frac = (hour - 6.0) / 12.0
+      const angle = (frac - 0.5) * Math.PI * 0.95
+      const rx = Math.sin(angle) * (bowlRadius + 0.002)
+      const rz = -Math.cos(angle) * (bowlRadius + 0.002)
+
+      focalSpot.position.set(rx, sphereCenterY, rz)
+      focalSpotMat.opacity = Math.min(1.0, 0.45 + (dni / 900) * 0.55)
+      focalSpot.scale.setScalar(1.0 + Math.sin(hour * 12) * 0.15)
+
+      burnTrace.visible = true
+      burnTraceMat.opacity = Math.min(0.96, 0.6 + frac * 0.36)
+    } else {
+      focalSpotMat.opacity = 0.0
+      if (hour < 6.0 || hour > 18.0) {
+        burnTraceMat.opacity = 0.55
+      }
+    }
+  }
+
+  return { root, update }
 }

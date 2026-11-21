@@ -1,0 +1,4 @@
+arXiv API Terms of Use Notice
+Timestamp: 2026-11-21T12:22:45+07:00
+URL: https://info.arxiv.org/help/api/index.html
+Notice: Users and automated systems accessing arXiv API must adhere to arXiv's Terms of Use (rate limit: max 1 request every 3 seconds) and always review the individual license and attribution terms of any papers retrieved.

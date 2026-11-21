@@ -18,12 +18,12 @@ import { buildWindStation, WindStationControls } from './models/windStation'
 import { buildRainGaugeStation, RainGaugeControls } from './models/rainGauge'
 import { buildPyranometerAndSoil } from './models/solarAndSoil'
 import { buildEvaporationPan, EvaporationPanControls } from './models/evaporationPan'
-import { buildCampbellStokes } from './models/campbellStokes'
+import { buildCampbellStokes, CampbellStokesControls } from './models/campbellStokes'
 import { buildDigitalBarometer } from './models/digitalBarometer'
 import { buildSkyAtmosphere, SkyAtmosphereSystem } from './models/skyAtmosphere'
 import { buildStationLighting, StationLightingSystem } from './models/stationLighting'
 import { buildHorizonPanorama360 } from './models/horizonPanorama'
-import { FirstPersonController, InstrumentProximityInfo } from './FirstPersonController'
+import { FirstPersonController, InstrumentProximityInfo, SurfaceInfo } from './FirstPersonController'
 
 export const CAMERA_PRESETS: Record<string, { pos: THREE.Vector3; target: THREE.Vector3 }> = {
   overview:    { pos: new THREE.Vector3(10.2, 6.2, 11.0),   target: new THREE.Vector3(0, 1.1, 0) },
@@ -49,6 +49,7 @@ interface WeatherParkCanvasProps {
   onTipRainGauge?: () => void
   onHourTick?: (newHour: number) => void
   onProximityChange?: (info: InstrumentProximityInfo | null) => void
+  onSurfaceChange?: (info: SurfaceInfo) => void
 }
 
 const MAX_RAIN_DROPS = 1600
@@ -62,6 +63,7 @@ export default function WeatherParkCanvas({
   onTipRainGauge,
   onHourTick,
   onProximityChange,
+  onSurfaceChange,
 }: WeatherParkCanvasProps) {
   const mountRef = useRef<HTMLDivElement>(null)
   const [hoveredInstrument, setHoveredInstrument] = useState<string | null>(null)
@@ -78,6 +80,7 @@ export default function WeatherParkCanvas({
   const windStationRef = useRef<WindStationControls | null>(null)
   const rainGaugeRef = useRef<RainGaugeControls | null>(null)
   const evapPanRef = useRef<EvaporationPanControls | null>(null)
+  const campbellRef = useRef<CampbellStokesControls | null>(null)
   const grassMeshRef = useRef<THREE.InstancedMesh | null>(null)
   const sceneRef = useRef<THREE.Scene | null>(null)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
@@ -205,6 +208,9 @@ export default function WeatherParkCanvas({
     fpsController.onProximityChange = (info) => {
       onProximityChange?.(info)
     }
+    fpsController.onSurfaceChange = (info) => {
+      onSurfaceChange?.(info)
+    }
     fpsController.onInteract = (id) => {
       onSelectInstrument(id)
     }
@@ -248,6 +254,7 @@ export default function WeatherParkCanvas({
     evapPanRef.current = evapPan
 
     const campbell = buildCampbellStokes(scene, sharedMats)
+    campbellRef.current = campbell
     const barometer = buildDigitalBarometer(scene, sharedMats)
 
     const interactiveRoots = [
@@ -474,6 +481,16 @@ export default function WeatherParkCanvas({
       // 6. Animasi Anemometer & Wind Vane
       if (windStationRef.current) {
         windStationRef.current.update(dt, currentState.windSpeed, currentState.windDir)
+      }
+
+      // 6b. Animasi Campbell-Stokes DNI & Jejak Bakar Pias (WMO-No. 8: >= 120 W/m²)
+      if (campbellRef.current) {
+        const sunPos = calculateSunPosition(currentState.hour)
+        const sinElev = Math.sin(degToRad(Math.max(0, sunPos.elevDeg)))
+        const rad = sunPos.elevDeg > 2 ? 1050 * Math.pow(sinElev, 1.15) * (1 - currentState.cloudCover / 130) : 0
+        const dni = sunPos.elevDeg > 2 ? Math.round(rad / Math.max(0.12, sinElev)) : 0
+        const isBurning = dni >= 120 && sunPos.elevDeg >= 3.0 && currentState.rainIntensity === 0 && currentState.cloudCover < 80
+        campbellRef.current.update(dni, isBurning, currentState.hour)
       }
 
       // 7. Animasi Rumput GPU (Goyangan angin)

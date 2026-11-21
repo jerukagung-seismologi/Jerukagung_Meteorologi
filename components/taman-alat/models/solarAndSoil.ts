@@ -82,62 +82,117 @@ export function buildPyranometerAndSoil(scene: THREE.Scene, sharedMats: SharedPB
     sharedMats.conduitGrey
   )
 
-  // --- B. PETAK 4 PROBE SUHU TANAH (5, 10, 20, 50 CM) ---
+  // --- B. PETAK TANAH GUNDUL WMO-No. 8 (5, 10, 20, 50 CM) ---
   const soilG = new THREE.Group()
-  soilG.position.set(0.72, 0, 0)
+  soilG.position.set(0.78, 0, 0)
   group.add(soilG)
 
-  const frameOuter = new THREE.Mesh(new THREE.BoxGeometry(1.68, 0.08, 1.18), sharedMats.concrete)
-  frameOuter.position.y = 0.04
+  // Bingkai beton penahan petak tanah 1.95m x 1.35m
+  const frameOuter = new THREE.Mesh(new THREE.BoxGeometry(1.95, 0.09, 1.35), sharedMats.concrete)
+  frameOuter.position.y = 0.045
   frameOuter.receiveShadow = true
   soilG.add(frameOuter)
 
   const soilBed = new THREE.Mesh(
-    new THREE.BoxGeometry(1.52, 0.09, 1.02),
+    new THREE.BoxGeometry(1.78, 0.095, 1.18),
     new THREE.MeshStandardMaterial({
       map: sharedMats.textures.soil.map,
       bumpMap: sharedMats.textures.soil.bumpMap,
-      bumpScale: 0.042,
+      bumpScale: 0.048,
       roughness: 0.96,
+      metalness: 0.0,
     })
   )
-  soilBed.position.y = 0.048
+  soilBed.position.y = 0.05
   soilBed.receiveShadow = true
   soilG.add(soilBed)
 
-  const soilProbes = [
-    { x: -0.48, z: 0.05, h: 0.24, color: 0x06b6d4, label: '5 cm' },
-    { x: -0.16, z: 0.05, h: 0.32, color: 0xf59e0b, label: '10 cm' },
-    { x: 0.16, z: 0.05, h: 0.40, color: 0xef4444, label: '20 cm' },
-    { x: 0.48, z: 0.05, h: 0.54, color: 0x8b5cf6, label: '50 cm' },
+  // 1. Tiga Termometer Tanah Bengkok (Bent-Stem Symons Pattern 60°) untuk 5, 10, dan 20 cm
+  const bentProbes = [
+    { x: -0.52, z: 0.12, depth: '5 cm', stemH: 0.18, color: 0x06b6d4 },
+    { x: -0.18, z: 0.12, depth: '10 cm', stemH: 0.24, color: 0xf59e0b },
+    { x: 0.18, z: 0.12, depth: '20 cm', stemH: 0.32, color: 0xef4444 },
   ]
 
-  soilProbes.forEach((p) => {
-    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.011, p.h, 12), sharedMats.stainless)
-    stem.position.set(p.x, 0.08 + p.h / 2, p.z)
-    stem.castShadow = true
-    soilG.add(stem)
+  bentProbes.forEach((bp) => {
+    const probeGrp = new THREE.Group()
+    probeGrp.position.set(bp.x, 0.08, bp.z)
+    soilG.add(probeGrp)
 
-    const head = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.026, 0.02, 0.05, 14),
-      new THREE.MeshStandardMaterial({ color: p.color, roughness: 0.32, metalness: 0.4 })
-    )
-    head.position.set(p.x, 0.08 + p.h + 0.025, p.z)
-    head.castShadow = true
-    soilG.add(head)
+    // Dudukan cincin kuningan di permukaan tanah
+    const baseCollar = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.026, 0.025, 14), sharedMats.brass)
+    baseCollar.position.y = 0.012
+    baseCollar.castShadow = true
+    probeGrp.add(baseCollar)
 
-    // Kabel hitam per probe
-    addConduitTube(
-      soilG,
-      [
-        new THREE.Vector3(p.x, 0.12, p.z - 0.01),
-        new THREE.Vector3(p.x * 0.6, 0.1, -0.18),
-        new THREE.Vector3(p.x * 0.12, 0.36, -0.42),
-      ],
-      0.0045,
-      sharedMats.cableBlack
+    // Batang kaca miring 60° (menghadap Selatan agar pengamat dari jalur setapak mudah membaca tanpa bayangan)
+    const stemGroup = new THREE.Group()
+    stemGroup.rotation.x = -Math.PI / 6 // Miring 30° dari vertikal = 60° dari horizontal
+    probeGrp.add(stemGroup)
+
+    // Tabung kaca transparan
+    const glassTube = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.009, 0.009, bp.stemH, 12),
+      sharedMats.glassPhysical
     )
+    glassTube.position.y = bp.stemH / 2
+    glassTube.castShadow = true
+    stemGroup.add(glassTube)
+
+    // Skala putih di belakang tabung kaca
+    const scalePlate = new THREE.Mesh(
+      new THREE.BoxGeometry(0.014, bp.stemH * 0.92, 0.004),
+      sharedMats.whiteWoodFence
+    )
+    scalePlate.position.set(0, bp.stemH / 2, -0.006)
+    stemGroup.add(scalePlate)
+
+    // Kolom cairan merah indikator suhu
+    const fluidStem = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.003, 0.003, bp.stemH * 0.72, 8),
+      new THREE.MeshBasicMaterial({ color: 0xdc2626 })
+    )
+    fluidStem.position.set(0, bp.stemH * 0.4, 0)
+    stemGroup.add(fluidStem)
+
+    // Pelat penahan tripod kuningan kecil
+    const tripodLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.003, 0.003, 0.08, 6), sharedMats.brass)
+    tripodLeg.position.set(0, 0.035, -0.035)
+    tripodLeg.rotation.x = Math.PI / 4
+    probeGrp.add(tripodLeg)
   })
+
+  // 2. Termometer Tanah Dalam 50 cm (Earth Thermometer Suspended in Steel Tube)
+  const deepTubeGrp = new THREE.Group()
+  deepTubeGrp.position.set(0.56, 0.08, 0.12)
+  soilG.add(deepTubeGrp)
+
+  // Selongsong tabung besi galvanis pelindung yang tertanam ke dalam tanah
+  const steelTube = new THREE.Mesh(new THREE.CylinderGeometry(0.026, 0.026, 0.36, 16), sharedMats.darkSteel)
+  steelTube.position.y = 0.18
+  steelTube.castShadow = true
+  deepTubeGrp.add(steelTube)
+
+  // Kerah flensa pengunci di bibir tanah
+  const tubeFlange = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.042, 0.022, 16), sharedMats.brass)
+  tubeFlange.position.y = 0.015
+  deepTubeGrp.add(tubeFlange)
+
+  // Tutup tudung pelindung hujan atas (rain cap) dari kuningan
+  const capMesh = new THREE.Mesh(new THREE.ConeGeometry(0.044, 0.038, 16), sharedMats.brass)
+  capMesh.position.y = 0.375
+  capMesh.castShadow = true
+  deepTubeGrp.add(capMesh)
+
+  // Rantai gantung penarik termometer paraffin
+  const chainStem = new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.004, 0.08, 8), sharedMats.stainless)
+  chainStem.position.set(0, 0.41, 0)
+  deepTubeGrp.add(chainStem)
+
+  const pullRing = new THREE.Mesh(new THREE.TorusGeometry(0.014, 0.0035, 8, 16), sharedMats.brass)
+  pullRing.position.set(0, 0.455, 0)
+  pullRing.rotation.y = Math.PI / 2
+  deepTubeGrp.add(pullRing)
 
   scene.add(group)
 
