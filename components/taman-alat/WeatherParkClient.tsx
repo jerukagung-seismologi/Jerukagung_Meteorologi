@@ -11,6 +11,8 @@ import {
   Sliders,
   CheckCircle2,
   Info,
+  Gamepad2,
+  Eye,
 } from 'lucide-react'
 import Header from '@/components/Header'
 import LoadingState from '@/components/graphics/LoadingState'
@@ -18,6 +20,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useWeatherParkData } from '@/hooks/useWeatherParkData'
 import { InstrumentId } from '@/lib/tamanAlatCatalog'
+import { InstrumentProximityInfo } from './FirstPersonController'
 import {
   SimulationState,
   calculatePhysicsAnalytics,
@@ -50,6 +53,10 @@ const INITIAL_SIMULATION: SimulationState = {
   rainIntensity: 0,
   cloudCover: 25,
   timelapse: false,
+  moonPhase: 0.38,
+  activeMood: 'noon',
+  nightLampOverride: 'auto',
+  navMode: 'orbit',
 }
 
 export default function WeatherParkClient() {
@@ -58,6 +65,7 @@ export default function WeatherParkClient() {
   const [state, setState] = useState<SimulationState>(INITIAL_SIMULATION)
   const [activeCamPreset, setActiveCamPreset] = useState<string>('overview')
   const [selectedInstrument, setSelectedInstrument] = useState<InstrumentId | null>(null)
+  const [proximityInfo, setProximityInfo] = useState<InstrumentProximityInfo | null>(null)
 
   // Simulation rain tipping statistics
   const [tipCount, setTipCount] = useState<number>(0)
@@ -210,8 +218,31 @@ export default function WeatherParkClient() {
             onCamPresetChange={setActiveCamPreset}
             onTipRainGauge={handleRainTip}
             onHourTick={handleHourTick}
+            onProximityChange={setProximityInfo}
           />
         </div>
+
+        {/* First-Person Center Crosshair */}
+        {state.navMode === 'firstPerson' && (
+          <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+            <div className="h-1.5 w-1.5 rounded-full border border-white/70 bg-white/50 shadow-sm" />
+          </div>
+        )}
+
+        {/* Proximity Interaction Banner [E] */}
+        {proximityInfo && state.navMode === 'firstPerson' && (
+          <div className="pointer-events-auto absolute top-20 left-1/2 -translate-x-1/2 z-30 animate-bounce">
+            <button
+              onClick={() => setSelectedInstrument(proximityInfo.instrumentId)}
+              className="flex items-center gap-2 rounded-2xl border border-amber-400/80 bg-slate-950/95 px-4 py-2 text-xs font-bold text-amber-200 shadow-2xl backdrop-blur-xl hover:bg-slate-900 transition"
+            >
+              <span className="rounded-lg bg-amber-500/30 px-1.5 py-0.5 font-mono text-[10px] text-amber-300 border border-amber-400/40">
+                [E]
+              </span>
+              <span>Periksa {proximityInfo.name}</span>
+            </button>
+          </div>
+        )}
 
         {/* Top Header HUD */}
         <div className="pointer-events-none absolute top-4 left-4 right-4 z-20 flex flex-wrap items-center justify-between gap-3">
@@ -223,8 +254,24 @@ export default function WeatherParkClient() {
             </span>
           </div>
 
-          {/* Quick Badges: Wind & Temp */}
+          {/* Quick Badges: Nav Mode, Wind & Temp */}
           <div className="pointer-events-auto flex items-center gap-2">
+            {/* Nav Mode Toggle: Orbit vs First-Person WASD */}
+            <button
+              onClick={() => {
+                const nextMode = state.navMode === 'firstPerson' ? 'orbit' : 'firstPerson'
+                handleStateChange({ navMode: nextMode })
+              }}
+              className={`flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition shadow-xl backdrop-blur-md ${
+                state.navMode === 'firstPerson'
+                  ? 'border border-amber-400/80 bg-amber-500/25 text-amber-200 shadow-amber-500/20'
+                  : 'border border-slate-700/60 bg-slate-900/85 text-slate-300 hover:border-sky-400/50 hover:text-white'
+              }`}
+            >
+              <Gamepad2 className="h-3.5 w-3.5" />
+              <span>{state.navMode === 'firstPerson' ? 'JELAJAH WASD' : 'ORBIT DRONE'}</span>
+            </button>
+
             <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-slate-700/60 bg-slate-900/85 px-3.5 py-1.5 text-xs font-medium text-slate-200 shadow-xl backdrop-blur-md">
               <Wind className="h-3.5 w-3.5 text-sky-400" />
               <span>
@@ -249,6 +296,21 @@ export default function WeatherParkClient() {
             </button>
           </div>
         </div>
+
+        {/* First-Person Navigation Helper Guide */}
+        {state.navMode === 'firstPerson' && (
+          <div className="pointer-events-none absolute bottom-16 left-1/2 -translate-x-1/2 z-20 hidden sm:flex items-center gap-2 rounded-full border border-slate-700/60 bg-slate-950/85 px-4 py-1.5 text-[11px] text-slate-300 shadow-2xl backdrop-blur-md">
+            <span className="font-semibold text-amber-300">[W][A][S][D]</span>
+            <span>Jalan</span>
+            <span>•</span>
+            <span className="font-semibold text-amber-300">[Shift]</span>
+            <span>Lari</span>
+            <span>•</span>
+            <span>Geser Mouse Menoleh</span>
+            <span>•</span>
+            <span>Klik Kanvas Kunci Kursor</span>
+          </div>
+        )}
 
         {/* Floating Side Panels */}
         <div className="pointer-events-none absolute inset-x-4 top-20 bottom-20 z-20 flex justify-between items-start gap-4 overflow-hidden">

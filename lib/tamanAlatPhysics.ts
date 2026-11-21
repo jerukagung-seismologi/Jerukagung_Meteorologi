@@ -117,6 +117,102 @@ export interface SimulationState {
   rainIntensity: number
   cloudCover: number
   timelapse: boolean
+
+  // Atmosfer 24 Jam, Benda Langit & Navigasi
+  moonPhase: number
+  activeMood: 'morning' | 'noon' | 'sunset' | 'night' | 'storm' | 'custom'
+  nightLampOverride: 'auto' | 'on' | 'off'
+  navMode: 'orbit' | 'firstPerson'
+}
+
+export type MoodKey = 'morning' | 'noon' | 'sunset' | 'night' | 'storm'
+
+export interface MoodPreset {
+  key: MoodKey
+  label: string
+  icon: string
+  hour: number
+  tempAmbient: number
+  rh: number
+  windSpeed: number
+  windDir: number
+  rainIntensity: number
+  cloudCover: number
+  moonPhase: number
+  desc: string
+}
+
+export const MOOD_PRESETS: Record<MoodKey, MoodPreset> = {
+  morning: {
+    key: 'morning',
+    label: 'Pagi Tropis',
+    icon: '🌅',
+    hour: 6.5,
+    tempAmbient: 24.5,
+    rh: 88,
+    windSpeed: 1.8,
+    windDir: 60,
+    rainIntensity: 0,
+    cloudCover: 20,
+    moonPhase: 0.25,
+    desc: 'Embun pagi fajar, matahari terbit rendah, angin sejuk tenang.',
+  },
+  noon: {
+    key: 'noon',
+    label: 'Siang Terik',
+    icon: '☀️',
+    hour: 12.0,
+    tempAmbient: 33.5,
+    rh: 58,
+    windSpeed: 3.5,
+    windDir: 120,
+    rainIntensity: 0,
+    cloudCover: 15,
+    moonPhase: 0.38,
+    desc: 'Radiasi surya puncak, langit biru cerah, bayangan tajam.',
+  },
+  sunset: {
+    key: 'sunset',
+    label: 'Senja Emas',
+    icon: '🌇',
+    hour: 17.75,
+    tempAmbient: 28.0,
+    rh: 75,
+    windSpeed: 2.2,
+    windDir: 240,
+    rainIntensity: 0,
+    cloudCover: 35,
+    moonPhase: 0.50,
+    desc: 'Semburat jingga keemasan di ufuk barat, lampu stasiun mulai menyala.',
+  },
+  night: {
+    key: 'night',
+    label: 'Malam Bintang',
+    icon: '🌌',
+    hour: 21.5,
+    tempAmbient: 25.0,
+    rh: 85,
+    windSpeed: 1.5,
+    windDir: 310,
+    rainIntensity: 0,
+    cloudCover: 10,
+    moonPhase: 0.85,
+    desc: 'Langit malam bertabur ribuan bintang berkerlip dan bulan terang.',
+  },
+  storm: {
+    key: 'storm',
+    label: 'Badai Petir',
+    icon: '⛈️',
+    hour: 15.0,
+    tempAmbient: 26.5,
+    rh: 94,
+    windSpeed: 8.5,
+    windDir: 280,
+    rainIntensity: 65,
+    cloudCover: 90,
+    moonPhase: 0.40,
+    desc: 'Awan konvektif gelap tebal, hujan lebat bertiup kencang, dan kilatan petir.',
+  },
 }
 
 export interface PhysicsAnalytics {

@@ -3,7 +3,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import * as THREE from 'three'
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js'
-import { Sky } from 'three/examples/jsm/objects/Sky.js'
 import { InstrumentId, INSTRUMENT_CATALOG } from '@/lib/tamanAlatCatalog'
 import {
   SimulationState,
@@ -21,6 +20,10 @@ import { buildPyranometerAndSoil } from './models/solarAndSoil'
 import { buildEvaporationPan, EvaporationPanControls } from './models/evaporationPan'
 import { buildCampbellStokes } from './models/campbellStokes'
 import { buildDigitalBarometer } from './models/digitalBarometer'
+import { buildSkyAtmosphere, SkyAtmosphereSystem } from './models/skyAtmosphere'
+import { buildStationLighting, StationLightingSystem } from './models/stationLighting'
+import { buildHorizonPanorama360 } from './models/horizonPanorama'
+import { FirstPersonController, InstrumentProximityInfo } from './FirstPersonController'
 
 export const CAMERA_PRESETS: Record<string, { pos: THREE.Vector3; target: THREE.Vector3 }> = {
   overview:    { pos: new THREE.Vector3(10.2, 6.2, 11.0),   target: new THREE.Vector3(0, 1.1, 0) },
@@ -45,6 +48,7 @@ interface WeatherParkCanvasProps {
   onCamPresetChange: (preset: string) => void
   onTipRainGauge?: () => void
   onHourTick?: (newHour: number) => void
+  onProximityChange?: (info: InstrumentProximityInfo | null) => void
 }
 
 const MAX_RAIN_DROPS = 1600
@@ -57,6 +61,7 @@ export default function WeatherParkCanvas({
   onCamPresetChange,
   onTipRainGauge,
   onHourTick,
+  onProximityChange,
 }: WeatherParkCanvasProps) {
   const mountRef = useRef<HTMLDivElement>(null)
   const [hoveredInstrument, setHoveredInstrument] = useState<string | null>(null)
@@ -76,6 +81,8 @@ export default function WeatherParkCanvas({
   const grassMeshRef = useRef<THREE.InstancedMesh | null>(null)
   const sceneRef = useRef<THREE.Scene | null>(null)
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null)
+  const controlsRef = useRef<OrbitControls | null>(null)
+  const fpsControllerRef = useRef<FirstPersonController | null>(null)
 
   const grassUniformsRef = useRef({
     uTime: { value: 0 },
@@ -92,13 +99,24 @@ export default function WeatherParkCanvas({
 
   // Watch for activeCamPreset changes
   useEffect(() => {
+    if (state.navMode === 'firstPerson') return
     const preset = CAMERA_PRESETS[activeCamPreset]
     if (preset) {
       camTransitionRef.current.targetPos.copy(preset.pos)
       camTransitionRef.current.targetLook.copy(preset.target)
       camTransitionRef.current.active = true
     }
-  }, [activeCamPreset])
+  }, [activeCamPreset, state.navMode])
+
+  // Watch for navigation mode switch (Orbit vs First-Person)
+  useEffect(() => {
+    if (controlsRef.current) {
+      controlsRef.current.enabled = state.navMode !== 'firstPerson'
+    }
+    if (fpsControllerRef.current) {
+      fpsControllerRef.current.setEnabled(state.navMode === 'firstPerson')
+    }
+  }, [state.navMode])
 
   // Watch for Stevenson structural parameter changes
   useEffect(() => {
@@ -150,9 +168,9 @@ export default function WeatherParkCanvas({
     // Scene & Renderer
     const scene = new THREE.Scene()
     sceneRef.current = scene
-    scene.fog = new THREE.FogExp2(0x6b90b8, 0.0038)
+    scene.fog = new THREE.FogExp2(0x6b90b8, 0.0035)
 
-    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.08, 300)
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.08, 450)
     camera.position.copy(CAMERA_PRESETS.overview.pos)
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' })
@@ -166,101 +184,48 @@ export default function WeatherParkCanvas({
     renderer.toneMappingExposure = 0.75
     container.appendChild(renderer.domElement)
 
+    // Controls
     const controls = new OrbitControls(camera, renderer.domElement)
+    controlsRef.current = controls
     controls.target.copy(CAMERA_PRESETS.overview.target)
     controls.enableDamping = true
     controls.dampingFactor = 0.065
     controls.maxPolarAngle = Math.PI / 2 - 0.025
     controls.minDistance = 0.95
-    controls.maxDistance = 30
+    controls.maxDistance = 35
     controls.update()
 
     controls.addEventListener('start', () => {
       camTransitionRef.current.active = false
     })
 
-    // Sky Shader (Rayleigh & Mie Atmospheric Scattering)
-    const sky = new Sky()
-    sky.scale.setScalar(220)
-    scene.add(sky)
-
-    // PMREM IBL Generator & Environment Scene
-    const pmremGenerator = new THREE.PMREMGenerator(renderer)
-    pmremGenerator.compileEquirectangularShader()
-
-    const envScene = new THREE.Scene()
-    const envSky = new Sky()
-    envSky.scale.setScalar(50)
-    envScene.add(envSky)
-
-    const envGround = new THREE.Mesh(
-      new THREE.CircleGeometry(48, 24),
-      new THREE.MeshBasicMaterial({ color: 0x386130 })
-    )
-    envGround.rotation.x = -Math.PI / 2
-    envGround.position.y = -0.5
-    envScene.add(envGround)
-
-    let envRenderTarget: THREE.WebGLRenderTarget | null = null
-    let lastIblElevDeg = -999
-    let lastIblCloud = -999
-    let lastIblUpdateMs = 0
-
-    // Lighting (disesuaikan agar adem dan tidak overexposed)
-    const hemiLight = new THREE.HemisphereLight(0xcde0f7, 0x2b421a, 0.42)
-    scene.add(hemiLight)
-
-    const sunLight = new THREE.DirectionalLight(0xfff8eb, 1.85)
-    sunLight.castShadow = true
-    sunLight.shadow.mapSize.set(initialPreset.shadowSize, initialPreset.shadowSize)
-    sunLight.shadow.camera.near = 2
-    sunLight.shadow.camera.far = 65
-    const d = 8.6
-    sunLight.shadow.camera.left = -d
-    sunLight.shadow.camera.right = d
-    sunLight.shadow.camera.top = d
-    sunLight.shadow.camera.bottom = -d
-    sunLight.shadow.bias = -0.00045
-    sunLight.shadow.normalBias = 0.025
-    scene.add(sunLight)
-
-    // Procedural Clouds
-    const cloudGroup = new THREE.Group()
-    const cloudMat = new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      roughness: 0.96,
-      metalness: 0.0,
-      transparent: true,
-      opacity: 0.35,
-    })
-    const puffGeo = new THREE.DodecahedronGeometry(1, 1)
-
-    for (let i = 0; i < 16; i++) {
-      const cluster = new THREE.Group()
-      const puffs = 3 + (i % 3)
-      for (let p = 0; p < puffs; p++) {
-        const m = new THREE.Mesh(puffGeo, cloudMat)
-        m.position.set((p - 1) * 1.9, (Math.random() - 0.5) * 0.55, (Math.random() - 0.5) * 1.3)
-        m.scale.set(1.9 + Math.random() * 1.3, 0.78 + Math.random() * 0.45, 1.5 + Math.random() * 1.1)
-        cluster.add(m)
-      }
-      const angle = (i / 16) * Math.PI * 2 + 0.15
-      const radius = 15 + (i % 4) * 9.5
-      cluster.position.set(Math.cos(angle) * radius, 16 + (i % 3) * 2.4, Math.sin(angle) * radius)
-      cluster.userData = { speed: 0.25 + (i % 4) * 0.12 }
-      cloudGroup.add(cluster)
+    // First-Person Controller (Minecraft-style WASD)
+    const fpsController = new FirstPersonController(camera, renderer.domElement)
+    fpsControllerRef.current = fpsController
+    fpsController.onProximityChange = (info) => {
+      onProximityChange?.(info)
     }
-    cloudGroup.userData = { cloudMat }
-    scene.add(cloudGroup)
+    fpsController.onInteract = (id) => {
+      onSelectInstrument(id)
+    }
 
     // Shared PBR Materials
     const sharedMats = createSharedPBRMaterials()
 
-    // Environment & Grass
+    // 1. Atmosfer 24 Jam: GLSL Sky Shader, Awan, Bintang Twinkling, Matahari, Bulan Kawah
+    const skyAtmosphere = buildSkyAtmosphere(scene)
+
+    // 2. Panorama Horizon 360° Kebumen & Pohon Siluet
+    buildHorizonPanorama360(scene)
+
+    // 3. Tiang Lampu Stasiun Otomatis & Sistem Petir
+    const stationLighting = buildStationLighting(scene, sharedMats)
+
+    // 4. Lingkungan Taman & Rumput Instanced GPU
     buildParkEnvironment(scene, sharedMats)
     grassMeshRef.current = buildInstancedGrass(scene, initialPreset.grassCount, grassUniformsRef.current)
 
-    // Instruments
+    // 5. Tujuh Instrumen Meteorologi Lengkap
     const stevenson = buildStevensonScreen(scene, sharedMats, {
       volumeKey: stateRef.current.volumeKey,
       legHeight: stateRef.current.legHeight,
@@ -373,6 +338,7 @@ export default function WeatherParkCanvas({
     }
 
     const onPointerMove = (e: PointerEvent) => {
+      if (stateRef.current.navMode === 'firstPerson') return
       const rect = renderer.domElement.getBoundingClientRect()
       pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1
       pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1
@@ -400,6 +366,7 @@ export default function WeatherParkCanvas({
     }
 
     const onPointerUp = (e: PointerEvent) => {
+      if (stateRef.current.navMode === 'firstPerson') return
       const dist = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y)
       if (dist > 6) return
 
@@ -436,154 +403,101 @@ export default function WeatherParkCanvas({
       const elapsed = clock.getElapsedTime()
       const currentState = stateRef.current
 
-      // 1. Sun & Atmosphere Updates (Sky Shader & Lighting)
-      const sun = calculateSunPosition(currentState.hour)
-      const sunDir = new THREE.Vector3(sun.sx, sun.sy, sun.sz).normalize()
-      sunLight.position.copy(sunDir).multiplyScalar(28)
-      if (sunLight.position.y < 1.2) sunLight.position.y = 1.2
+      // 1. Sistem Petir Konvektif (Acak saat badai atau hujan deras)
+      if (currentState.activeMood === 'storm' || (currentState.rainIntensity > 40 && Math.random() < 0.009)) {
+        stationLighting.triggerLightning()
+      }
+      const lightning = stationLighting.updateLightning(dt)
 
-      const cloudFrac = currentState.cloudCover / 100
-      const rainFrac = Math.min(1, currentState.rainIntensity / 65)
-      const overcast = Math.min(1, cloudFrac * 0.78 + rainFrac * 0.48)
-      const dayFactor = clamp((sun.elevDeg + 4) / 26, 0, 1)
-      const sunHigh = clamp(sun.elevDeg / 45, 0, 1)
+      // 2. Sistem Atmosfer 24 Jam (GLSL Sky, Bintang Twinkle, Bulan Kawah & Fase, Pencahayaan)
+      const atmo = skyAtmosphere.update(
+        currentState.hour,
+        currentState.cloudCover,
+        currentState.moonPhase ?? 0.38,
+        lightning,
+        dt,
+        elapsed
+      )
 
-      // Atmospheric parameters
-      const turbidity = 2.0 + overcast * 10.5 + (1 - sunHigh) * 2.5
-      const rayleigh = Math.max(0.35, (2.6 - overcast * 1.9) * (0.35 + 0.65 * dayFactor))
-      const mieCoeff = 0.0045 + overcast * 0.018
-      const mieG = 0.82 - overcast * 0.16
+      // Lampu stasiun otomatis / manual
+      stationLighting.updateLamp(atmo.nightFactor, currentState.nightLampOverride ?? 'auto')
 
-      ;[sky, envSky].forEach((s) => {
-        const u = s.material.uniforms
-        if (u['turbidity']) u['turbidity'].value = turbidity
-        if (u['rayleigh']) u['rayleigh'].value = rayleigh
-        if (u['mieCoefficient']) u['mieCoefficient'].value = mieCoeff
-        if (u['mieDirectionalG']) u['mieDirectionalG'].value = mieG
-        if (u['sunPosition']) u['sunPosition'].value.copy(sunDir)
-      })
+      // Exposure & Fog adaptif sesuai waktu & petir
+      renderer.toneMappingExposure =
+        (0.48 + (1.0 - atmo.nightFactor) * 0.27 - (currentState.cloudCover / 100) * 0.1) *
+        (1.0 + lightning * 0.45)
 
-      const sunWarm = new THREE.Color(0xff9447)
-      const sunDay = new THREE.Color(0xfff7e8)
-      sunLight.color.copy(sunWarm).lerp(sunDay, sunHigh)
-      sunLight.intensity =
-        sun.elevDeg > -1
-          ? Math.max(0.18, (1.92 * Math.sin(Math.max(0.05, degToRad(sun.elevDeg))) + 0.22) * (1 - overcast * 0.72))
-          : 0.06
-
-      hemiLight.intensity = 0.12 + dayFactor * (0.40 - overcast * 0.14)
-      renderer.toneMappingExposure = 0.42 + dayFactor * (0.33 - overcast * 0.12)
-
-      const fogNight = new THREE.Color(0x0a1122)
-      const fogSunset = new THREE.Color(0xc97545)
-      const fogClear = new THREE.Color(0x6b92ba)
-      const fogCloudy = new THREE.Color(0x566a7d)
-      const fogDay = fogSunset.clone().lerp(fogClear, sunHigh).lerp(fogCloudy, overcast * 0.85)
-      scene.fog.color.copy(fogNight).lerp(fogDay, dayFactor)
-      scene.fog.density = 0.0032 + overcast * 0.0065 + rainFrac * 0.0055
-
-      // Cloud appearance & drift
-      cloudMat.opacity = clamp(0.06 + cloudFrac * 0.8 + rainFrac * 0.16, 0.05, 0.92)
-      const cColor = new THREE.Color(0xffffff).lerp(new THREE.Color(0x4b5563), rainFrac * 0.6 + cloudFrac * 0.28)
-      cColor.multiplyScalar(0.22 + 0.78 * dayFactor)
-      cloudMat.color.copy(cColor)
-      cloudGroup.visible = currentState.cloudCover > 2 || currentState.rainIntensity > 0
-
-      if (cloudGroup.visible) {
-        const dirRad = degToRad(currentState.windDir)
-        const cVx = -Math.sin(dirRad) * Math.max(0.25, currentState.windSpeed * 0.14)
-        const cVz = Math.cos(dirRad) * Math.max(0.25, currentState.windSpeed * 0.14)
-        cloudGroup.children.forEach((c) => {
-          c.position.x += cVx * (c.userData.speed || 0.3) * dt
-          c.position.z += cVz * (c.userData.speed || 0.3) * dt
-          if (c.position.x > 46) c.position.x = -46
-          if (c.position.x < -46) c.position.x = 46
-          if (c.position.z > 46) c.position.z = -46
-          if (c.position.z < -46) c.position.z = 46
-        })
+      if (scene.fog instanceof THREE.FogExp2) {
+        scene.fog.color.setHex(atmo.isNight ? 0x060e1c : 0x6b90b8)
+        scene.fog.density = atmo.isNight ? 0.0042 : 0.0034
       }
 
-      // Throttled PMREM IBL Regeneration
-      const q = QUALITY_PRESETS[currentState.qualityKey] || QUALITY_PRESETS.balanced
-      const now = performance.now()
-      const elevMoved = Math.abs(sun.elevDeg - lastIblElevDeg) >= q.iblMinDeltaDeg
-      const cloudMoved = Math.abs(currentState.cloudCover - lastIblCloud) >= 7
-      const timeReady = now - lastIblUpdateMs >= q.iblMinIntervalMs
-
-      if (!envRenderTarget || ((elevMoved || cloudMoved) && timeReady)) {
-        const nextRT = pmremGenerator.fromScene(envScene, q.iblBlur, 0.1, 100)
-        if (envRenderTarget) envRenderTarget.dispose()
-        envRenderTarget = nextRT
-        scene.environment = envRenderTarget.texture
-        scene.environmentIntensity = 0.22 + dayFactor * (0.42 - overcast * 0.14)
-
-        lastIblElevDeg = sun.elevDeg
-        lastIblCloud = currentState.cloudCover
-        lastIblUpdateMs = now
+      // 3. Update Navigasi Kamera: First-Person WASD vs OrbitControls
+      if (currentState.navMode === 'firstPerson') {
+        fpsController.update(dt)
+      } else {
+        // Orbit Controls transition lerp
+        if (camTransitionRef.current.active) {
+          camera.position.lerp(camTransitionRef.current.targetPos, dt * 3.8)
+          controls.target.lerp(camTransitionRef.current.targetLook, dt * 3.8)
+          if (
+            camera.position.distanceTo(camTransitionRef.current.targetPos) < 0.04 &&
+            controls.target.distanceTo(camTransitionRef.current.targetLook) < 0.04
+          ) {
+            camera.position.copy(camTransitionRef.current.targetPos)
+            controls.target.copy(camTransitionRef.current.targetLook)
+            camTransitionRef.current.active = false
+          }
+        }
+        controls.update()
       }
 
-      // 2. Wind sway on 3D grass
-      const windRad = degToRad(currentState.windDir)
+      // 4. Timelapse logic
+      if (currentState.timelapse) {
+        timelapseThrottle += dt
+        if (timelapseThrottle > 0.06) {
+          timelapseThrottle = 0
+          const nextHour = (currentState.hour + 0.1) % 24
+          onHourTick?.(nextHour)
+        }
+      }
+
+      // 5. Animasi Buka/Tutup Pintu Sangkar
+      const targetAngle = currentState.doorOpen ? -degToRad(105) : 0
+      if (Math.abs(currentDoorAngle - targetAngle) > 0.01) {
+        currentDoorAngle = THREE.MathUtils.lerp(currentDoorAngle, targetAngle, dt * 6.5)
+        if (stevensonRef.current) {
+          stevensonRef.current.setDoorAngle(currentDoorAngle)
+        }
+      }
+
+      // 6. Animasi Anemometer & Wind Vane
+      if (windStationRef.current) {
+        windStationRef.current.update(dt, currentState.windSpeed, currentState.windDir)
+      }
+
+      // 7. Animasi Rumput GPU (Goyangan angin)
+      const windAngleRad = degToRad(currentState.windDir)
       grassUniformsRef.current.uTime.value = elapsed
       grassUniformsRef.current.uWindSpeed.value = currentState.windSpeed
-      grassUniformsRef.current.uWindDir.value.set(-Math.sin(windRad), Math.cos(windRad))
+      grassUniformsRef.current.uWindDir.value.set(-Math.sin(windAngleRad), -Math.cos(windAngleRad))
 
-      // 3. Timelapse Handler
-      if (currentState.timelapse && onHourTick) {
-        timelapseThrottle += dt
-        if (timelapseThrottle >= 0.1) {
-          let newHour = currentState.hour + timelapseThrottle * 0.55
-          timelapseThrottle = 0
-          if (newHour > 19.0) newHour = 5.0
-          onHourTick(newHour)
-        }
-      }
+      // 8. Animasi Partikel Hujan Instanced
+      const rainCount = Math.min(
+        MAX_RAIN_DROPS,
+        Math.floor((currentState.rainIntensity / 80) * MAX_RAIN_DROPS)
+      )
+      rainInstMesh.count = rainCount
 
-      // 4. Smooth Camera Lerp
-      if (camTransitionRef.current.active) {
-        const alpha = 1 - Math.exp(-5.5 * dt)
-        camera.position.lerp(camTransitionRef.current.targetPos, alpha)
-        controls.target.lerp(camTransitionRef.current.targetLook, alpha)
-        if (
-          camera.position.distanceTo(camTransitionRef.current.targetPos) < 0.02 &&
-          controls.target.distanceTo(camTransitionRef.current.targetLook) < 0.02
-        ) {
-          camTransitionRef.current.active = false
-        }
-      }
-
-      // 5. Stevenson Screen Animation
-      const targetDoor = currentState.doorOpen ? -degToRad(105) : 0
-      currentDoorAngle += (targetDoor - currentDoorAngle) * Math.min(1, dt * 6.5)
-      stevenson.updateDoor(currentDoorAngle)
-      stevenson.updateEspLed(elapsed)
-
-      // 6. Wind Station Animation
-      windStation.update(currentState.windSpeed, currentState.windDir, dt, elapsed)
-
-      // 7. Rain Gauge Animation
-      rainGauge.update(currentState.rainIntensity, dt, onTipRainGauge)
-
-      // 8. Evaporation Pan Ripples & Mini Rotor
-      evapPan.update(currentState.windSpeed, currentState.rainIntensity, dt, elapsed)
-
-      // 9. Instanced Rain Drops
-      if (currentState.rainIntensity <= 0.1) {
-        rainInstMesh.count = 0
-      } else {
-        const active = Math.min(
-          MAX_RAIN_DROPS,
-          Math.floor((currentState.rainIntensity / 100) * MAX_RAIN_DROPS) + 100
-        )
-        rainInstMesh.count = active
-
-        const flowVx = -Math.sin(windRad) * (currentState.windSpeed * 0.28)
-        const flowVz = Math.cos(windRad) * (currentState.windSpeed * 0.28)
+      if (rainCount > 0) {
+        const dirRad = degToRad(currentState.windDir)
+        const flowVx = -Math.sin(dirRad) * (currentState.windSpeed * 0.28)
+        const flowVz = Math.cos(dirRad) * (currentState.windSpeed * 0.28)
         const fallVec = new THREE.Vector3(flowVx, -11.5, flowVz).normalize()
         const upVec = new THREE.Vector3(0, 1, 0)
         const tiltQuat = new THREE.Quaternion().setFromUnitVectors(upVec, fallVec.clone().negate())
 
-        for (let i = 0; i < active; i++) {
+        for (let i = 0; i < rainCount; i++) {
           const d = rainData[i]
           d.y -= d.speed * dt
           d.x += flowVx * dt
@@ -608,15 +522,15 @@ export default function WeatherParkCanvas({
         rainInstMesh.instanceMatrix.needsUpdate = true
       }
 
-      // 10. Airflow Particles
-      airflowGroup.visible = currentState.showAirflow && currentState.windSpeed > 0.1
-      if (airflowGroup.visible) {
-        const centerY = 0.05 + currentState.legHeight + 0.84 * 0.5
-        const flowX = -Math.sin(windRad)
-        const flowZ = Math.cos(windRad)
-        const perpX = flowZ
-        const perpZ = -flowX
-        const yaw = Math.atan2(flowX, flowZ)
+      // 9. Animasi Streamlines Aliran Udara
+      airflowGroup.visible = currentState.showAirflow
+      if (currentState.showAirflow) {
+        const yaw = degToRad(currentState.windDir + 180)
+        const flowX = Math.sin(yaw)
+        const flowZ = Math.cos(yaw)
+        const perpX = -flowZ
+        const perpZ = flowX
+        const centerY = currentState.legHeight + 0.4
         const speed = Math.min(3.6, 0.35 + currentState.windSpeed * 0.14)
 
         for (let i = 0; i < airflowParticles.length; i++) {
@@ -638,7 +552,6 @@ export default function WeatherParkCanvas({
         }
       }
 
-      controls.update()
       renderer.render(scene, camera)
     }
 
@@ -665,8 +578,6 @@ export default function WeatherParkCanvas({
       domEl.removeEventListener('pointerup', onPointerUp)
       controls.dispose()
       renderer.dispose()
-      if (envRenderTarget) envRenderTarget.dispose()
-      pmremGenerator.dispose()
       if (container.contains(domEl)) {
         container.removeChild(domEl)
       }
@@ -676,7 +587,8 @@ export default function WeatherParkCanvas({
 
   return (
     <div className="relative h-full w-full select-none overflow-hidden" ref={mountRef}>
-      {hoveredInstrument && tooltipPos && (
+      {/* Tooltip Hover (saat Mode Orbit) */}
+      {hoveredInstrument && tooltipPos && state.navMode !== 'firstPerson' && (
         <div
           className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-12 rounded-lg border border-sky-400/40 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-sky-200 shadow-xl backdrop-blur-md transition-all duration-75"
           style={{ left: `${tooltipPos.x}px`, top: `${tooltipPos.y}px` }}

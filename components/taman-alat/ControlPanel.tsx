@@ -28,6 +28,7 @@ import {
   SimulationState,
   PhysicsAnalytics,
   VOLUME_PRESETS,
+  MOOD_PRESETS,
   formatHourWIB,
   getCompassLabel,
 } from '@/lib/tamanAlatPhysics'
@@ -130,6 +131,46 @@ export default function ControlPanel({
             >
               Simulasi Interaktif
             </button>
+          </div>
+
+          {/* 5 Preset Suasana Atmosfer 24 Jam */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <Label className="text-slate-300 text-xs font-medium">Preset Suasana Atmosfer</Label>
+              <span className="text-[10px] text-amber-400 font-semibold uppercase tracking-wider">24 Jam PBR</span>
+            </div>
+            <div className="grid grid-cols-5 gap-1">
+              {Object.values(MOOD_PRESETS).map((m) => {
+                const active = state.activeMood === m.key
+                return (
+                  <button
+                    key={m.key}
+                    onClick={() => {
+                      onChange({
+                        activeMood: m.key,
+                        hour: m.hour,
+                        tempAmbient: m.tempAmbient,
+                        rh: m.rh,
+                        windSpeed: m.windSpeed,
+                        windDir: m.windDir,
+                        rainIntensity: m.rainIntensity,
+                        cloudCover: m.cloudCover,
+                        moonPhase: m.moonPhase,
+                      })
+                    }}
+                    className={`flex flex-col items-center justify-center rounded-xl p-1.5 text-center transition ${
+                      active
+                        ? 'border border-amber-400/70 bg-amber-500/20 text-amber-200 shadow-md font-semibold'
+                        : 'border border-slate-800 bg-slate-950/50 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                    }`}
+                    title={m.desc}
+                  >
+                    <span className="text-sm leading-none">{m.icon}</span>
+                    <span className="text-[9px] mt-1 truncate max-w-full leading-tight">{m.label.split(' ')[0]}</span>
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           {/* Tabs */}
@@ -284,12 +325,63 @@ export default function ControlPanel({
                 </div>
                 <Slider
                   value={[state.hour]}
-                  min={5.0}
-                  max={19.0}
+                  min={0.0}
+                  max={23.9}
                   step={0.1}
                   disabled={state.timelapse || mode === 'live'}
                   onValueChange={([val]) => onChange({ hour: val })}
                 />
+              </div>
+
+              {/* Fase Bulan (0.0 s/d 1.0) */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <Label className="text-slate-300 text-xs">Fase Bulan</Label>
+                  <span className="font-mono text-sky-300">
+                    {state.moonPhase <= 0.1 || state.moonPhase >= 0.95
+                      ? 'Bulan Baru'
+                      : state.moonPhase < 0.4
+                      ? 'Bulan Sabit'
+                      : state.moonPhase < 0.65
+                      ? 'Bulan Perbani'
+                      : state.moonPhase < 0.9
+                      ? 'Bulan Cembung'
+                      : 'Bulan Purnama'}{' '}
+                    ({Math.round((state.moonPhase ?? 0.38) * 100)}%)
+                  </span>
+                </div>
+                <Slider
+                  value={[state.moonPhase ?? 0.38]}
+                  min={0.0}
+                  max={1.0}
+                  step={0.02}
+                  onValueChange={([val]) => onChange({ moonPhase: val })}
+                />
+              </div>
+
+              {/* Lampu Taman Stasiun Otomatis */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <Label className="text-slate-300 text-xs">Lampu Stasiun Malam</Label>
+                  <span className="text-amber-300 text-[11px] font-semibold uppercase">
+                    {state.nightLampOverride === 'on' ? 'Nyala' : state.nightLampOverride === 'off' ? 'Mati' : 'Otomatis (Sensor)'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-1">
+                  {(['auto', 'on', 'off'] as const).map((modeKey) => (
+                    <button
+                      key={modeKey}
+                      onClick={() => onChange({ nightLampOverride: modeKey })}
+                      className={`rounded-lg py-1 text-[11px] font-semibold transition ${
+                        (state.nightLampOverride ?? 'auto') === modeKey
+                          ? 'bg-amber-500/20 text-amber-300 border border-amber-400/50'
+                          : 'border border-slate-800 bg-slate-950/40 text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      {modeKey === 'auto' ? 'Otomatis' : modeKey === 'on' ? 'Nyala' : 'Mati'}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {/* Ambient Temp */}
